@@ -2,6 +2,35 @@
 <resources>
   <string name="app_name">ShutUp</string>
   <string name="about_forked_from">Forked from</string>
+  <string name="home_shutter_sound">シャッター音</string>
+  <string name="home_enforced">鳴ります</string>
+  <string name="home_not_enforced">解除済み</string>
+  <string name="home_unknown">未確認</string>
+  <string name="home_other_policy">その他</string>
+  <string name="home_working">処理中</string>
+  <string name="home_force_system">(FOR_SYSTEM=%1$s)</string>
+  <string name="home_enforced_hint">シャッター音が鳴る状態です</string>
+  <string name="home_released_hint">着信音モードに従います</string>
+  <string name="home_other_policy_hint">現在のシャッター音設定を使用中</string>
+  <string name="home_with_default">%1$s（デフォルト）</string>
+  <string name="home_applying">設定を反映しています</string>
+  <string name="home_start_shizuku_hint">Shizukuを起動すると状態を確認できます</string>
+  <string name="home_authorize_hint">Shizukuの権限を許可してください</string>
+  <string name="home_refresh_hint">再確認して現在の状態を取得してください</string>
+  <string name="home_open_shizuku">Shizukuを開く</string>
+  <string name="home_restore">既定値に戻す</string>
+  <string name="home_system_status">動作状況</string>
+  <string name="home_shizuku">Shizuku</string>
+  <string name="home_connected">接続済み</string>
+  <string name="home_permission_needed">権限が必要です</string>
+  <string name="home_not_running">起動していません</string>
+  <string name="home_device_default">端末の既定値</string>
+  <string name="home_default_enforced">強制あり</string>
+  <string name="home_default_not_enforced">強制なし</string>
+  <string name="home_restart_note">再起動すると元に戻ります</string>
+  <string name="home_before_using">使う前に</string>
+  <string name="home_expand_notes">注意事項を表示</string>
+  <string name="home_collapse_notes">注意事項を閉じる</string>
   <string name="tile_label">ShutUp</string>
   <string name="about">日本向けなど一部の端末は、マナーモードでもカメラのシャッター音が鳴るよう強制されています。このアプリは Shizuku を使って、その強制（AudioSystem の FOR_SYSTEM）を解除したり戻したりします。</string>
   <string name="caveats">変更は audioserver のメモリ上だけです。端末の再起動か audioserver の再起動で端末の既定値に戻り、それ以外では戻りません。アプリを削除しても元に戻らないので、削除する前に「既定値に戻す」を実行してください。\n\n強制を解除すると、シャッター音は着信音モードに従います。消えるのはサイレント／バイブのときだけです。同じ強制ストリームを使う他の音も同様に影響を受けます。\n\n周囲の人のプライバシーと、お住まいの地域のルールを守って使ってください。</string>

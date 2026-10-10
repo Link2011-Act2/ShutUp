@@ -22,6 +22,7 @@ internal fun OssLicensesScreen(onBack: () -> Unit) {
     val entries = listOf(
             Entry(context.getString(R.string.license_app_title), BuildConfig.APPLICATION_ID, "NYSL 0.9982", AppLinks.REPOSITORY, "NYSL.txt"),
             Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
+            Entry("Material Design icons / Material Symbols", "Google Material icons and Symbols", "Apache License 2.0", "https://github.com/google/material-design-icons", "Apache-2.0.txt"),
             Entry("Shizuku API and Provider", "dev.rikka.shizuku:api / provider:13.1.5", "Apache License 2.0", "https://github.com/RikkaApps/Shizuku-API", "Apache-2.0.txt"),
             Entry("HiddenApiBypass", "org.lsposed.hiddenapibypass:hiddenapibypass:6.1", "Apache License 2.0", "https://github.com/LSPosed/AndroidHiddenApiBypass", "Apache-2.0.txt"),
             Entry("Kotlin", "org.jetbrains.kotlin:kotlin-stdlib", "Apache License 2.0", "https://github.com/JetBrains/kotlin", "Apache-2.0.txt"),

@@ -2,6 +2,35 @@
 <resources>
   <string name="app_name">ShutUp</string>
   <string name="about_forked_from">Forked from</string>
+  <string name="home_shutter_sound">Shutter sound</string>
+  <string name="home_enforced">Will play</string>
+  <string name="home_not_enforced">Released</string>
+  <string name="home_unknown">Unknown</string>
+  <string name="home_other_policy">Other setting</string>
+  <string name="home_working">Applying…</string>
+  <string name="home_force_system">(FOR_SYSTEM=%1$s)</string>
+  <string name="home_enforced_hint">The shutter sound will play.</string>
+  <string name="home_released_hint">Follows the ringer mode.</string>
+  <string name="home_other_policy_hint">Using the current shutter sound setting</string>
+  <string name="home_with_default">%1$s (default)</string>
+  <string name="home_applying">Updating the enforcement setting</string>
+  <string name="home_start_shizuku_hint">Start Shizuku to check the current setting</string>
+  <string name="home_authorize_hint">Allow Shizuku access to check the setting</string>
+  <string name="home_refresh_hint">Refresh to check the current setting</string>
+  <string name="home_open_shizuku">Open Shizuku</string>
+  <string name="home_restore">Restore device default</string>
+  <string name="home_system_status">System status</string>
+  <string name="home_shizuku">Shizuku</string>
+  <string name="home_connected">Connected</string>
+  <string name="home_permission_needed">Permission required</string>
+  <string name="home_not_running">Not running</string>
+  <string name="home_device_default">Device default</string>
+  <string name="home_default_enforced">Enforced</string>
+  <string name="home_default_not_enforced">Not enforced</string>
+  <string name="home_restart_note">Restarting restores the device default.</string>
+  <string name="home_before_using">Before you use it</string>
+  <string name="home_expand_notes">Show usage notes</string>
+  <string name="home_collapse_notes">Hide usage notes</string>
   <string name="tile_label">ShutUp</string>
   <string name="about">Devices sold in some regions force the camera shutter sound to play even in silent mode. This app uses Shizuku to switch that enforcement (AudioSystem FOR_SYSTEM) off and back on.</string>
   <string name="caveats">The change lives in audioserver only: a reboot or an audioserver restart puts the device default back, and nothing else does. Uninstalling the app does not undo it, so restore before removing the app.\n\nWith the enforcement off, the shutter follows the ringer mode: it is silenced in silent or vibrate mode only. Other sounds that use the enforced stream are affected the same way.\n\nRespect the privacy of the people around you and the rules where you live.</string>

@@ -7,6 +7,14 @@ import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,13 +23,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jp.linkserver.shutter.*
@@ -29,22 +34,67 @@ import jp.linkserver.shutter.R
 
 @Composable
 fun ShutterApp(shutter: ShutterViewModel, onRelease: () -> Unit) {
+    val state by shutter.state.collectAsStateWithLifecycle()
+    ShutterNavigation(state, shutter::authorize, onRelease,
+        { shutter.apply(ForceUse.deviceDefault()) }, shutter::refresh)
+}
+
+@Composable
+internal fun ShutterNavigation(
+    state: ShutterUiState, onAuthorize: () -> Unit, onRelease: () -> Unit,
+    onRestore: () -> Unit, onRefresh: () -> Unit
+) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val holder = rememberSaveableStateHolder()
-    val state by shutter.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     val back = {
         screen = when (screen) { "licenses" -> "about"; "about" -> "settings"; else -> "home" }
     }
     BackHandler(enabled = screen != "home", onBack = back)
-    holder.SaveableStateProvider(screen) {
-        when (screen) {
-            "settings" -> SettingsScreen(back) { screen = "about" }
-            "about" -> AboutScreen(back) { screen = "licenses" }
-            "licenses" -> OssLicensesScreen(back)
-            else -> HomeScreen(state, { screen = "settings" }, shutter::authorize, onRelease,
-                { shutter.apply(ForceUse.deviceDefault()) }, shutter::refresh)
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+        AnimatedContent(
+            targetState = screen,
+            modifier = Modifier.fillMaxSize().clipToBounds(),
+            transitionSpec = {
+                val direction = if (screenDepth(targetState) > screenDepth(initialState)) 1 else -1
+                ((slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { direction * it / 5 } +
+                    fadeIn(tween(220, delayMillis = 40))) togetherWith
+                    (slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
+                        fadeOut(tween(140)))).using(null)
+            },
+            label = "screen_transition"
+        ) { targetScreen ->
+            holder.SaveableStateProvider(targetScreen) {
+                when (targetScreen) {
+                    "settings" -> SettingsScreen(back) { screen = "about" }
+                    "about" -> AboutScreen(back) { screen = "licenses" }
+                    "licenses" -> OssLicensesScreen(back)
+                    else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
+                        onRelease, onRestore, onRefresh)
+                }
+            }
         }
     }
+}
+
+private fun screenDepth(screen: String): Int = when (screen) {
+    "settings" -> 1
+    "about" -> 2
+    "licenses" -> 3
+    else -> 0
+}
+
+private fun openShizuku(context: Context) {
+    val launch = context.packageManager.getLaunchIntentForPackage("moe.shizuku.privileged.api")
+    if (launch != null) {
+        try {
+            context.startActivity(launch)
+            return
+        } catch (_: ActivityNotFoundException) {
+            // Fall through to Shizuku's official setup page.
+        }
+    }
+    openUrl(context, "https://shizuku.rikka.app/")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,79 +120,6 @@ internal fun ScreenScaffold(title: String, onBack: (() -> Unit)? = null,
         },
         content = content
     )
-}
-
-@Composable
-private fun HomeScreen(state: ShutterUiState, onSettings: () -> Unit, onAuthorize: () -> Unit,
-    onRelease: () -> Unit, onRestore: () -> Unit, onRefresh: () -> Unit) {
-    ScreenScaffold(stringResource(R.string.app_name), actions = {
-        IconButton(onClick = onSettings) {
-            Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.settings_title))
-        }
-    }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp)) {
-            Text(stringResource(R.string.about), style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(24.dp))
-            StatusRow(stringResource(when (state.status) {
-                ShutterSound.Status.NOT_RUNNING -> R.string.shizuku_not_running
-                ShutterSound.Status.NOT_AUTHORIZED -> R.string.shizuku_not_authorized
-                ShutterSound.Status.READY -> R.string.shizuku_ready
-            }), SettingsGroupPosition.Top)
-            SettingsDividerGap()
-            StatusRow(stringResource(if (ForceUse.deviceDefault() == ForceUse.FORCE_SYSTEM_ENFORCED)
-                R.string.device_forced else R.string.device_not_forced), SettingsGroupPosition.Middle)
-            SettingsDividerGap()
-            val current = stringResource(when {
-                state.busy -> R.string.current_working
-                state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.current_enforced
-                state.current == ForceUse.FORCE_NONE -> R.string.current_none
-                else -> R.string.current_unknown
-            }) + if (!state.busy && state.current != null) " (FOR_SYSTEM=${state.current})" else ""
-            StatusRow(current, SettingsGroupPosition.Bottom, true)
-            if (state.error.isNotEmpty()) {
-                Spacer(Modifier.height(12.dp))
-                SettingsItemSurface(false, SettingsGroupPosition.Single, containerColor = MaterialTheme.colorScheme.errorContainer) {
-                    Text(state.error, Modifier.padding(20.dp).semantics { liveRegion = LiveRegionMode.Polite },
-                        color = MaterialTheme.colorScheme.onErrorContainer)
-                }
-            }
-            if (state.alreadyNone) {
-                Spacer(Modifier.height(12.dp))
-                StatusRow(stringResource(R.string.result_already_none), SettingsGroupPosition.Single)
-            }
-            Spacer(Modifier.height(24.dp))
-            FilledTonalButton(onClick = onAuthorize, enabled = !state.busy && state.status == ShutterSound.Status.NOT_AUTHORIZED,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(stringResource(R.string.action_authorize))
-            }
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = onRelease, enabled = state.canRelease, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(stringResource(R.string.action_release))
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onRestore, enabled = state.canRestore, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(stringResource(R.string.action_restore))
-            }
-            TextButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.action_refresh))
-            }
-            Spacer(Modifier.height(24.dp))
-            StatusRow(stringResource(R.string.caveats), SettingsGroupPosition.Single)
-        }
-    }
-}
-
-@Composable
-private fun StatusRow(text: String, position: SettingsGroupPosition, emphasized: Boolean = false) {
-    SettingsItemSurface(false, position) {
-        Text(text, Modifier.fillMaxWidth().padding(20.dp).semantics { liveRegion = LiveRegionMode.Polite },
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = when {
-                emphasized -> FontWeight.Bold
-                position == SettingsGroupPosition.Single -> FontWeight.Normal
-                else -> FontWeight.Medium
-            })
-    }
 }
 
 @Composable
