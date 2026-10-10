@@ -82,9 +82,6 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
                         Text(stringResource(R.string.about_updates_body), Modifier.padding(horizontal = 22.dp, vertical = 18.dp),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 22.sp)
-                        Text(stringResource(R.string.update_auto_check_description),
-                            Modifier.padding(horizontal = 22.dp).padding(bottom = 16.dp),
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         HorizontalDivider(Modifier.padding(horizontal = 22.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         Row(Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {

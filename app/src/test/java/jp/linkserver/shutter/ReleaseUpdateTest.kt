@@ -38,4 +38,24 @@ class ReleaseUpdateTest {
         assertFalse(isRepositoryReleaseUrl("${AppLinks.REPOSITORY}/releases/download/../../../../../other.apk", true))
         assertFalse(isRepositoryReleaseUrl("${AppLinks.REPOSITORY}/releases/tag/v1", true))
     }
+
+    @Test fun developerComparisonBypassOffersSameOrOlderAndUsesPublicationDate() {
+        val same = release("v1.0.0-IntDev")
+        assertNull(selectReleaseUpdate(listOf(same), "1.0.0-IntDev"))
+        assertEquals(same, selectReleaseUpdate(listOf(same), "1.0.0-IntDev", true))
+        val olderButRecent = release("v0.5.0-IntDev").copy(publishedAt = 200)
+        val higherButOld = release("v9.0.0").copy(publishedAt = 100)
+        assertEquals(olderButRecent, selectReleaseUpdate(listOf(higherButOld, olderButRecent), "2.0.0-IntDev", true))
+        assertEquals(higherButOld, selectReleaseUpdate(listOf(higherButOld, olderButRecent), "2.0.0-IntDev"))
+        assertNull(selectReleaseUpdate(emptyList(), "1.0.0-IntDev", true))
+    }
+
+    @Test fun developerComparisonBypassIsAlwaysDisabledOutsideIntDev() {
+        val older = release("v1.0.0")
+        for (installed in listOf("2.0.0", "2.0.0-Release", "2.0.0-Stable", "2.0.0-Beta", "2.0.0-RC")) {
+            assertNull(installed, selectReleaseUpdate(listOf(older), installed, true))
+        }
+        assertEquals("nightly", selectReleaseUpdate(listOf(release("nightly")), "1.0.0-IntDev", true)?.tag)
+        assertNull(selectReleaseUpdate(listOf(release("nightly")), "1.0.0", true))
+    }
 }

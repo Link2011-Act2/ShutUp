@@ -12,19 +12,31 @@ internal fun isUpdateCheckDue(lastTime: Long, lastVersion: String?, currentVersi
 
 internal class AppUpdatePreferences(context: Context,
     private val prefs: SharedPreferences = context.applicationContext.getSharedPreferences("github_release_updates", Context.MODE_PRIVATE),
-    private val installedVersion: String = BuildConfig.VERSION_NAME
+    private val installedVersion: String = installedAppVersionName(context)
 ) : AppUpdateStore {
+    val developerSettings: UpdateDeveloperSettings get() = resolveUpdateDeveloperSettings(installedVersion,
+        prefs.getBoolean("dev_ignore_version_comparison", false),
+        prefs.getBoolean("dev_ignore_update_interval", false))
+
+    fun setIgnoreVersionComparison(enabled: Boolean) {
+        if (developerSettings.available) prefs.edit().putBoolean("dev_ignore_version_comparison", enabled).apply()
+    }
+    fun setIgnoreInterval(enabled: Boolean) {
+        if (developerSettings.available) prefs.edit().putBoolean("dev_ignore_update_interval", enabled).apply()
+    }
+
     override fun loadUpdate(): GitHubRelease? = runCatching {
         val saved = prefs.getString("cached_update", null) ?: return null
         decodeUpdate(JSONObject(saved)).takeIf {
             isRepositoryReleaseUrl(it.url) &&
                 (it.apkUrl == null || isRepositoryReleaseUrl(it.apkUrl, download = true)) &&
                 acceptsRelease(it, installedVersion) &&
-                (compareReleaseVersions(it.tag, installedVersion) ?: -1) > 0
+                (developerSettings.ignoreVersionComparison ||
+                    (compareReleaseVersions(it.tag, installedVersion) ?: -1) > 0)
         }
     }.getOrNull()
 
-    override fun shouldCheck() = isUpdateCheckDue(prefs.getLong("last_check_ms", 0),
+    override fun shouldCheck() = developerSettings.ignoreInterval || isUpdateCheckDue(prefs.getLong("last_check_ms", 0),
         prefs.getString("last_check_version", null), installedVersion, System.currentTimeMillis())
     override fun saveSuccessfulCheck(update: GitHubRelease?) {
         prefs.edit().apply {
@@ -45,6 +57,7 @@ internal fun encodeUpdate(update: GitHubRelease) = JSONObject().apply {
     put("intermediateNotes", JSONArray().apply {
         update.intermediateNotes.forEach { put(JSONObject().put("tag", it.tag).put("notes", it.notes)) }
     })
+    put("publishedAt", update.publishedAt)
 }
 
 internal fun decodeUpdate(json: JSONObject): GitHubRelease {
@@ -59,5 +72,5 @@ internal fun decodeUpdate(json: JSONObject): GitHubRelease {
                 val noteTag = note.optString("tag").takeIf { it.isNotBlank() } ?: continue
                 add(ReleaseNote(noteTag, note.optString("notes")))
             }
-        })
+        }, publishedAt = json.optLong("publishedAt", 0))
 }

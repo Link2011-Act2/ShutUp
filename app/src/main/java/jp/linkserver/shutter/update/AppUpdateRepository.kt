@@ -39,9 +39,14 @@ internal class AppUpdateRepository(
             if (!force && !store.shouldCheck()) return@withLock Result.success(state.value.availableUpdate)
             val result = checkRelease()
             (result.exceptionOrNull() as? CancellationException)?.let { throw it }
-            result.onSuccess { update -> store.saveSuccessfulCheck(update); publish(update) }
+            result.map { update ->
+                store.saveSuccessfulCheck(update)
+                store.loadUpdate().also(::publish)
+            }
         }
     }
+
+    fun refreshCachedState() = publish(store.loadUpdate())
 
     @Synchronized fun hideBanner() {
         hiddenBannerTag = state.value.notificationUpdate?.tag

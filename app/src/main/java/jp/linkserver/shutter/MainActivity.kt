@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                     if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                         notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
-                    shutter.apply(ShutterTileService.released())
+                    shutter.release()
                 }
             }
         }
@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         shutter.refresh()
+        jp.linkserver.shutter.maintain.AutoMaintainRuntime.get(this).checkNow()
         updates.checkForUpdates()
     }
 

@@ -28,8 +28,8 @@ Nothing device specific is involved; this is the AOSP audio policy.
 
 ## Things to know
 
-- The change lives in audioserver only. A reboot or an audioserver restart
-  restores the device default, and nothing else does. **Uninstalling the app
+- The change lives in audioserver only. A reboot, an audioserver restart,
+  or Android reapplying audio policy can restore enforcement. **Uninstalling the app
   does not undo it**, so restore first.
   Touch and hold the app icon and choose *Restore before uninstall* to open
   the reminder and restoration controls.
@@ -49,6 +49,43 @@ Nothing device specific is involved; this is the AOSP audio policy.
    A notification stays while the setting differs from the device default
    and restores it from its button.
 
+## Optional automatic maintenance
+
+Enable **Maintain released state** in Settings to automatically release shutter
+sound enforcement again when it returns. It defaults to off. The enabled flag
+and the armed (maintenance target) flag are saved separately and survive app
+process death and device reboot.
+
+- Enabling it arms maintenance, checks immediately, and schedules unique
+  WorkManager periodic work approximately once an hour, without a network
+  requirement. Doze, battery saving, force-stop, and manufacturer restrictions
+  can delay or prevent execution; exact hourly timing is not guaranteed.
+- A Shizuku connection (or permission grant) also triggers a check while the
+  application process is alive. Shizuku events do not launch a stopped app.
+  WorkManager can start the app process for periodic work and reschedules it
+  after reboot. No foreground service or continuous polling is used.
+- Recovery requires both saved flags to be true and usable, authorized Shizuku.
+  If Shizuku is stopped or not authorized, recovery is deferred. Wireless
+  debugging Shizuku may need to be started manually again after reboot.
+- **Restore device default** leaves the toggle **ON**, but durably pauses
+  automatic release. This applies to the home screen, QS tile, notification
+  restore action, and before-uninstall reminder. Periodic checks and Shizuku
+  reconnections do not undo that pause, including after reboot.
+- Manually releasing enforcement resumes maintenance if enabled. With the
+  toggle off, it only performs the manual operation. Switching off and back on
+  also re-arms maintenance.
+- Switching **OFF** stops automatic recovery and cancels periodic work;
+  it does **not** change the current audio policy or restore the device default.
+- Only a known `FOR_SYSTEM=11` is automatically changed to `0`. A current `0`
+  needs no write; unknown values are left alone. Device defaults still come
+  from `MediaActionSound.mustPlayShutterSound()`, including defaults of `0`.
+
+「解除状態を維持」は任意の機能で、初期値はOFFです。Shizuku接続時と約1時間ごとに
+確認しますが、省電力制御などにより間隔は遅延します。Shizukuが利用できなければ
+再解除できません。「既定値に戻す」を操作すると、トグルはONのまま自動解除だけを
+一時停止し、アプリ終了・再起動後も保持します。次の手動解除、またはOFF→ONで
+再開します。OFFにしても現在の音声ポリシーは変更しません。
+
 ## Updates
 
 The app checks this repository's GitHub Releases when opened or resumed,
@@ -64,6 +101,14 @@ release notes and intermediate versions, and can download an APK and open
 Android's installer after installation permission is granted. The APK must
 belong to this package and have a compatible signing certificate.
 
+IntDev builds expose two independent, saved developer options in Settings:
+ignore version comparison (always offer the most recently published release,
+even if its version is the same, older, or not a version tag), and ignore the
+eight-hour automatic-check interval. Both default to off. Other channels hide
+these controls and always disable both behaviors, even if enabled settings
+remain from an earlier IntDev installation. APK package, signing, and Android
+version-code checks still apply during installation.
+
 ## Build
 
 ```sh
@@ -76,20 +121,20 @@ The keystore comes from `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS` and
 `KEY_PASSWORD` in the environment; a local build without them is signed with
 the debug key.
 
-| Workflow | Trigger | Key |
-|---|---|---|
-| `ci.yml` | every push / pull request | `testkey.jks` (public AOSP test key), fingerprint checked |
-| `release.yml` | tag `v*` | release key from Actions secrets, fingerprint checked |
+Version settings are maintained in `app/build.gradle.kts`:
 
-```sh
-git tag v1.0 && git push origin v1.0
-```
+- `appVersionName` is the user-facing version, optionally overridden by the
+  `VERSION_NAME` environment variable.
+- `appVersionCode` is Android's internal version code. Increase it for each
+  distributed APK across all release channels; the current value is `2`.
 
-A test-signed APK and a release-signed one cannot update each other; switching
-between them means uninstalling first.
+Build and publish APKs manually. Upload the signed APK to a GitHub Release
+whose tag matches its version name (an optional leading `v` is supported).
+Update detection compares version names, so also advance the version name
+when distributing an update.
 
-Release signing certificate SHA-256:
-`5B:06:35:F4:A2:AC:4F:BF:29:E1:AB:51:34:B7:A4:56:84:3D:B4:93:6A:5B:CB:64:9A:1F:D9:11:82:BE:EB:D4`
+Use the same signing key for subsequent updates. An APK signed with a different
+key cannot update an existing installation.
 
 ## License
 

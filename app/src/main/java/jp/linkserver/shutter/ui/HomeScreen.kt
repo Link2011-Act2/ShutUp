@@ -1,7 +1,10 @@
 package jp.linkserver.shutter.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -128,10 +131,23 @@ private fun HomeStateHero(
     val isUnenforcedByDefault = isReleased && deviceDefault == ForceUse.FORCE_NONE
     val isUnknown = state.status != ShutterSound.Status.READY || state.current == null
     val colors = MaterialTheme.colorScheme
-    val containerColor = if (isReleased) colors.primaryContainer else colors.surfaceContainerHigh
-    val contentColor = if (isReleased) colors.onPrimaryContainer else colors.onSurface
-    val iconColor = if (isReleased) colors.primary else colors.onSurfaceVariant
-    val icon = if (isReleased) R.drawable.ic_no_photography else R.drawable.ic_photo_camera
+    val containerColor by animateColorAsState(
+        if (isReleased) colors.primaryContainer else colors.surfaceContainerHigh,
+        tween(700, easing = FastOutSlowInEasing), label = "shutter card background")
+    val contentColor by animateColorAsState(
+        if (isReleased) colors.onPrimaryContainer else colors.onSurface,
+        tween(700, easing = FastOutSlowInEasing), label = "shutter card content")
+    val iconColor by animateColorAsState(
+        if (isReleased) colors.primary else colors.onSurfaceVariant,
+        tween(700, easing = FastOutSlowInEasing), label = "shutter status icon")
+    val emblemColor by animateColorAsState(
+        if (isReleased) colors.primary.copy(alpha = 0.10f) else colors.surfaceContainerHighest,
+        tween(700, easing = FastOutSlowInEasing), label = "shutter status shape color")
+    val icon = when {
+        isUnknown -> R.drawable.ic_help
+        isReleased -> R.drawable.ic_check_circle
+        else -> R.drawable.ic_error
+    }
     val label = when {
         state.busy -> R.string.home_working
         isUnknown -> R.string.home_unknown
@@ -172,13 +188,7 @@ private fun HomeStateHero(
                         fontFamily = FontFamily.Monospace,
                         color = contentColor.copy(alpha = 0.72f))
                 }
-                Surface(Modifier.size(92.dp), shape = CircleShape,
-                    color = if (isReleased) iconColor.copy(alpha = 0.10f) else colors.surfaceContainerHighest) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(painterResource(icon), null,
-                            Modifier.size(52.dp), tint = iconColor)
-                    }
-                }
+                HomeStatusEmblem(isReleased, icon, emblemColor, iconColor)
             }
             Text(description, style = MaterialTheme.typography.bodyMedium,
                 color = contentColor.copy(alpha = 0.8f))

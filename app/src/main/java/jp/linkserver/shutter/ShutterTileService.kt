@@ -24,11 +24,7 @@ class ShutterTileService : TileService() {
 
     override fun onClick() {
         if (ShutterSound.status() != ShutterSound.Status.READY) return
-        ShutterSound.query(this) { result ->
-            val current = result.getOrNull() ?: return@query
-            val next = if (isChanged(current)) ForceUse.deviceDefault() else released()
-            ShutterSound.set(this, next) { onStartListening() }
-        }
+        ShutterSound.toggle(this) { onStartListening() }
     }
 
     companion object {

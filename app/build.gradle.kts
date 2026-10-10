@@ -22,6 +22,8 @@ val buildNumberFiles = (
 
 val appCodeName = "Kyuri"
 val appVersionName = System.getenv("VERSION_NAME") ?: "1.0.0-IntDev_rev0"
+// Increase this for each distributed APK, regardless of its release channel.
+val appVersionCode = 2
 val buildContentHash = MessageDigest.getInstance("SHA-256").run {
     buildNumberFiles.forEach { file ->
         update(file.relativeTo(rootProject.projectDir).invariantSeparatorsPath.toByteArray())
@@ -45,10 +47,8 @@ val buildNumberVersionPrefix = if (
 val generatedBuildNumber =
     "$appCodeName-$buildNumberVersionPrefix${appVersionName.substringBefore('-')}-$buildTimestamp-${buildContentHash.take(3)}"
 
-// Signing comes from the environment: CI points STORE_FILE at the public AOSP
-// testkey.jks, a tagged release at the key restored from secrets. Without it
-// the release build falls back to the local debug key so that it still
-// installs.
+// Local release signing comes from the environment. Without a configured
+// keystore, release builds use the local debug key.
 val keystorePath: String? = System.getenv("STORE_FILE")
 
 android {
@@ -61,7 +61,7 @@ android {
         minSdk = 33
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInt()
+        versionCode = appVersionCode
         versionName = appVersionName
         buildConfigField("String", "BUILD_NUMBER", "\"$generatedBuildNumber\"")
     }
@@ -102,15 +102,18 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.material3:material3:1.5.0-alpha10")
+    implementation("androidx.graphics:graphics-shapes:1.0.1")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.work:work-testing:2.12.0")
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:6.1")

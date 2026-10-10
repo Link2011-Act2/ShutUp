@@ -10,7 +10,8 @@ class AppUpdateRepositoryTest {
     private class Store(var cached: GitHubRelease? = null, var due: Boolean = true) : AppUpdateStore {
         var saves = 0
         var ignored: String? = null
-        override fun loadUpdate() = cached
+        var acceptsCache = true
+        override fun loadUpdate() = cached.takeIf { acceptsCache }
         override fun shouldCheck() = due
         override fun saveSuccessfulCheck(update: GitHubRelease?) { cached = update; saves++; due = false }
         override fun isDismissed(tag: String) = tag.equals(ignored, true)
@@ -89,5 +90,22 @@ class AppUpdateRepositoryTest {
         assertTrue(isUpdateCheckDue(100, "1.0", "1.0", 100 + CHECK_INTERVAL_MS))
         assertTrue(isUpdateCheckDue(100, "1.0", "1.1", 101))
         assertTrue(isUpdateCheckDue(100, "1.0", "1.0", 99))
+    }
+
+    @Test fun changingPolicyDuringACheckCannotPublishAnInvalidCachedUpdate() = runBlocking {
+        val store = Store(release)
+        val started = CompletableDeferred<Unit>()
+        val finish = CompletableDeferred<Unit>()
+        val repository = AppUpdateRepository(store) {
+            started.complete(Unit); finish.await(); Result.success(release)
+        }
+        val pending = async { repository.check() }
+        started.await()
+        store.acceptsCache = false
+        repository.refreshCachedState()
+        assertNull(repository.state.value.availableUpdate)
+        finish.complete(Unit)
+        assertNull(pending.await().getOrThrow())
+        assertNull(repository.state.value.availableUpdate)
     }
 }

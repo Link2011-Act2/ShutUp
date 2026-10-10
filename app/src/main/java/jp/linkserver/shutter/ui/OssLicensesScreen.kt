@@ -21,7 +21,7 @@ internal fun OssLicensesScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val entries = listOf(
             Entry("ShutterSoundToggle", context.getString(R.string.license_upstream_description), "NYSL 0.9982", "https://github.com/soralis0912/ShutterSoundToggle", "NYSL.txt"),
-            Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
+            Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / WorkManager / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
             Entry("Material Design icons / Material Symbols", "Google Material icons and Symbols", "Apache License 2.0", "https://github.com/google/material-design-icons", "Apache-2.0.txt"),
             Entry("Shizuku API and Provider", "dev.rikka.shizuku:api / provider:13.1.5", "Apache License 2.0", "https://github.com/RikkaApps/Shizuku-API", "Apache-2.0.txt"),
             Entry("HiddenApiBypass", "org.lsposed.hiddenapibypass:hiddenapibypass:6.1", "Apache License 2.0", "https://github.com/LSPosed/AndroidHiddenApiBypass", "Apache-2.0.txt"),

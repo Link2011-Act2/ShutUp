@@ -9,7 +9,7 @@ class RestoreReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
         val app = context.applicationContext
-        ShutterSound.set(app, ForceUse.deviceDefault()) { result ->
+        ShutterSound.restore(app) { result ->
             if (result.isFailure) Notifications.showRestoreFailed(app)
             pending.finish()
         }

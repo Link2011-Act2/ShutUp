@@ -33,21 +33,27 @@ import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
 import jp.linkserver.shutter.update.AppUpdateState
 import jp.linkserver.shutter.update.AppUpdateViewModel
+import jp.linkserver.shutter.update.UpdateDeveloperSettings
+import jp.linkserver.shutter.maintain.AutoMaintainState
 
 @Composable
 internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolean = false,
     onDismissUninstallReminder: () -> Unit = {}, updates: AppUpdateViewModel? = null,
     onRelease: () -> Unit) {
     val state by shutter.state.collectAsStateWithLifecycle()
+    val autoMaintainState by shutter.autoMaintainState.collectAsStateWithLifecycle()
     val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: AppUpdateState()
+    val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
     ShutterNavigation(state, shutter::authorize, onRelease,
-        { shutter.apply(ForceUse.deviceDefault()) }, shutter::refresh,
+        shutter::restore, shutter::refresh,
         updateState, { updates?.checkManually() ?: Result.success(null) },
-        { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder)
+        { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder,
+        developerSettings, { updates?.setIgnoreVersionComparison(it) }, { updates?.setIgnoreInterval(it) },
+        autoMaintainState, shutter::setAutoMaintainEnabled)
     if (showUninstallReminder) {
         val context = LocalContext.current
         UninstallReminderDialog(state, onDismissUninstallReminder,
-            { shutter.apply(ForceUse.deviceDefault()) }, { openShizuku(context) },
+            shutter::restore, { openShizuku(context) },
             shutter::authorize, shutter::refresh)
     }
 }
@@ -59,7 +65,12 @@ internal fun ShutterNavigation(
     updateState: AppUpdateState = AppUpdateState(),
     onCheckUpdates: suspend () -> Result<GitHubRelease?> = { Result.success(null) },
     onHideUpdateBanner: () -> Unit = {}, onIgnoreUpdate: (String) -> Unit = {},
-    updateAllowed: Boolean = true
+    updateAllowed: Boolean = true,
+    developerSettings: UpdateDeveloperSettings = UpdateDeveloperSettings(),
+    onIgnoreVersionComparisonChange: (Boolean) -> Unit = {},
+    onIgnoreIntervalChange: (Boolean) -> Unit = {},
+    autoMaintainState: AutoMaintainState = AutoMaintainState(),
+    onAutoMaintainChange: (Boolean) -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val holder = rememberSaveableStateHolder()
@@ -98,7 +109,9 @@ internal fun ShutterNavigation(
         ) { targetScreen ->
             holder.SaveableStateProvider(targetScreen) {
                 when (targetScreen) {
-                    "settings" -> SettingsScreen(back) { screen = "about" }
+                    "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
+                        onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
+                        autoMaintainState, onAutoMaintainChange)
                     "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
                     "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
                         ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
@@ -167,7 +180,12 @@ internal fun ScreenScaffold(title: String, onBack: (() -> Unit)? = null,
 }
 
 @Composable
-private fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit) {
+internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
+    developerSettings: UpdateDeveloperSettings = UpdateDeveloperSettings(),
+    onIgnoreVersionComparisonChange: (Boolean) -> Unit = {},
+    onIgnoreIntervalChange: (Boolean) -> Unit = {},
+    autoMaintainState: AutoMaintainState = AutoMaintainState(),
+    onAutoMaintainChange: (Boolean) -> Unit = {}) {
     val context = LocalContext.current
     ScreenScaffold(stringResource(R.string.settings_title), onBack) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp),
@@ -181,6 +199,11 @@ private fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit) {
                 AboutSectionTitle(stringResource(R.string.settings_information))
                 SettingsEntry(stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_description),
                     onAbout, false, SettingsGroupPosition.Single)
+            }
+            AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange)
+            if (developerSettings.available) {
+                DeveloperUpdateSettingsSection(developerSettings,
+                    onIgnoreVersionComparisonChange, onIgnoreIntervalChange)
             }
         }
     }
