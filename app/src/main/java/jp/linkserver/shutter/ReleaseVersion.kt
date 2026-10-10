@@ -10,7 +10,9 @@ private fun parseReleaseVersion(value: String): ReleaseVersion? {
     val parts = match.groupValues[1].split('.').map { it.toLongOrNull() ?: return null }
     val suffix = match.groupValues[2].lowercase(java.util.Locale.ROOT)
         .takeUnless { it == "release" || it == "stable" }.orEmpty()
-    return ReleaseVersion(parts, suffix.split(Regex("[._-]")).filter { it.isNotEmpty() })
+    val tokens = suffix.replace(Regex("([a-z])(?=[0-9])"), "$1.")
+        .split(Regex("[._-]")).filter { it.isNotEmpty() }
+    return ReleaseVersion(parts, tokens)
 }
 
 /** Null means the release tag cannot safely be compared to the installed version. */

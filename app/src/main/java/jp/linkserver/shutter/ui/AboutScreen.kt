@@ -19,13 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /** Compose port of glyphvisualizer AboutScreen, excluding known issues and debug logs. */
 @Composable
-internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit) {
+internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
+    onCheckUpdates: suspend () -> Result<GitHubRelease?>, onUpdateAvailable: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val versionName = BuildConfig.VERSION_NAME
@@ -49,25 +49,23 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit) {
     var checking by remember { mutableStateOf(false) }
     var updateResult by rememberSaveable { mutableStateOf("unchecked") }
     var latestTag by rememberSaveable { mutableStateOf("") }
-    var release by remember { mutableStateOf<GitHubRelease?>(null) }
 
     fun checkUpdates() {
         if (checking) return
         checking = true
         scope.launch {
-            val result = withContext(Dispatchers.IO) { runCatching { checkLatestRelease() } }
-            checking = false
-            result.onSuccess { latest ->
-                val comparison = latest?.let { compareReleaseVersions(it.tag, versionName) }
-                latestTag = latest?.tag.orEmpty()
-                updateResult = when {
-                    latest == null -> "none"
-                    comparison == null -> "unknown"
-                    comparison > 0 -> "available"
-                    else -> "latest"
-                }
-                if (latest != null && (comparison == null || comparison > 0)) release = latest
-            }.onFailure { updateResult = "failed" }
+            try {
+                val result = onCheckUpdates()
+                result.onSuccess { latest ->
+                    latestTag = latest?.tag.orEmpty()
+                    updateResult = if (latest == null) "latest" else "available"
+                    if (latest != null) onUpdateAvailable()
+                }.onFailure { updateResult = "failed" }
+            } catch (error: CancellationException) {
+                throw error
+            } finally {
+                checking = false
+            }
         }
     }
 
@@ -84,6 +82,9 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit) {
                         Text(stringResource(R.string.about_updates_body), Modifier.padding(horizontal = 22.dp, vertical = 18.dp),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 22.sp)
+                        Text(stringResource(R.string.update_auto_check_description),
+                            Modifier.padding(horizontal = 22.dp).padding(bottom = 16.dp),
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         HorizontalDivider(Modifier.padding(horizontal = 22.dp), color = MaterialTheme.colorScheme.outlineVariant)
                         Row(Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -130,11 +131,6 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit) {
     if (showVersion) TextDialog(stringResource(R.string.about_version_details_title),
         stringResource(R.string.about_version_details, displayVersion(versionName), BuildConfig.VERSION_CODE, build),
         { showVersion = false })
-    release?.let { latest ->
-        TextDialog(stringResource(R.string.about_update_dialog_title, displayVersion(latest.tag)),
-            latest.notes.ifBlank { context.getString(R.string.about_update_no_notes) }, { release = null },
-            stringResource(R.string.about_open_release)) { openUrl(context, latest.url); release = null }
-    }
 }
 
 @Composable

@@ -55,6 +55,8 @@ class HomeScreenTest {
         screenshot("enforced")
         compose.onNodeWithText(text(R.string.action_release)).performClick()
         compose.onNodeWithText("(FOR_SYSTEM=0)").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_not_enforced)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_default_not_enforced)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.result_already_none)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.action_release)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.home_restore)).assertIsEnabled()
@@ -120,8 +122,14 @@ class HomeScreenTest {
                     {}, {}, {}, {}, {}, {}, deviceDefault = ForceUse.FORCE_NONE)
             }
         }
+        compose.onNode(hasText(text(R.string.home_default_not_enforced)) and
+            hasAnySibling(hasText("(FOR_SYSTEM=0)"))).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_not_enforced)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.home_with_default,
+            text(R.string.home_default_not_enforced_hint))).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.home_restore)).assertIsNotEnabled()
         compose.onNodeWithText(text(R.string.action_release)).assertDoesNotExist()
+        screenshot("default-not-enforced")
     }
 
     @Test fun unknownReadyStateRefreshesWithoutChangingAudioPolicy() {

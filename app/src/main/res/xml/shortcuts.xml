@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="prepare_uninstall"
+        android:enabled="true"
+        android:icon="@mipmap/ic_shortcut_restore"
+        android:shortcutShortLabel="@string/shortcut_prepare_uninstall_short"
+        android:shortcutLongLabel="@string/shortcut_prepare_uninstall_long">
+        <intent
+            android:action="jp.linkserver.shutter.action.PREPARE_UNINSTALL"
+            android:targetPackage="jp.linkserver.shutter"
+            android:targetClass="jp.linkserver.shutter.MainActivity" />
+    </shortcut>
+</shortcuts>

@@ -31,24 +31,56 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
+import jp.linkserver.shutter.update.AppUpdateState
+import jp.linkserver.shutter.update.AppUpdateViewModel
 
 @Composable
-fun ShutterApp(shutter: ShutterViewModel, onRelease: () -> Unit) {
+internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolean = false,
+    onDismissUninstallReminder: () -> Unit = {}, updates: AppUpdateViewModel? = null,
+    onRelease: () -> Unit) {
     val state by shutter.state.collectAsStateWithLifecycle()
+    val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: AppUpdateState()
     ShutterNavigation(state, shutter::authorize, onRelease,
-        { shutter.apply(ForceUse.deviceDefault()) }, shutter::refresh)
+        { shutter.apply(ForceUse.deviceDefault()) }, shutter::refresh,
+        updateState, { updates?.checkManually() ?: Result.success(null) },
+        { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder)
+    if (showUninstallReminder) {
+        val context = LocalContext.current
+        UninstallReminderDialog(state, onDismissUninstallReminder,
+            { shutter.apply(ForceUse.deviceDefault()) }, { openShizuku(context) },
+            shutter::authorize, shutter::refresh)
+    }
 }
 
 @Composable
 internal fun ShutterNavigation(
     state: ShutterUiState, onAuthorize: () -> Unit, onRelease: () -> Unit,
-    onRestore: () -> Unit, onRefresh: () -> Unit
+    onRestore: () -> Unit, onRefresh: () -> Unit,
+    updateState: AppUpdateState = AppUpdateState(),
+    onCheckUpdates: suspend () -> Result<GitHubRelease?> = { Result.success(null) },
+    onHideUpdateBanner: () -> Unit = {}, onIgnoreUpdate: (String) -> Unit = {},
+    updateAllowed: Boolean = true
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val holder = rememberSaveableStateHolder()
     val context = LocalContext.current
+    var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
+    var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
+    val notification = updateState.notificationUpdate
+    val canShowUpdate = updateAllowed && !state.busy
+    val openUpdate = {
+        updateReturnScreen = screen
+        screen = "update"
+        showUpdatePrompt = false
+        onHideUpdateBanner()
+    }
+    val openPrompt = { onHideUpdateBanner(); showUpdatePrompt = true }
     val back = {
-        screen = when (screen) { "licenses" -> "about"; "about" -> "settings"; else -> "home" }
+        screen = when (screen) { "update" -> updateReturnScreen; "licenses" -> "about"; "about" -> "settings"; else -> "home" }
+    }
+    if (showUpdatePrompt && notification != null && canShowUpdate && screen == "home") {
+        AppUpdatePrompt(notification, openUpdate,
+            { showUpdatePrompt = false; onIgnoreUpdate(notification.tag) }, { showUpdatePrompt = false })
     }
     BackHandler(enabled = screen != "home", onBack = back)
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -67,10 +99,21 @@ internal fun ShutterNavigation(
             holder.SaveableStateProvider(targetScreen) {
                 when (targetScreen) {
                     "settings" -> SettingsScreen(back) { screen = "about" }
-                    "about" -> AboutScreen(back) { screen = "licenses" }
+                    "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
+                    "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
+                        ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
+                            Text(stringResource(R.string.about_update_latest), Modifier.padding(padding).padding(20.dp))
+                        }
                     "licenses" -> OssLicensesScreen(back)
                     else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
-                        onRelease, onRestore, onRefresh)
+                        onRelease, onRestore, onRefresh,
+                        updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(openPrompt) },
+                        updateBanner = {
+                            if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
+                                AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
+                                Spacer(Modifier.height(16.dp))
+                            }
+                        })
                 }
             }
         }
@@ -81,6 +124,7 @@ private fun screenDepth(screen: String): Int = when (screen) {
     "settings" -> 1
     "about" -> 2
     "licenses" -> 3
+    "update" -> 4
     else -> 0
 }
 

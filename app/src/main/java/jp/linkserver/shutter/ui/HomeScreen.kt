@@ -47,7 +47,9 @@ internal fun HomeScreen(
     onRelease: () -> Unit,
     onRestore: () -> Unit,
     onRefresh: () -> Unit,
-    deviceDefault: Int = ForceUse.deviceDefault()
+    deviceDefault: Int = ForceUse.deviceDefault(),
+    updateAction: @Composable RowScope.() -> Unit = {},
+    updateBanner: @Composable () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -56,6 +58,7 @@ internal fun HomeScreen(
                 title = { Text(stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) },
                 actions = {
+                    updateAction()
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Default.Settings, stringResource(R.string.settings_title))
                     }
@@ -69,6 +72,7 @@ internal fun HomeScreen(
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
+            updateBanner()
             HomeStateHero(state, deviceDefault, onOpenShizuku, onAuthorize, onRelease, onRestore, onRefresh)
             if (state.error.isNotBlank()) {
                 Spacer(Modifier.height(16.dp))
@@ -121,6 +125,7 @@ private fun HomeStateHero(
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED
     val isReleased = state.status == ShutterSound.Status.READY &&
         state.current == ForceUse.FORCE_NONE
+    val isUnenforcedByDefault = isReleased && deviceDefault == ForceUse.FORCE_NONE
     val isUnknown = state.status != ShutterSound.Status.READY || state.current == null
     val colors = MaterialTheme.colorScheme
     val containerColor = if (isReleased) colors.primaryContainer else colors.surfaceContainerHigh
@@ -131,6 +136,7 @@ private fun HomeStateHero(
         state.busy -> R.string.home_working
         isUnknown -> R.string.home_unknown
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_enforced
+        isUnenforcedByDefault -> R.string.home_default_not_enforced
         state.current == ForceUse.FORCE_NONE -> R.string.home_not_enforced
         else -> R.string.home_other_policy
     }
@@ -140,6 +146,7 @@ private fun HomeStateHero(
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
         state.current == null -> R.string.home_refresh_hint
         isEnforced -> R.string.home_enforced_hint
+        isUnenforcedByDefault -> R.string.home_default_not_enforced_hint
         isReleased -> R.string.home_released_hint
         else -> R.string.home_other_policy_hint
     }

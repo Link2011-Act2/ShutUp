@@ -31,6 +31,8 @@ Nothing device specific is involved; this is the AOSP audio policy.
 - The change lives in audioserver only. A reboot or an audioserver restart
   restores the device default, and nothing else does. **Uninstalling the app
   does not undo it**, so restore first.
+  Touch and hold the app icon and choose *Restore before uninstall* to open
+  the reminder and restoration controls.
 - With the enforcement off, the shutter follows the ringer mode: it is quiet
   in silent or vibrate mode only. Other sounds on the enforced stream are
   affected the same way.
@@ -46,6 +48,21 @@ Nothing device specific is involved; this is the AOSP audio policy.
 3. *Stop enforcing the shutter sound*, or use the quick settings tile.
    A notification stays while the setting differs from the device default
    and restores it from its button.
+
+## Updates
+
+The app checks this repository's GitHub Releases when opened or resumed,
+at eight-hour intervals after a successful check. It does not schedule
+checks while closed. Saved update information remains available offline.
+Close the banner to hide it for the current session, or choose *Ignore this
+version* to suppress its banner and icon until a newer version is available.
+Manual checks in app information always contact GitHub, including for ignored versions.
+
+Stable builds receive full releases; Beta builds receive Beta and full releases;
+IntDev builds can also receive development releases. The update screen shows
+release notes and intermediate versions, and can download an APK and open
+Android's installer after installation permission is granted. The APK must
+belong to this package and have a compatible signing certificate.
 
 ## Build
 
@@ -84,9 +101,6 @@ retain their respective licenses.
 - The original [ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle)
   by soralis0912 was released under NYSL Version 0.9982. Its original license
   text is preserved in [licenses/ShutterSoundToggle-NYSL.txt](licenses/ShutterSoundToggle-NYSL.txt).
-- UI and build-number functionality adapted from
-  [Glyph Barty](https://github.com/Link2011-Act2/GlyphBarty) retain its MIT license
-  and copyright (c) 2026 Azul1nk. See [licenses/GlyphBarty-MIT.txt](licenses/GlyphBarty-MIT.txt).
 - Dependencies and assets including AndroidX, Shizuku API, HiddenApiBypass,
   and Material Design icons / Material Symbols are under Apache License 2.0.
   Their licenses are also available in the app's open-source license screen.
@@ -94,4 +108,4 @@ retain their respective licenses.
 ShutUpはMIT Licenseで公開しています。著作権表記は、ShutUp独自の追加・改変部分を対象とするもので、
 フォーク元のコードの権利を取得したことを示すものではありません。
 元のShutterSoundToggleはNYSL 0.9982で公開されており、上記の別ファイルに原文を保存しています。
-Glyph Bartyからの移植部分や、使用するライブラリ・素材には、それぞれのライセンスが適用されます。
+使用する第三者のライブラリ・素材には、それぞれのライセンスが適用されます。
