@@ -46,14 +46,14 @@ jobs:
             exit 1
           fi
           mkdir -p out
-          cp "$apk" "out/ShutterSoundToggle-testkey-${GITHUB_SHA::7}.apk"
+          cp "$apk" "out/ShutUp-testkey-${GITHUB_SHA::7}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
           # The name says which key it is because a test-signed build and a
           # release-signed one cannot replace each other: installing this and
           # then a release means uninstalling the app in between.
-          name: ShutterSoundToggle-testkey-${{ github.sha }}
+          name: ShutUp-testkey-${{ github.sha }}
           path: out/*.apk
           if-no-files-found: error
           retention-days: 30

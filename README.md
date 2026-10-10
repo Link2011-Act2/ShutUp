@@ -1,4 +1,4 @@
-# Shutter Sound Toggle
+# ShutUp
 
 Phones sold in Japan and a few other regions play the camera shutter sound
 even in silent mode. This app switches that enforcement off and back on

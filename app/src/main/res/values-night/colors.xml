@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Adapted from glyphvisualizer/ui/theme/Theme.kt and Color.kt. -->
+  <color name="shutter_surface">#18120F</color>
+</resources>

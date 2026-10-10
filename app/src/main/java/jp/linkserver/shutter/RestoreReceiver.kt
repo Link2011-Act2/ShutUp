@@ -1,4 +1,4 @@
-package org.soralis.shuttersound
+package jp.linkserver.shutter
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Shutter" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowLightStatusBar">@bool/shutter_light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/shutter_light_system_bars</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/shutter_surface</item>
+    </style>
+</resources>

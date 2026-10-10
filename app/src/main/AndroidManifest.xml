@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
@@ -10,7 +11,8 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+        android:localeConfig="@xml/locales_config"
+        android:theme="@style/Theme.Shutter">
 
         <activity
             android:name=".MainActivity"

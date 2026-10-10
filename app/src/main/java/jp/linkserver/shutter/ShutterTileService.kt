@@ -1,4 +1,4 @@
-package org.soralis.shuttersound
+package jp.linkserver.shutter
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService

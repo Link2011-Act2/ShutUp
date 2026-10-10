@@ -71,14 +71,14 @@ jobs:
             exit 1
           fi
           mkdir -p out
-          cp "$apk" "out/ShutterSoundToggle-${GITHUB_REF_NAME}.apk"
+          cp "$apk" "out/ShutUp-${GITHUB_REF_NAME}.apk"
 
       - name: Release
         if: github.ref_type == 'tag'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: ShutterSoundToggle ${{ github.ref_name }}
+          name: ShutUp ${{ github.ref_name }}
           artifacts: out/*.apk
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -87,6 +87,6 @@ jobs:
         if: github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
-          name: ShutterSoundToggle-release-${{ github.sha }}
+          name: ShutUp-release-${{ github.sha }}
           path: out/*.apk
           if-no-files-found: error

@@ -1,4 +1,4 @@
-package org.soralis.shuttersound;
+package jp.linkserver.shutter;
 
 interface IShutterService {
     // Shizuku calls this transaction to stop the user service.

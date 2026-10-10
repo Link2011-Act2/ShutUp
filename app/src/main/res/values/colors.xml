@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FF37474F</color>
+  <!-- Adapted from glyphvisualizer/ui/theme/Theme.kt and Color.kt. -->
+  <color name="ic_launcher_background">#FF37474F</color>
+  <color name="shutter_surface">#F8F2EE</color>
 </resources>

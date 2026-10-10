@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ShutterSoundToggle"
+rootProject.name = "ShutUp"
 include(":app")
