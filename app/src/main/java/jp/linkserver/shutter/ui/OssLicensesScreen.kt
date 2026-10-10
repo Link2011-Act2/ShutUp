@@ -20,7 +20,9 @@ private data class Entry(val title: String, val coordinate: String, val license:
 internal fun OssLicensesScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val entries = listOf(
-            Entry(context.getString(R.string.license_app_title), BuildConfig.APPLICATION_ID, "NYSL 0.9982", AppLinks.REPOSITORY, "NYSL.txt"),
+            Entry(context.getString(R.string.license_app_title), BuildConfig.APPLICATION_ID, "MIT License", AppLinks.REPOSITORY, "MIT.txt"),
+            Entry("ShutterSoundToggle", context.getString(R.string.license_upstream_description), "NYSL 0.9982", "https://github.com/soralis0912/ShutterSoundToggle", "NYSL.txt"),
+            Entry("Glyph Barty", context.getString(R.string.license_glyph_description), "MIT License", "https://github.com/Link2011-Act2/GlyphBarty", "GlyphBarty-MIT.txt"),
             Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
             Entry("Material Design icons / Material Symbols", "Google Material icons and Symbols", "Apache License 2.0", "https://github.com/google/material-design-icons", "Apache-2.0.txt"),
             Entry("Shizuku API and Provider", "dev.rikka.shizuku:api / provider:13.1.5", "Apache License 2.0", "https://github.com/RikkaApps/Shizuku-API", "Apache-2.0.txt"),

@@ -28,6 +28,7 @@
   <string name="home_default_enforced">Enforced</string>
   <string name="home_default_not_enforced">Not enforced</string>
   <string name="home_restart_note">Restarting restores the device default.</string>
+  <string name="home_uninstall_note">Uninstalling the app does not restore the setting. Tap “Restore device default” before uninstalling.</string>
   <string name="home_before_using">Before you use it</string>
   <string name="home_expand_notes">Show usage notes</string>
   <string name="home_collapse_notes">Hide usage notes</string>
@@ -97,6 +98,8 @@
   <string name="about_licenses_title">Open-source licenses</string>
   <string name="about_licenses_description">License information for software used by this app.</string>
   <string name="license_app_title">ShutUp</string>
+  <string name="license_upstream_description">Original project by soralis0912</string>
+  <string name="license_glyph_description">Adapted UI and build-number functionality / Copyright (c) 2026 Azul1nk</string>
   <string name="license_show_text">Show license</string>
   <string name="license_open_project">Open project</string>
   <string name="license_load_failed">Unable to load the license text.</string>

@@ -1,5 +1,8 @@
 # ShutUp
 
+Forked from [soralis0912/ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle),
+with modifications by Azul1nk including the Jetpack Compose UI, settings, and app information screens.
+
 Phones sold in Japan and a few other regions play the camera shutter sound
 even in silent mode. This app switches that enforcement off and back on
 through [Shizuku](https://shizuku.rikka.app/), with no root.
@@ -73,7 +76,22 @@ Release signing certificate SHA-256:
 
 ## License
 
-[NYSL](http://www.kmonos.net/nysl/) Version 0.9982. See [LICENSE](LICENSE).
+ShutUp is published under the [MIT License](LICENSE), copyright (c) 2026 Azul1nk.
+This notice covers our original contributions and modifications; it does not
+claim ownership of the original upstream code. Third-party code and assets
+retain their respective licenses.
 
-The libraries it uses, Shizuku API and HiddenApiBypass, are under the
-Apache License 2.0.
+- The original [ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle)
+  by soralis0912 was released under NYSL Version 0.9982. Its original license
+  text is preserved in [licenses/ShutterSoundToggle-NYSL.txt](licenses/ShutterSoundToggle-NYSL.txt).
+- UI and build-number functionality adapted from
+  [Glyph Barty](https://github.com/Link2011-Act2/GlyphBarty) retain its MIT license
+  and copyright (c) 2026 Azul1nk. See [licenses/GlyphBarty-MIT.txt](licenses/GlyphBarty-MIT.txt).
+- Dependencies and assets including AndroidX, Shizuku API, HiddenApiBypass,
+  and Material Design icons / Material Symbols are under Apache License 2.0.
+  Their licenses are also available in the app's open-source license screen.
+
+ShutUpはMIT Licenseで公開しています。著作権表記は、ShutUp独自の追加・改変部分を対象とするもので、
+フォーク元のコードの権利を取得したことを示すものではありません。
+元のShutterSoundToggleはNYSL 0.9982で公開されており、上記の別ファイルに原文を保存しています。
+Glyph Bartyからの移植部分や、使用するライブラリ・素材には、それぞれのライセンスが適用されます。

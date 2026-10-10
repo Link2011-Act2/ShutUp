@@ -28,6 +28,7 @@
   <string name="home_default_enforced">強制あり</string>
   <string name="home_default_not_enforced">強制なし</string>
   <string name="home_restart_note">再起動すると元に戻ります</string>
+  <string name="home_uninstall_note">アプリを削除しても設定は元に戻りません。削除する前に「既定値に戻す」を押してください。</string>
   <string name="home_before_using">使う前に</string>
   <string name="home_expand_notes">注意事項を表示</string>
   <string name="home_collapse_notes">注意事項を閉じる</string>
@@ -97,6 +98,8 @@
   <string name="about_licenses_title">OSSライセンス</string>
   <string name="about_licenses_description">このアプリで使用しているソフトウェアのライセンス情報です。</string>
   <string name="license_app_title">ShutUp</string>
+  <string name="license_upstream_description">フォーク元 / soralis0912</string>
+  <string name="license_glyph_description">UI・ビルド番号処理の移植元 / Copyright (c) 2026 Azul1nk</string>
   <string name="license_show_text">ライセンスを表示</string>
   <string name="license_open_project">プロジェクトを開く</string>
   <string name="license_load_failed">ライセンス本文を読み込めませんでした。</string>

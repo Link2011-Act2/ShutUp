@@ -93,11 +93,16 @@ internal fun HomeScreen(
             Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow) {
                 Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     HomeIconBubble(rememberVectorPainter(Icons.Default.Info), 36)
-                    Text(stringResource(R.string.home_restart_note),
-                        style = MaterialTheme.typography.bodyMedium)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(stringResource(R.string.home_restart_note),
+                            style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.home_uninstall_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
