@@ -27,6 +27,8 @@ Nothing device specific is involved; this is the AOSP audio policy.
 
 - If the shutter sound still plays in silent mode even after removing the enforcement, you're out of luck. The camera app itself is playing the sound, so this app can't stop it.
 
+- This app technically supports Android 9 and later, but Android 13 or later is generally required without root.<br>If your device is rooted, I think there are better ways to do this than using this app.
+
 - On ColorOS (OPPO, OnePlus, realme), turn on *Disable permission monitoring* in the developer options before starting Shizuku, or the shell calls are refused.
 
 - Respect the privacy of the people around you and the rules where you live.
