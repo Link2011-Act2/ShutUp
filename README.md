@@ -56,6 +56,10 @@ sound enforcement again when it returns. It defaults to off. The enabled flag
 and the armed (maintenance target) flag are saved separately and survive app
 process death and device reboot.
 
+After the first successful manual release, a one-time prompt offers to enable
+this setting. **Maintain** turns the Settings toggle on; **Not now** leaves it
+unchanged and dismisses the offer permanently. You can enable it later in Settings.
+
 - Enabling it arms maintenance, checks immediately, and schedules unique
   WorkManager periodic work approximately once an hour, without a network
   requirement. Doze, battery saving, force-stop, and manufacturer restrictions
@@ -85,6 +89,8 @@ process death and device reboot.
 再解除できません。「既定値に戻す」を操作すると、トグルはONのまま自動解除だけを
 一時停止し、アプリ終了・再起動後も保持します。次の手動解除、またはOFF→ONで
 再開します。OFFにしても現在の音声ポリシーは変更しません。
+初回の手動解除成功後に一度だけ案内し、「維持する」で設定がONになります。
+「今はしない」は設定を変更せず、再案内しません。後から設定でONにできます。
 
 ## Updates
 

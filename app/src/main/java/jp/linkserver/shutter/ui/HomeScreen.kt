@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -141,7 +142,12 @@ private fun HomeStateHero(
         if (isReleased) colors.primary else colors.onSurfaceVariant,
         tween(700, easing = FastOutSlowInEasing), label = "shutter status icon")
     val emblemColor by animateColorAsState(
-        if (isReleased) colors.primary.copy(alpha = 0.10f) else colors.surfaceContainerHighest,
+        when {
+            isReleased -> colors.primary.copy(alpha = 0.10f)
+            isEnforced && colors.surface.luminance() > 0.5f ->
+                lerp(colors.surfaceContainerHighest, colors.onSurfaceVariant, 0.18f)
+            else -> colors.surfaceContainerHighest
+        },
         tween(700, easing = FastOutSlowInEasing), label = "shutter status shape color")
     val icon = when {
         isUnknown -> R.drawable.ic_help
@@ -232,6 +238,8 @@ private fun HomeHeroAction(
                 color = LocalContentColor.current)
         } else {
             val icon = when {
+                state.status == ShutterSound.Status.NOT_RUNNING -> painterResource(R.drawable.ic_open_in_new)
+                state.status == ShutterSound.Status.NOT_AUTHORIZED -> painterResource(R.drawable.ic_security)
                 state.status == ShutterSound.Status.READY && state.current == null ->
                     rememberVectorPainter(Icons.Default.Refresh)
                 state.status == ShutterSound.Status.READY && restore -> painterResource(R.drawable.ic_restore)

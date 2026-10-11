@@ -49,7 +49,8 @@ class AutoMaintainSettingsTest {
             }
             compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
             compose.onNodeWithText(text(R.string.auto_maintain_title)).performScrollTo().assertIsOff()
-            compose.onNodeWithText(text(R.string.auto_maintain_state_off)).assertIsDisplayed()
+            compose.onNodeWithText(text(R.string.auto_maintain_state_active)).assertDoesNotExist()
+            compose.onNodeWithText(text(R.string.auto_maintain_state_paused)).assertDoesNotExist()
             compose.onNodeWithText(text(R.string.auto_maintain_title)).performClick().assertIsOn()
             runBlocking { controller.maintain() }
             assertEquals(0, policy)

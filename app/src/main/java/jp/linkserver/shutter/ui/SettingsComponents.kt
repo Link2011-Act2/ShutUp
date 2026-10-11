@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -33,6 +36,21 @@ enum class SettingsGroupPosition {
     Top,
     Middle,
     Bottom
+}
+
+@Composable
+internal fun SettingsSwitch(checked: Boolean) {
+    Switch(
+        checked = checked,
+        onCheckedChange = null,
+        thumbContent = {
+            Icon(
+                imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,
+                contentDescription = null,
+                modifier = Modifier.size(SwitchDefaults.IconSize)
+            )
+        }
+    )
 }
 
 @Composable

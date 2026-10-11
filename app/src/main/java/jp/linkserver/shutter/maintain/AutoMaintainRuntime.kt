@@ -15,6 +15,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
     val controller = AutoMaintainController(AutoMaintainPreferences(app), ShizukuAudioPolicy.connector(app))
+    val offer = AutoMaintainOffer(AutoMaintainOfferPreferences(app))
     private val scheduler by lazy { AutoMaintainScheduler(app) }
     private var initialized = false
     private var listening = false
@@ -32,6 +33,15 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         try { controller.setEnabled(enabled) } finally { reconcile() }
         automatic?.cancel()
         if (enabled) checkNow()
+        offer.finish()
+    }
+    fun respondToOffer(maintain: Boolean) {
+        // A manual restoration wins even if saving the offer's dismissal failed.
+        if (maintain && !controller.state.value.armed) {
+            offer.finish()
+            return
+        }
+        offer.respond(maintain) { setEnabled(true) }
     }
     private fun reconcile() {
         val enabled = controller.state.value.enabled
@@ -58,14 +68,19 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     fun manual(action: ManualAction, callback: (Result<Int>) -> Unit) {
         val request = try { controller.requestManual(action) }
         catch (error: Exception) { callback(Result.failure(error)); return }
+        updateOffer { offer.manualRequested(action) }
         automatic?.cancel()
         scope.launch {
             val result = policyResult { controller.performManual(request, ForceUse.deviceDefault()) }
+            updateOffer { offer.manualFinished(action, result, ForceUse.deviceDefault(), controller.state.value) }
             callback(result)
         }
     }
     fun query(callback: (Result<Int>) -> Unit) {
         scope.launch { callback(policyResult { controller.query() }) }
+    }
+    private fun updateOffer(block: () -> Unit) {
+        runCatching(block).onFailure { Log.w("AutoMaintain", "Could not save first-release offer", it) }
     }
     private suspend fun policyResult(block: suspend () -> Int): Result<Int> = try {
         Result.success(withContext(Dispatchers.IO) { block() })

@@ -31,6 +31,7 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
     private var queryGeneration = 0
     private val maintenance = AutoMaintainRuntime.get(application)
     internal val autoMaintainState = maintenance.controller.state
+    internal val autoMaintainOfferPending = maintenance.offer.pending
     private val received = Shizuku.OnBinderReceivedListener { refresh() }
     private val dead = Shizuku.OnBinderDeadListener { refresh() }
     private val permission = Shizuku.OnRequestPermissionResultListener { _, _ -> refresh() }
@@ -78,6 +79,13 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
     internal fun setAutoMaintainEnabled(enabled: Boolean) {
         runCatching { maintenance.setEnabled(enabled) }.onFailure {
             Log.e("AutoMaintain", "Could not save settings", it)
+            Toast.makeText(getApplication(), R.string.auto_maintain_save_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    internal fun respondToAutoMaintainOffer(maintain: Boolean) {
+        runCatching { maintenance.respondToOffer(maintain) }.onFailure {
+            Log.e("AutoMaintain", "Could not save first-release choice", it)
             Toast.makeText(getApplication(), R.string.auto_maintain_save_failed, Toast.LENGTH_LONG).show()
         }
     }

@@ -42,6 +42,7 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
     onRelease: () -> Unit) {
     val state by shutter.state.collectAsStateWithLifecycle()
     val autoMaintainState by shutter.autoMaintainState.collectAsStateWithLifecycle()
+    val offerPending by shutter.autoMaintainOfferPending.collectAsStateWithLifecycle()
     val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: AppUpdateState()
     val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
     ShutterNavigation(state, shutter::authorize, onRelease,
@@ -49,7 +50,8 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
         updateState, { updates?.checkManually() ?: Result.success(null) },
         { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder,
         developerSettings, { updates?.setIgnoreVersionComparison(it) }, { updates?.setIgnoreInterval(it) },
-        autoMaintainState, shutter::setAutoMaintainEnabled)
+        autoMaintainState, shutter::setAutoMaintainEnabled,
+        offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer)
     if (showUninstallReminder) {
         val context = LocalContext.current
         UninstallReminderDialog(state, onDismissUninstallReminder,
@@ -70,7 +72,9 @@ internal fun ShutterNavigation(
     onIgnoreVersionComparisonChange: (Boolean) -> Unit = {},
     onIgnoreIntervalChange: (Boolean) -> Unit = {},
     autoMaintainState: AutoMaintainState = AutoMaintainState(),
-    onAutoMaintainChange: (Boolean) -> Unit = {}
+    onAutoMaintainChange: (Boolean) -> Unit = {},
+    autoMaintainOfferPending: Boolean = false,
+    onAutoMaintainOfferChoice: (Boolean) -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val holder = rememberSaveableStateHolder()
@@ -78,7 +82,8 @@ internal fun ShutterNavigation(
     var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
     var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
     val notification = updateState.notificationUpdate
-    val canShowUpdate = updateAllowed && !state.busy
+    val showMaintainOffer = autoMaintainOfferPending && autoMaintainState.armed && !autoMaintainState.enabled && !state.busy
+    val canShowUpdate = updateAllowed && !state.busy && !showMaintainOffer
     val openUpdate = {
         updateReturnScreen = screen
         screen = "update"
@@ -94,6 +99,7 @@ internal fun ShutterNavigation(
             { showUpdatePrompt = false; onIgnoreUpdate(notification.tag) }, { showUpdatePrompt = false })
     }
     BackHandler(enabled = screen != "home", onBack = back)
+    if (showMaintainOffer) AutoMaintainOfferDialog(onAutoMaintainOfferChoice)
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         AnimatedContent(
             targetState = screen,
@@ -192,15 +198,18 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
             verticalArrangement = Arrangement.spacedBy(28.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 AboutSectionTitle(stringResource(R.string.settings_general))
-                SettingsEntry(stringResource(R.string.settings_language_title), stringResource(R.string.settings_language_description),
-                    { openAppLanguageSettings(context) }, false, SettingsGroupPosition.Single)
+                Column {
+                    SettingsEntry(stringResource(R.string.settings_language_title), stringResource(R.string.settings_language_description),
+                        { openAppLanguageSettings(context) }, false, SettingsGroupPosition.Top)
+                    SettingsDividerGap()
+                    AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange, SettingsGroupPosition.Bottom)
+                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 AboutSectionTitle(stringResource(R.string.settings_information))
                 SettingsEntry(stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_description),
                     onAbout, false, SettingsGroupPosition.Single)
             }
-            AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange)
             if (developerSettings.available) {
                 DeveloperUpdateSettingsSection(developerSettings,
                     onIgnoreVersionComparisonChange, onIgnoreIntervalChange)

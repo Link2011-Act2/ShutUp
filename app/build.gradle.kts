@@ -21,7 +21,7 @@ val buildNumberFiles = (
 ).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
 val appCodeName = "Kyuri"
-val appVersionName = System.getenv("VERSION_NAME") ?: "1.0.0-IntDev_rev0"
+val appVersionName = System.getenv("VERSION_NAME") ?: "1.0.0-IntDev_rev1"
 // Increase this for each distributed APK, regardless of its release channel.
 val appVersionCode = 2
 val buildContentHash = MessageDigest.getInstance("SHA-256").run {
@@ -108,6 +108,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.work:work-runtime-ktx:2.12.0")
+    // Same release-note renderer as NITTC Scheduler.
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:ext-tables:4.6.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.01"))
