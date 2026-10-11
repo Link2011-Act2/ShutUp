@@ -29,7 +29,7 @@
   <string name="home_default_enforced">強制あり</string>
   <string name="home_default_not_enforced">強制なし</string>
   <string name="home_restart_note">再起動すると元に戻ります</string>
-  <string name="home_uninstall_note">アプリを削除しても設定は元に戻りません。削除する前に「既定値に戻す」を押してください。</string>
+  <string name="home_uninstall_note">また、アプリを削除しても設定は元に戻りません。削除する前に「既定値に戻す」を押してください。</string>
   <string name="shortcut_prepare_uninstall_short">削除前に戻す</string>
   <string name="shortcut_prepare_uninstall_long">削除前に既定値へ戻す</string>
   <string name="uninstall_reminder_title">削除しようとしていますか？</string>
