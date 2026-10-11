@@ -48,5 +48,10 @@
 とりあえずこのアプリはMIT Licenseで公開しています<br>
 ただ、フォーク元はNYSL 0.9982ですし、他に使っているOSSライブラリはそれのライセンスに依存します
 
+## スクリーンショット
+<img width="200" alt="Screenshot_20261011-154731" src="https://github.com/user-attachments/assets/2fb41ef5-0e89-45b6-a02a-2ed8972a1b4f" />
+<img width="200" alt="Screenshot_20261011-154737" src="https://github.com/user-attachments/assets/d1329c36-5c94-4d8a-80d6-846226c6db94" />
+
+
 ## 余談
 このアプリの名前はひどいですが、これはShutterとShut upを掛けたダジャレです
