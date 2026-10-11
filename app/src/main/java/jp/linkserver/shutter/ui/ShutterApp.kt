@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -199,10 +200,14 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 AboutSectionTitle(stringResource(R.string.settings_general))
                 Column {
-                    SettingsEntry(stringResource(R.string.settings_language_title), stringResource(R.string.settings_language_description),
-                        { openAppLanguageSettings(context) }, false, SettingsGroupPosition.Top)
-                    SettingsDividerGap()
-                    AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange, SettingsGroupPosition.Bottom)
+                    val hasLanguageSettings = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    if (hasLanguageSettings) {
+                        SettingsEntry(stringResource(R.string.settings_language_title), stringResource(R.string.settings_language_description),
+                            { openAppLanguageSettings(context) }, false, SettingsGroupPosition.Top)
+                        SettingsDividerGap()
+                    }
+                    AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange,
+                        if (hasLanguageSettings) SettingsGroupPosition.Bottom else SettingsGroupPosition.Single)
                 }
             }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -219,6 +224,7 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
 }
 
 private fun openAppLanguageSettings(context: Context) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
     val packageUri = Uri.fromParts("package", context.packageName, null)
     for (action in listOf(Settings.ACTION_APP_LOCALE_SETTINGS, Settings.ACTION_APPLICATION_DETAILS_SETTINGS)) {
         try {

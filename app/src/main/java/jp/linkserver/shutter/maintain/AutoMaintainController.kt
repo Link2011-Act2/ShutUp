@@ -91,9 +91,12 @@ internal class AutoMaintainController(
         catch (error: Exception) { mutableState.value = next.copy(armed = false); throw error }
     }
 
-    suspend fun performManual(request: ManualRequest, deviceDefault: Int): Int = try {
+    suspend fun performManual(request: ManualRequest, deviceDefault: Int?): Int = try {
         operations.withLock {
             synchronized(intentLock) { requireCurrent(request) }
+            check(deviceDefault != null || request.action == ManualAction.RELEASE) {
+                "The device shutter sound default is unavailable"
+            }
             val connection = connection() ?: error("Shizuku is unavailable or permission is not granted")
             val context = currentCoroutineContext()
             context.ensureActive()
@@ -108,7 +111,7 @@ internal class AutoMaintainController(
                 // Reassert manual intent if the toggle changed while connecting.
                 val next = state.value.copy(armed = action == ManualAction.RELEASE)
                 if (next != state.value) saveState(next)
-                val target = if (action == ManualAction.RESTORE) deviceDefault else ForceUse.FORCE_NONE
+                val target = if (action == ManualAction.RESTORE) checkNotNull(deviceDefault) else ForceUse.FORCE_NONE
                 if (before != target) connection.write(target)
                 mutableCurrent.value = target
                 target

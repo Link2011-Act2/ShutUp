@@ -48,6 +48,8 @@
   <string name="shizuku_ready">Shizuku: 準備完了</string>
   <string name="device_forced">端末の既定値: シャッター音を強制</string>
   <string name="device_not_forced">端末の既定値: 強制しない</string>
+  <string name="device_default_unavailable">端末の既定値を取得できません。再確認してから復元してください。</string>
+  <string name="audio_routing_permission_denied">この端末では、ADB起動のShizukuに音声設定を変更する権限がありません。ADB方式では解除・復元できません。root起動のShizukuなど、必要な権限のある環境が必要です。</string>
   <string name="current_enforced">現在: 強制</string>
   <string name="current_none">現在: 強制なし（着信音モードに従う）</string>
   <string name="current_unknown">現在: 不明</string>

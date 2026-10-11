@@ -72,4 +72,17 @@ class UninstallReminderTest {
         compose.onNodeWithText(text(R.string.uninstall_reminder_error)).assertIsDisplayed()
         assertEquals(0, restores)
     }
+
+    @Test fun unknownDeviceDefaultBlocksRestorationAndKeepsTheReminderVisible() {
+        compose.setContent {
+            ShutterTheme {
+                UninstallReminderDialog(ShutterUiState(ShutterSound.Status.READY, ForceUse.FORCE_NONE),
+                    {}, {}, {}, {}, {}, deviceDefault = null)
+            }
+        }
+        compose.onNodeWithText(text(R.string.home_restore)).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.device_default_unavailable)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.uninstall_reminder_ready_title)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.uninstall_reminder_already_default)).assertDoesNotExist()
+    }
 }

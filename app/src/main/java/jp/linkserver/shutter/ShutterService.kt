@@ -5,8 +5,8 @@ import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
 /**
- * Runs in a Shizuku user service process, as shell (or root), which holds
- * MODIFY_AUDIO_ROUTING that audioserver checks in setForceUse.
+ * Runs in a Shizuku user service process, as shell (or root). Audio policy writes
+ * require MODIFY_AUDIO_ROUTING, which shell lacks on some OS versions and devices.
  */
 class ShutterService : IShutterService.Stub() {
 

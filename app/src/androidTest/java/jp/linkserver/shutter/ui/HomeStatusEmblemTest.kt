@@ -12,17 +12,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
 
 /** Rendered-image checks exercise the actual morph and rotation without touching audio. */
 class HomeStatusEmblemTest {
     @get:Rule val compose = createComposeRule()
 
-    private fun image() = compose.onNodeWithTag("home_status_emblem").captureToImage()
+    private fun image(): ImageBitmap {
+        val image = compose.onNodeWithTag("home_status_emblem").captureToImage()
+        assertEquals("The shape interior must remain solid on older renderers", Color.Blue,
+            image.toPixelMap()[image.width * 4 / 5, image.height / 2])
+        return image
+    }
 
     private fun difference(a: ImageBitmap, b: ImageBitmap, center: Boolean = false): Float {
         val pixelsA = a.toPixelMap()
         val pixelsB = b.toPixelMap()
-        var changed = 0
+        var changed = 0f
         var sampled = 0
         for (y in 0 until a.height) for (x in 0 until a.width) {
             val dx = (x + 0.5f) / a.width - 0.5f
@@ -32,10 +38,15 @@ class HomeStatusEmblemTest {
                 else radiusSquared > 0.34f * 0.34f
             if (included) {
                 sampled++
-                if (pixelsA[x, y] != pixelsB[x, y]) changed++
+                val first = pixelsA[x, y]
+                val second = pixelsB[x, y]
+                // Weight edge changes by magnitude so small antialiasing differences do not
+                // count as a whole displaced pixel on older renderers.
+                changed += maxOf(abs(first.red - second.red), abs(first.green - second.green),
+                    abs(first.blue - second.blue), abs(first.alpha - second.alpha))
             }
         }
-        return changed.toFloat() / sampled
+        return changed / sampled
     }
 
     @Test fun outlineMorphsAndCanReverseFromItsCurrentShape() {

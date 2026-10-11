@@ -19,7 +19,8 @@ data class ShutterUiState(
     val error: String = ""
 ) {
     val canRelease get() = !busy && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
-    val canRestore get() = !busy && status == ShutterSound.Status.READY && current != null && current != ForceUse.deviceDefault()
+    val canRestore get() = !busy && status == ShutterSound.Status.READY && current != null &&
+        ForceUse.deviceDefault()?.let { current != it } == true
     val alreadyNone get() = !busy && current == ForceUse.FORCE_NONE && ForceUse.deviceDefault() == ForceUse.FORCE_NONE
 }
 
@@ -93,6 +94,10 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
     private fun apply(restore: Boolean) {
         if (state.value.busy || state.value.status != ShutterSound.Status.READY) return
         val config = if (restore) ForceUse.deviceDefault() else ForceUse.FORCE_NONE
+        if (config == null) {
+            mutableState.update { it.copy(error = getApplication<Application>().getString(R.string.device_default_unavailable)) }
+            return
+        }
         val before = state.value.current
         ++queryGeneration
         mutableState.update { it.copy(busy = true, error = "") }

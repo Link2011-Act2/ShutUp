@@ -20,10 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -38,6 +37,7 @@ internal fun HomeStatusEmblem(
 ) {
     val morph = remember { Morph(MaterialShapes.SoftBurst, MaterialShapes.Cookie9Sided) }
     val path = remember { Path() }
+    val transform = remember { Matrix() }
     val progress = animateFloatAsState(
         if (released) 1f else 0f,
         tween(700, easing = FastOutSlowInEasing), label = "shutter status shape")
@@ -50,12 +50,12 @@ internal fun HomeStatusEmblem(
         Canvas(Modifier.matchParentSize().graphicsLayer { rotationZ = rotation.value }) {
             morph.toPath(progress.value, path)
             // Leave room for the outline to rotate without touching nearby text.
-            withTransform({
-                translate(size.width * 0.05f, size.height * 0.05f)
-                scale(size.width * 0.9f, size.height * 0.9f, pivot = Offset.Zero)
-            }) {
-                drawPath(path, containerColor)
-            }
+            // Expand the path itself: scaling a unit path while drawing can break on API 28.
+            transform.reset()
+            transform.translate(size.width * 0.05f, size.height * 0.05f)
+            transform.scale(size.width * 0.9f, size.height * 0.9f)
+            path.transform(transform)
+            drawPath(path, containerColor)
         }
         Crossfade(icon, animationSpec = tween(220), label = "shutter status symbol") { symbol ->
             Icon(painterResource(symbol), null, Modifier.size(52.dp), tint = iconColor)

@@ -14,8 +14,13 @@ class ShutterTileService : TileService() {
         }
         ShutterSound.query(this) { result ->
             val current = qsTile ?: return@query
+            val deviceDefault = ForceUse.deviceDefault()
             current.state = result.fold(
-                { if (isChanged(it)) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE },
+                { when {
+                    deviceDefault == null -> Tile.STATE_UNAVAILABLE
+                    it != deviceDefault -> Tile.STATE_ACTIVE
+                    else -> Tile.STATE_INACTIVE
+                } },
                 { Tile.STATE_UNAVAILABLE }
             )
             current.updateTile()
@@ -31,6 +36,6 @@ class ShutterTileService : TileService() {
         /** The value that lets the ringer mode silence the shutter. */
         fun released() = ForceUse.FORCE_NONE
 
-        fun isChanged(config: Int) = config != ForceUse.deviceDefault()
+        fun isChanged(config: Int) = ForceUse.deviceDefault()?.let { config != it } == true
     }
 }

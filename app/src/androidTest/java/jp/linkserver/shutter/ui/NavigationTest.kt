@@ -1,6 +1,7 @@
 package jp.linkserver.shutter.ui
 
 import android.graphics.Bitmap
+import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -53,6 +54,11 @@ class NavigationTest {
         settle()
         compose.onNodeWithText(text(R.string.app_name)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.settings_title)).assertIsDisplayed()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            compose.onNodeWithText(text(R.string.settings_language_title)).assertIsDisplayed()
+        } else {
+            compose.onNodeWithText(text(R.string.settings_language_title)).assertDoesNotExist()
+        }
         screenshot("settings")
 
         compose.onNodeWithText(text(R.string.settings_about_title)).performClick()

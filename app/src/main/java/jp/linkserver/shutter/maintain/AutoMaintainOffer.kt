@@ -17,9 +17,10 @@ internal class AutoMaintainOffer(private val store: AutoMaintainOfferStore) {
     val pending = mutablePending.asStateFlow()
 
     @Synchronized
-    fun manualFinished(action: ManualAction, result: Result<Int>, deviceDefault: Int, state: AutoMaintainState) {
+    fun manualFinished(action: ManualAction, result: Result<Int>, deviceDefault: Int?, state: AutoMaintainState) {
         if (stage != AutoMaintainOfferStage.READY || action == ManualAction.RESTORE ||
-            result.getOrNull() != ForceUse.FORCE_NONE || deviceDefault == ForceUse.FORCE_NONE || !state.armed) return
+            result.getOrNull() != ForceUse.FORCE_NONE || deviceDefault == null ||
+            deviceDefault == ForceUse.FORCE_NONE || !state.armed) return
         save(if (state.enabled) AutoMaintainOfferStage.HANDLED else AutoMaintainOfferStage.PENDING)
     }
 

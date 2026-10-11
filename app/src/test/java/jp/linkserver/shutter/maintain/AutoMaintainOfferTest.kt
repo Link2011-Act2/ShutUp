@@ -28,6 +28,7 @@ class AutoMaintainOfferTest {
         offer.manualFinished(ManualAction.RELEASE, Result.failure(IllegalStateException()), 11, AutoMaintainState(false, true))
         offer.manualFinished(ManualAction.RESTORE, Result.success(0), 0, AutoMaintainState())
         offer.manualFinished(ManualAction.RELEASE, Result.success(0), 0, AutoMaintainState(false, true))
+        offer.manualFinished(ManualAction.RELEASE, Result.success(0), null, AutoMaintainState(false, true))
         offer.manualFinished(ManualAction.RELEASE, Result.success(0), 11, AutoMaintainState(false, false))
         assertFalse(offer.pending.value)
         offer.release()

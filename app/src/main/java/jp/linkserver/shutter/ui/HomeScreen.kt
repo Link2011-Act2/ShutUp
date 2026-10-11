@@ -51,7 +51,7 @@ internal fun HomeScreen(
     onRelease: () -> Unit,
     onRestore: () -> Unit,
     onRefresh: () -> Unit,
-    deviceDefault: Int = ForceUse.deviceDefault(),
+    deviceDefault: Int? = ForceUse.deviceDefault(),
     updateAction: @Composable RowScope.() -> Unit = {},
     updateBanner: @Composable () -> Unit = {}
 ) {
@@ -121,7 +121,7 @@ internal fun HomeScreen(
 
 @Composable
 private fun HomeStateHero(
-    state: ShutterUiState, deviceDefault: Int,
+    state: ShutterUiState, deviceDefault: Int?,
     onOpenShizuku: () -> Unit, onAuthorize: () -> Unit,
     onRelease: () -> Unit, onRestore: () -> Unit, onRefresh: () -> Unit
 ) {
@@ -173,7 +173,7 @@ private fun HomeStateHero(
         else -> R.string.home_other_policy_hint
     }
     val subtitleText = stringResource(subtitle)
-    val description = if (!state.busy && state.status == ShutterSound.Status.READY &&
+    val description = if (deviceDefault != null && !state.busy && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault) {
         stringResource(R.string.home_with_default, subtitleText)
     } else subtitleText
@@ -198,6 +198,11 @@ private fun HomeStateHero(
             }
             Text(description, style = MaterialTheme.typography.bodyMedium,
                 color = contentColor.copy(alpha = 0.8f))
+            if (deviceDefault == null) {
+                Text(stringResource(R.string.device_default_unavailable),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.8f))
+            }
             Spacer(Modifier.height(8.dp))
             HomeHeroAction(state, deviceDefault, onOpenShizuku, onAuthorize, onRelease, onRestore, onRefresh)
         }
@@ -206,7 +211,7 @@ private fun HomeStateHero(
 
 @Composable
 private fun HomeHeroAction(
-    state: ShutterUiState, deviceDefault: Int,
+    state: ShutterUiState, deviceDefault: Int?,
     onOpenShizuku: () -> Unit, onAuthorize: () -> Unit,
     onRelease: () -> Unit, onRestore: () -> Unit, onRefresh: () -> Unit
 ) {
@@ -227,7 +232,7 @@ private fun HomeHeroAction(
         else -> onRelease
     }
     val enabled = !state.busy && !(state.status == ShutterSound.Status.READY &&
-        restore && state.current == deviceDefault)
+        restore && (deviceDefault == null || state.current == deviceDefault))
     Button(
         onClick = action, enabled = enabled,
         modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
@@ -254,7 +259,7 @@ private fun HomeHeroAction(
 }
 
 @Composable
-private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int, onRefresh: () -> Unit) {
+private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int?, onRefresh: () -> Unit) {
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -279,8 +284,11 @@ private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int, onRefres
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
             HomeStatusItem(rememberVectorPainter(Icons.Default.Settings), stringResource(R.string.home_device_default),
-                stringResource(if (deviceDefault == ForceUse.FORCE_SYSTEM_ENFORCED)
-                    R.string.home_default_enforced else R.string.home_default_not_enforced))
+                stringResource(when (deviceDefault) {
+                    ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_default_enforced
+                    ForceUse.FORCE_NONE -> R.string.home_default_not_enforced
+                    else -> R.string.home_unknown
+                }))
         }
     }
 }

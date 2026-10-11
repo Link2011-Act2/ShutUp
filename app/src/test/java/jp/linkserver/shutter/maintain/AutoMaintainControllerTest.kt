@@ -38,6 +38,29 @@ class AutoMaintainControllerTest {
         assertEquals(0, f.connects)
         assertTrue(f.policy.writes.isEmpty())
     }
+
+    @Test fun unknownDeviceDefaultBlocksRestorationAndToggleWithoutWriting() = runBlocking {
+        for (action in listOf(ManualAction.RESTORE, ManualAction.TOGGLE)) {
+            val f = Fixture(AutoMaintainState(true, true), 0)
+            val result = runCatching {
+                f.controller.performManual(f.controller.requestManual(action), null)
+            }
+            assertTrue(result.exceptionOrNull() is IllegalStateException)
+            assertTrue(f.policy.writes.isEmpty())
+            assertEquals(0, f.connects)
+            assertFalse(f.controller.state.value.armed)
+            assertEquals(MaintainResult.INACTIVE, f.controller.maintain())
+            // A failed request must also clear pending intent so a retry can succeed.
+            assertEquals(11, f.manual(ManualAction.RESTORE, 11))
+            assertEquals(listOf(11), f.policy.writes)
+        }
+    }
+
+    @Test fun explicitReleaseCanProceedWhenTheDeviceDefaultIsUnknown() = runBlocking {
+        val f = Fixture(value = 11)
+        assertEquals(0, f.controller.performManual(f.controller.requestManual(ManualAction.RELEASE), null))
+        assertEquals(listOf(0), f.policy.writes)
+    }
     @Test fun enablingArmsAndRestoresEnforcementExactlyOnce() = runBlocking {
         val f = Fixture()
         f.controller.setEnabled(true)

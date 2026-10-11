@@ -107,10 +107,10 @@ internal suspend fun downloadUpdateApk(
 
 /** Reject a different app or signing key before handing an APK to Android. */
 internal fun verifyUpdateApk(context: Context, file: File) {
-    val flags = PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong())
-    val archive = context.packageManager.getPackageArchiveInfo(file.absolutePath, flags)
+    val flags = PackageManager.GET_SIGNING_CERTIFICATES
+    val archive = context.packageManager.archivePackageInfo(file.absolutePath, flags)
     check(archive?.packageName == context.packageName) { context.getString(R.string.update_invalid_apk) }
-    val installed = context.packageManager.getPackageInfo(context.packageName, flags)
+    val installed = context.packageManager.installedPackageInfo(context.packageName, flags)
     check(archive.longVersionCode >= installed.longVersionCode) { context.getString(R.string.update_invalid_apk) }
     val signing = archive.signingInfo
     val certificates = if (signing?.hasMultipleSigners() == true) signing.apkContentsSigners

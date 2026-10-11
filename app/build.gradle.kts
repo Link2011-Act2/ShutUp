@@ -57,8 +57,7 @@ android {
 
     defaultConfig {
         applicationId = "jp.linkserver.shutter"
-        // MediaActionSound.mustPlayShutterSound() tells what to restore to.
-        minSdk = 33
+        minSdk = 28
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = appVersionCode

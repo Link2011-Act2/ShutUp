@@ -17,6 +17,7 @@ import kotlin.coroutines.resume
 
 /** Connection bookkeeping is main-thread confined; IPC runs on the coordinator's IO thread. */
 internal object ShizukuAudioPolicy {
+    internal const val AUDIO_ROUTING_PERMISSION = "android.permission.MODIFY_AUDIO_ROUTING"
     private const val TIMEOUT_MS = 8_000L
     private val main = Handler(Looper.getMainLooper())
     private var service: IShutterService? = null
@@ -51,6 +52,9 @@ internal object ShizukuAudioPolicy {
             object : AudioPolicyConnection {
                 override fun read() = it.forSystem.also { value -> ShutterSound.sync(context, value) }
                 override fun write(value: Int) {
+                    if (Shizuku.checkRemotePermission(AUDIO_ROUTING_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+                        throw SecurityException(context.getString(R.string.audio_routing_permission_denied))
+                    }
                     it.forSystem = value
                     ShutterSound.sync(context, value, changed = true)
                 }

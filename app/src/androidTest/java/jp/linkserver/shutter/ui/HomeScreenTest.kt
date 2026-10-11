@@ -145,4 +145,17 @@ class HomeScreenTest {
         assertEquals(1, refreshCalls)
         assertEquals(0, policyCalls)
     }
+
+    @Test fun unknownDeviceDefaultDoesNotOfferRestorationOrClaimTheReleasedStateIsDefault() {
+        compose.setContent {
+            ShutterTheme {
+                HomeScreen(ShutterUiState(ShutterSound.Status.READY, ForceUse.FORCE_NONE),
+                    {}, {}, {}, {}, {}, {}, deviceDefault = null)
+            }
+        }
+        compose.onNodeWithText(text(R.string.home_restore)).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.device_default_unavailable)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.result_already_none)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.home_default_not_enforced)).assertDoesNotExist()
+    }
 }

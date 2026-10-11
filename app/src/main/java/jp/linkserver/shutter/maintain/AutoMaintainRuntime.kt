@@ -71,8 +71,9 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         updateOffer { offer.manualRequested(action) }
         automatic?.cancel()
         scope.launch {
-            val result = policyResult { controller.performManual(request, ForceUse.deviceDefault()) }
-            updateOffer { offer.manualFinished(action, result, ForceUse.deviceDefault(), controller.state.value) }
+            val deviceDefault = withContext(Dispatchers.IO) { ForceUse.deviceDefault() }
+            val result = policyResult { controller.performManual(request, deviceDefault) }
+            updateOffer { offer.manualFinished(action, result, deviceDefault, controller.state.value) }
             callback(result)
         }
     }
