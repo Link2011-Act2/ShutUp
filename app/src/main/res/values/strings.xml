@@ -107,7 +107,7 @@
   <string name="about_version_details_title">Version details</string>
   <string name="about_version_details">Version: %1$s\nInternal version code: %2$d\nBuild number: %3$s</string>
   <string name="about_updates_title">What\'s new</string>
-  <string name="about_updates_body">• Initial release</string>
+  <string name="about_updates_body">• Fixed an issue where colors were distorted in dark mode</string>
   <string name="about_check_updates">Check for updates</string>
   <string name="update_screen_title">Update available</string>
   <string name="update_action_description">Update available. Open update confirmation</string>
