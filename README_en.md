@@ -47,6 +47,10 @@ Nothing device specific is involved; this is the AOSP audio policy.
 For now, this app is released under the MIT License.  
 However, the original project is licensed under NYSL 0.9982, and the other OSS libraries used by this app are subject to their respective licenses.
 
+## Screenshots
+<img width="200" alt="Screenshot_20261011-154744" src="https://github.com/user-attachments/assets/352cada1-7547-4a50-bc4d-37b1a5a0f2fd" />
+<img width="200" alt="Screenshot_20261011-154751" src="https://github.com/user-attachments/assets/e4d1d5b3-f491-42a8-a737-a2889a1dd67a" />
+
 ## Fun fact
 
 The name of this app is terrible, but it's actually a pun combining "Shutter" and "Shut up".
