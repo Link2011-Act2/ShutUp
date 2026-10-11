@@ -21,9 +21,9 @@ val buildNumberFiles = (
 ).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
 val appCodeName = "Kyuri"
-val appVersionName = System.getenv("VERSION_NAME") ?: "1.0.1-IntDev"
+val appVersionName = System.getenv("VERSION_NAME") ?: "1.0.1-Release"
 // Increase this for each distributed APK, regardless of its release channel.
-val appVersionCode = 2
+val appVersionCode = 3
 val buildContentHash = MessageDigest.getInstance("SHA-256").run {
     buildNumberFiles.forEach { file ->
         update(file.relativeTo(rootProject.projectDir).invariantSeparatorsPath.toByteArray())
