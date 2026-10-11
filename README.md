@@ -1,162 +1,50 @@
+[日本語](README.md) | [English](README_en.md)
+
 # ShutUp
 
-Forked from [soralis0912/ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle),
-with modifications by Azul1nk including the Jetpack Compose UI, settings, and app information screens.
-
-Phones sold in Japan and a few other regions play the camera shutter sound
-even in silent mode. This app switches that enforcement off and back on
-through [Shizuku](https://shizuku.rikka.app/), with no root.
+[soralis0912/ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle)のフォークです
+<br>変更点はMaterial 3 ExpressiveのUI、自動解除機能くらいで、やることはほぼ同じです
 
 日本向けなどの端末は、マナーモードでもシャッター音が鳴るよう強制されています。
-このアプリは Shizuku を使い、root なしでその強制を解除したり戻したりします。
+このアプリは [Shizuku](https://shizuku.rikka.app/) を使い、root なしでその強制を解除できます。
 
-## How it works
+要は、日本版スマホであってもマナーモードならシャッター音が消えるようにできるということです
 
-When a device, its SIM's carrier config or `audio.camerasound.force` asks
-for an audible shutter, AudioService sets the audio policy's force-use for
-`FOR_SYSTEM` to `FORCE_SYSTEM_ENFORCED`. The shutter then plays on
-`STREAM_SYSTEM_ENFORCED`, which the ringer mode does not mute.
+## 仕組み
 
-The app starts a Shizuku user service, running as `shell`, which holds the
-`MODIFY_AUDIO_ROUTING` permission that audioserver checks. The service calls
-`AudioSystem.setForceUse(FOR_SYSTEM, FORCE_NONE)` to lift the enforcement,
-and `FORCE_SYSTEM_ENFORCED` to put it back. What to put back comes from
-`MediaActionSound.mustPlayShutterSound()`, so a device that does not enforce
-it is left alone.
+端末本体、SIMのキャリア設定、または audio.camerasound.force によってシャッター音を鳴らすことが要求されると、AudioServiceは音声ポリシーの FOR_SYSTEM に対するforce-useを FORCE_SYSTEM_ENFORCED に設定します。これにより、シャッター音はマナーモードでもミュートされない STREAM_SYSTEM_ENFORCED で再生されます。
 
-Nothing device specific is involved; this is the AOSP audio policy.
+このアプリはShizukuのUserServiceを shell として起動し、audioserverがチェックする MODIFY_AUDIO_ROUTING 権限を利用します。このサービスは AudioSystem.setForceUse(FOR_SYSTEM, FORCE_NONE) を呼び出して強制を解除し、FORCE_SYSTEM_ENFORCED に設定することで元に戻します。復元する値は MediaActionSound.mustPlayShutterSound() から取得するため、もともとシャッター音が強制されていない端末には影響しません。
 
-## Things to know
+特定の端末に依存する処理はありません。AOSPの音声ポリシーを利用しています。
 
-- The change lives in audioserver only. A reboot, an audioserver restart,
-  or Android reapplying audio policy can restore enforcement. **Uninstalling the app
-  does not undo it**, so restore first.
-  Touch and hold the app icon and choose *Restore before uninstall* to open
-  the reminder and restoration controls.
-- With the enforcement off, the shutter follows the ringer mode: it is quiet
-  in silent or vibrate mode only. Other sounds on the enforced stream are
-  affected the same way.
-- On ColorOS (OPPO, OnePlus, realme), turn on *Disable permission monitoring*
-  in the developer options before starting Shizuku, or the shell calls are
-  refused.
-- Respect the privacy of the people around you and the rules where you live.
+<br>死ぬほど簡単に言うと、どんな状態であってもシャッター音を鳴らすクソ設定があり、それを無理やり解除することでマナーモードならシャッター音が消えるということです
 
-## Use
+## 知っておくべきこと
 
-1. Install and start Shizuku (wireless debugging or adb; root also works).
-2. Open the app, grant the Shizuku permission.
-3. *Stop enforcing the shutter sound*, or use the quick settings tile.
-   A notification stays while the setting differs from the device default
-   and restores it from its button.
+- この変更はaudioserver上にのみ保持されます。端末の再起動、audioserverの再起動、またはAndroidによる音声ポリシーの再適用によって、シャッター音の強制が元に戻る場合があります。アプリをアンインストールしても変更は元に戻らないため、先に復元してください。
+アプリアイコンを長押しして「アンインストール前に復元」を選ぶと、注意事項と復元操作の画面を開けます。
 
-## Optional automatic maintenance
+- 強制を解除すると、シャッター音はマナーモードの設定に従うようになります。サイレントまたはバイブレーションモードのときだけ消音されます。また、同じ強制音声ストリームを使用する他の音にも影響します。
 
-Enable **Maintain released state** in Settings to automatically release shutter
-sound enforcement again when it returns. It defaults to off. The enabled flag
-and the armed (maintenance target) flag are saved separately and survive app
-process death and device reboot.
+- マナーモード中であってもシャッター音が鳴るなら、たぶん無理です。カメラアプリ自身が鳴らしているため、このアプリでは止められません
 
-After the first successful manual release, a one-time prompt offers to enable
-this setting. **Maintain** turns the Settings toggle on; **Not now** leaves it
-unchanged and dismisses the offer permanently. You can enable it later in Settings.
+- ColorOS（OPPO、OnePlus、realme）では、Shizukuを起動する前に開発者向けオプションから「権限の監視を無効化」をオンにしてください。そうしないと、shellからの呼び出しが拒否されます。
 
-- Enabling it arms maintenance, checks immediately, and schedules unique
-  WorkManager periodic work approximately once an hour, without a network
-  requirement. Doze, battery saving, force-stop, and manufacturer restrictions
-  can delay or prevent execution; exact hourly timing is not guaranteed.
-- A Shizuku connection (or permission grant) also triggers a check while the
-  application process is alive. Shizuku events do not launch a stopped app.
-  WorkManager can start the app process for periodic work and reschedules it
-  after reboot. No foreground service or continuous polling is used.
-- Recovery requires both saved flags to be true and usable, authorized Shizuku.
-  If Shizuku is stopped or not authorized, recovery is deferred. Wireless
-  debugging Shizuku may need to be started manually again after reboot.
-- **Restore device default** leaves the toggle **ON**, but durably pauses
-  automatic release. This applies to the home screen, QS tile, notification
-  restore action, and before-uninstall reminder. Periodic checks and Shizuku
-  reconnections do not undo that pause, including after reboot.
-- Manually releasing enforcement resumes maintenance if enabled. With the
-  toggle off, it only performs the manual operation. Switching off and back on
-  also re-arms maintenance.
-- Switching **OFF** stops automatic recovery and cancels periodic work;
-  it does **not** change the current audio policy or restore the device default.
-- Only a known `FOR_SYSTEM=11` is automatically changed to `0`. A current `0`
-  needs no write; unknown values are left alone. Device defaults still come
-  from `MediaActionSound.mustPlayShutterSound()`, including defaults of `0`.
+- 周囲の人のプライバシーと、お住まいの地域のルールを尊重してください。
 
-「解除状態を維持」は任意の機能で、初期値はOFFです。Shizuku接続時と約1時間ごとに
-確認しますが、省電力制御などにより間隔は遅延します。Shizukuが利用できなければ
-再解除できません。「既定値に戻す」を操作すると、トグルはONのまま自動解除だけを
-一時停止し、アプリ終了・再起動後も保持します。次の手動解除、またはOFF→ONで
-再開します。OFFにしても現在の音声ポリシーは変更しません。
-初回の手動解除成功後に一度だけ案内し、「維持する」で設定がONになります。
-「今はしない」は設定を変更せず、再案内しません。後から設定でONにできます。
+## 使い方
 
-## Updates
+1. Shizukuをインストールして開始しておきます
+2. このアプリを開いて、Shizukuの権限を許可しておきます
+3. クイック設定タイルか、アプリ内から「シャッター音の強制を解除」を押してください。これでマナーモード中はシャッター音が消えます<br>
+   この変更が入っている間は通知が表示されます
+4. 自動解除機能をオンにすれば、一定時間ごとにシャッター音の状態が戻っていないかを監視します<br>スマホの再起動後にも自動で解除できます。Shizukuが再始動したときにも確認するので
 
-The app checks this repository's GitHub Releases when opened or resumed,
-at eight-hour intervals after a successful check. It does not schedule
-checks while closed. Saved update information remains available offline.
-Close the banner to hide it for the current session, or choose *Ignore this
-version* to suppress its banner and icon until a newer version is available.
-Manual checks in app information always contact GitHub, including for ignored versions.
+## ライセンス
 
-Stable builds receive full releases; Beta builds receive Beta and full releases;
-IntDev builds can also receive development releases. The update screen shows
-release notes and intermediate versions, and can download an APK and open
-Android's installer after installation permission is granted. The APK must
-belong to this package and have a compatible signing certificate.
+とりあえずこのアプリで変更とかした部分はMIT Licenseで公開しています<br>
+ただ、フォーク元はNYSL 0.9982ですし、他に使っているOSSライブラリはそれのライセンスに依存します
 
-IntDev builds expose two independent, saved developer options in Settings:
-ignore version comparison (always offer the most recently published release,
-even if its version is the same, older, or not a version tag), and ignore the
-eight-hour automatic-check interval. Both default to off. Other channels hide
-these controls and always disable both behaviors, even if enabled settings
-remain from an earlier IntDev installation. APK package, signing, and Android
-version-code checks still apply during installation.
-
-## Build
-
-```sh
-./gradlew assembleRelease
-```
-
-Requires Android 13 (API 33) or later.
-
-The keystore comes from `STORE_FILE`, `STORE_PASSWORD`, `KEY_ALIAS` and
-`KEY_PASSWORD` in the environment; a local build without them is signed with
-the debug key.
-
-Version settings are maintained in `app/build.gradle.kts`:
-
-- `appVersionName` is the user-facing version, optionally overridden by the
-  `VERSION_NAME` environment variable.
-- `appVersionCode` is Android's internal version code. Increase it for each
-  distributed APK across all release channels; the current value is `2`.
-
-Build and publish APKs manually. Upload the signed APK to a GitHub Release
-whose tag matches its version name (an optional leading `v` is supported).
-Update detection compares version names, so also advance the version name
-when distributing an update.
-
-Use the same signing key for subsequent updates. An APK signed with a different
-key cannot update an existing installation.
-
-## License
-
-ShutUp is published under the [MIT License](LICENSE), copyright (c) 2026 Azul1nk.
-This notice covers our original contributions and modifications; it does not
-claim ownership of the original upstream code. Third-party code and assets
-retain their respective licenses.
-
-- The original [ShutterSoundToggle](https://github.com/soralis0912/ShutterSoundToggle)
-  by soralis0912 was released under NYSL Version 0.9982. Its original license
-  text is preserved in [licenses/ShutterSoundToggle-NYSL.txt](licenses/ShutterSoundToggle-NYSL.txt).
-- Dependencies and assets including AndroidX, Shizuku API, HiddenApiBypass,
-  and Material Design icons / Material Symbols are under Apache License 2.0.
-  Their licenses are also available in the app's open-source license screen.
-
-ShutUpはMIT Licenseで公開しています。著作権表記は、ShutUp独自の追加・改変部分を対象とするもので、
-フォーク元のコードの権利を取得したことを示すものではありません。
-元のShutterSoundToggleはNYSL 0.9982で公開されており、上記の別ファイルに原文を保存しています。
-使用する第三者のライブラリ・素材には、それぞれのライセンスが適用されます。
+## 余談
+このアプリの名前はひどいですが、これはShutterとShut upを掛けたダジャレです
