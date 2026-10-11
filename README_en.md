@@ -44,7 +44,7 @@ Nothing device specific is involved; this is the AOSP audio policy.
 
 ## License
 
-For now, the parts added or modified in this app are released under the [MIT License](LICENSE).  
+For now, this app is released under the MIT License.  
 However, the original project is licensed under NYSL 0.9982, and the other OSS libraries used by this app are subject to their respective licenses.
 
 ## Fun fact
