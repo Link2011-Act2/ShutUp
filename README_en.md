@@ -16,7 +16,7 @@ The app starts a Shizuku user service, running as `shell`, which holds the `MODI
 
 Nothing device specific is involved; this is the AOSP audio policy.
 
-To put it stupidly simply, there's this shitty setting that forces the shutter sound to play no matter what, and this app forcibly disables it so the shutter sound can be muted in silent mode.
+**To put it stupidly simply, there's this shitty setting that forces the shutter sound to play no matter what, and this app forcibly disables it so the shutter sound can be muted in silent mode.**
 
 ## Things to know
 
@@ -44,3 +44,7 @@ To put it stupidly simply, there's this shitty setting that forces the shutter s
 
 For now, the parts added or modified in this app are released under the [MIT License](LICENSE).  
 However, the original project is licensed under NYSL 0.9982, and the other OSS libraries used by this app are subject to their respective licenses.
+
+## Fun fact
+
+The name of this app is terrible, but it's actually a pun combining "Shutter" and "Shut up".
