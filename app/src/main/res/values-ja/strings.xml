@@ -107,7 +107,7 @@
   <string name="about_version_details_title">バージョンの詳細</string>
   <string name="about_version_details">バージョン: %1$s\n内部バージョン番号: %2$d\nビルド番号: %3$s</string>
   <string name="about_updates_title">最新情報</string>
-  <string name="about_updates_body">• 初回リリース</string>
+  <string name="about_updates_body">• ダークモードの時、色がおかしくなる問題修正</string>
   <string name="about_check_updates">アップデートを確認</string>
   <string name="update_screen_title">アップデートがあります</string>
   <string name="update_action_description">アップデートがあります。更新の確認を開く</string>
