@@ -43,6 +43,11 @@ internal fun SettingsSwitch(checked: Boolean) {
     Switch(
         checked = checked,
         onCheckedChange = null,
+        // Pair the checked icon with its onPrimary thumb, including dynamic color schemes.
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+            checkedIconColor = MaterialTheme.colorScheme.primary
+        ),
         thumbContent = {
             Icon(
                 imageVector = if (checked) Icons.Filled.Check else Icons.Filled.Close,

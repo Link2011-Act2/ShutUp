@@ -139,11 +139,11 @@ private fun HomeStateHero(
         if (isReleased) colors.onPrimaryContainer else colors.onSurface,
         tween(700, easing = FastOutSlowInEasing), label = "shutter card content")
     val iconColor by animateColorAsState(
-        if (isReleased) colors.primary else colors.onSurfaceVariant,
+        if (isReleased) colors.onPrimaryContainer else colors.onSurfaceVariant,
         tween(700, easing = FastOutSlowInEasing), label = "shutter status icon")
     val emblemColor by animateColorAsState(
         when {
-            isReleased -> colors.primary.copy(alpha = 0.10f)
+            isReleased -> colors.onPrimaryContainer.copy(alpha = 0.10f)
             isEnforced && colors.surface.luminance() > 0.5f ->
                 lerp(colors.surfaceContainerHighest, colors.onSurfaceVariant, 0.18f)
             else -> colors.surfaceContainerHighest
