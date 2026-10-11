@@ -1,0 +1,4 @@
+# Shizuku loads this Binder service by class name in a separate process.
+-keep,allowoptimization class jp.linkserver.shutter.ShutterService {
+    public <init>();
+}

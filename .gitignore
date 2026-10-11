@@ -1,10 +1,53 @@
+# Gradle, Kotlin, and native build caches
 .gradle/
+.kotlin/
 build/
-app/build/
-local.properties
+.cxx/
+.externalNativeBuild/
+
+# Android Studio settings and captures
 .idea/
 *.iml
-.kotlin/
+captures/
+
+# Machine-specific configuration and signing credentials
+local.properties
+*.local.properties
+keystore.properties
+signing.properties
+secrets.properties
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Signing keystores and private keys
 *.jks
-!testkey.jks
 *.keystore
+*.p12
+*.pfx
+*.pk8
+*.key
+
+# APK exports and Android Studio's generated signed-build folders
+/APK/
+/app/debug/
+/app/release/
+*.apk
+*.aab
+*.apks
+*.ap_
+*.idsig
+
+# Local diagnostics and editor temporary files
+*.log
+*.hprof
+*.tmp
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
