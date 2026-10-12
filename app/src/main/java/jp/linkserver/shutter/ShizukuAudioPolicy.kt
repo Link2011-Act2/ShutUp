@@ -8,6 +8,9 @@ import android.os.Handler
 import android.os.DeadObjectException
 import android.os.IBinder
 import android.os.Looper
+import android.os.Build
+import android.os.Process
+import android.os.RemoteException
 import android.util.Log
 import jp.linkserver.shutter.maintain.AudioPolicyConnection
 import jp.linkserver.shutter.maintain.AudioPolicyConnector
@@ -26,7 +29,9 @@ internal object ShizukuAudioPolicy {
     private var waitingForBinder = false
     private val waiting = mutableListOf<(Result<IShutterService>) -> Unit>()
     private val args = Shizuku.UserServiceArgs(ComponentName(BuildConfig.APPLICATION_ID, ShutterService::class.java.name))
-        .daemon(false).processNameSuffix("audio").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+        // Include the IPC revision so a running pre-CSC service is recreated
+        // even when a locally installed APK retains the same app version code.
+        .daemon(false).processNameSuffix("audio").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE * 100 + 2)
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             binding = false
@@ -70,7 +75,6 @@ internal object ShizukuAudioPolicy {
                             if (error is DeadObjectException) AudioPolicyFailure.SERVICE_DISCONNECTED
                             else AudioPolicyFailure.READ_FAILED, error)
                     }
-                    ShutterSound.sync(context, value)
                     return value
                 }
                 override fun write(value: Int) {
@@ -78,11 +82,42 @@ internal object ShizukuAudioPolicy {
                         throw SecurityException(context.getString(R.string.audio_routing_permission_denied))
                     }
                     it.forSystem = value
-                    ShutterSound.sync(context, value, changed = true)
                 }
             }
         }
     }
+
+    fun shutterConnector(context: Context, store: ShutterChangeStore,
+        legacyMaintainArmed: Boolean, legacyInstallation: Boolean,
+        publish: (ShutterSnapshot) -> Unit): AudioPolicyConnector =
+        object : AudioPolicyConnector {
+            override val storedRestoration = true
+            override suspend fun connect(): AudioPolicyConnection {
+                val bound = withContext(Dispatchers.Main.immediate) { awaitService() }
+                val backend = ShutterBackend(object : ShutterDevice {
+                    override fun readAudio() = bound.forSystem
+                    override fun writeAudio(value: Int) {
+                        if (Shizuku.checkRemotePermission(AUDIO_ROUTING_PERMISSION) != PackageManager.PERMISSION_GRANTED)
+                            throw SecurityException(context.getString(R.string.audio_routing_permission_denied))
+                        bound.forSystem = value
+                    }
+                    // Settings.System is per-user; never implicitly write user 0
+                    // when ShutUp is installed in another Android user/profile.
+                    private val userId = Process.myUid() / 100_000
+                    override fun readCsc(): String? = bound.getGalaxyShutter(userId).takeUnless { it == "null" }
+                    override fun writeCsc(value: Int) {
+                        try {
+                            if (!bound.setGalaxyShutter(userId, value)) throw ShutterWriteUncertainException()
+                        }
+                        catch (error: RemoteException) { throw ShutterWriteUncertainException(error) }
+                    }
+                    override fun canWriteCsc() =
+                        Shizuku.checkRemotePermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
+                }, store, Build.MANUFACTURER.equals("samsung", ignoreCase = true),
+                    ForceUse.deviceDefault(), legacyMaintainArmed, legacyInstallation)
+                return BackendPolicyConnection(backend, store, publish)
+            }
+        }
 
     private suspend fun awaitService(): IShutterService {
         var callback: ((Result<IShutterService>) -> Unit)? = null

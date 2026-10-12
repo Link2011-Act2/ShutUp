@@ -31,11 +31,24 @@ internal interface AutoMaintainStore {
 internal interface AudioPolicyConnection {
     fun read(): Int
     fun write(value: Int)
+    fun baseline(deviceDefault: Int?): Int? = deviceDefault
+    fun shouldRestore(current: Int, deviceDefault: Int?): Boolean = current != deviceDefault
+    fun release(beforeWrite: () -> Unit = {}): Int {
+        beforeWrite()
+        write(ForceUse.FORCE_NONE)
+        return read()
+    }
+    fun restore(deviceDefault: Int?, beforeWrite: () -> Unit = {}): Int {
+        beforeWrite()
+        write(checkNotNull(deviceDefault))
+        return read()
+    }
 }
 
 internal fun interface AudioPolicyConnector {
     /** Cancellable; no policy operation may be hidden inside the connection callback. */
     suspend fun connect(): AudioPolicyConnection?
+    val storedRestoration: Boolean get() = false
 }
 
 internal enum class ManualAction { RELEASE, RESTORE, TOGGLE }
@@ -94,7 +107,7 @@ internal class AutoMaintainController(
     suspend fun performManual(request: ManualRequest, deviceDefault: Int?): Int = try {
         operations.withLock {
             synchronized(intentLock) { requireCurrent(request) }
-            check(deviceDefault != null || request.action == ManualAction.RELEASE) {
+            check(deviceDefault != null || request.action == ManualAction.RELEASE || connector.storedRestoration) {
                 "The device shutter sound default is unavailable"
             }
             val connection = connection() ?: error("Shizuku is unavailable or permission is not granted")
@@ -105,16 +118,20 @@ internal class AutoMaintainController(
                 context.ensureActive()
                 requireCurrent(request)
                 val action = if (request.action == ManualAction.TOGGLE) {
-                    if (before != deviceDefault) ManualAction.RESTORE else ManualAction.RELEASE
+                    if (connection.shouldRestore(before, deviceDefault)) ManualAction.RESTORE else ManualAction.RELEASE
                 } else request.action
                 // An OFF operation stops only automatic work, never a pending manual restoration.
                 // Reassert manual intent if the toggle changed while connecting.
                 val next = state.value.copy(armed = action == ManualAction.RELEASE)
                 if (next != state.value) saveState(next)
-                val target = if (action == ManualAction.RESTORE) checkNotNull(deviceDefault) else ForceUse.FORCE_NONE
-                if (before != target) connection.write(target)
-                mutableCurrent.value = target
-                target
+                val target = if (action == ManualAction.RESTORE) connection.baseline(deviceDefault) else ForceUse.FORCE_NONE
+                val actual = if (connector.storedRestoration || before != target) {
+                    val beforeWrite = { context.ensureActive(); requireCurrent(request) }
+                    if (action == ManualAction.RESTORE) connection.restore(deviceDefault, beforeWrite)
+                    else connection.release(beforeWrite)
+                } else before
+                mutableCurrent.value = actual
+                actual
             }
         }
     } finally {
@@ -169,8 +186,7 @@ internal class AutoMaintainController(
                 ForceUse.FORCE_NONE -> MaintainResult.ALREADY_RELEASED
                 ForceUse.FORCE_SYSTEM_ENFORCED -> {
                     // Intent check and synchronous IPC write share one lock.
-                    connection.write(ForceUse.FORCE_NONE)
-                    mutableCurrent.value = ForceUse.FORCE_NONE
+                    mutableCurrent.value = connection.release { context.ensureActive() }
                     MaintainResult.RESTORED
                 }
                 else -> MaintainResult.UNKNOWN

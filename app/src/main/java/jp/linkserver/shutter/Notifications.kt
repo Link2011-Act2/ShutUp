@@ -13,15 +13,16 @@ object Notifications {
     private const val CHANNEL = "changed"
     private const val ID = 1
 
-    fun showChanged(context: Context) = post(context, R.string.notification_changed)
+    fun showChanged(context: Context, persistent: Boolean = false) = post(context,
+        if (persistent) R.string.notification_changed_persistent else R.string.notification_changed, persistent)
 
-    fun showRestoreFailed(context: Context) = post(context, R.string.notification_restore_failed)
+    fun showRestoreFailed(context: Context) = post(context, R.string.notification_restore_failed_common)
 
     fun cancel(context: Context) {
         context.getSystemService(NotificationManager::class.java).cancel(ID)
     }
 
-    private fun post(context: Context, text: Int) {
+    private fun post(context: Context, text: Int, persistent: Boolean = false) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(
@@ -47,7 +48,7 @@ object Notifications {
             .setContentIntent(open)
             .addAction(
                 Notification.Action.Builder(
-                    null, context.getString(R.string.action_restore), restore
+                    null, context.getString(if (persistent) R.string.restore_previous else R.string.action_restore), restore
                 ).build()
             )
             .build()

@@ -6,6 +6,11 @@ import android.os.Looper
 import android.util.Log
 import jp.linkserver.shutter.ForceUse
 import jp.linkserver.shutter.ShizukuAudioPolicy
+import jp.linkserver.shutter.ShutterJournalFile
+import jp.linkserver.shutter.ShutterSnapshot
+import jp.linkserver.shutter.ShutterSound
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.*
 import rikka.shizuku.Shizuku
 
@@ -14,7 +19,18 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val app = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
-    val controller = AutoMaintainController(AutoMaintainPreferences(app), ShizukuAudioPolicy.connector(app))
+    private val preferences = AutoMaintainPreferences(app)
+    private val mutableSnapshot = MutableStateFlow<ShutterSnapshot?>(null)
+    val snapshot = mutableSnapshot.asStateFlow()
+    private val legacyInstallation = runCatching {
+        app.packageManager.getPackageInfo(app.packageName, 0).let { it.firstInstallTime < it.lastUpdateTime }
+    }.getOrDefault(true)
+    val controller = AutoMaintainController(preferences,
+        ShizukuAudioPolicy.shutterConnector(app, ShutterJournalFile(app), preferences.load().armed, legacyInstallation) {
+            val changed = mutableSnapshot.value != it
+            mutableSnapshot.value = it
+            ShutterSound.sync(app, it, changed)
+        })
     private val statusQuery = PolicyQuery(scope) { controller.query() }
     val offer = AutoMaintainOffer(AutoMaintainOfferPreferences(app))
     private val scheduler by lazy { AutoMaintainScheduler(app) }
@@ -74,7 +90,9 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         scope.launch {
             val deviceDefault = withContext(Dispatchers.IO) { ForceUse.deviceDefault() }
             val result = policyResult { controller.performManual(request, deviceDefault) }
-            updateOffer { offer.manualFinished(action, result, deviceDefault, controller.state.value) }
+            if (snapshot.value?.hasChange != false) updateOffer {
+                offer.manualFinished(action, result, snapshot.value?.baseline ?: deviceDefault, controller.state.value)
+            }
             callback(result)
         }
     }

@@ -20,10 +20,10 @@ import jp.linkserver.shutter.ShutterUiState
 internal fun UninstallReminderDialog(
     state: ShutterUiState, onDismiss: () -> Unit, onRestore: () -> Unit,
     onOpenShizuku: () -> Unit, onAuthorize: () -> Unit, onRefresh: () -> Unit,
-    deviceDefault: Int? = ForceUse.deviceDefault()
+    deviceDefault: Int? = state.defaultValue
 ) {
     val alreadyDefault = deviceDefault != null && state.status == ShutterSound.Status.READY &&
-        state.current == deviceDefault && !state.working
+        state.current == deviceDefault && !state.working && !state.hasChange
     val detail = when {
         state.checking -> R.string.home_checking_hint
         state.busy -> R.string.current_working
@@ -39,7 +39,7 @@ internal fun UninstallReminderDialog(
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
         state.current == null -> R.string.action_refresh
-        else -> R.string.home_restore
+        else -> if (state.persistent) R.string.restore_previous else R.string.home_restore
     }
     val action = when (state.status) {
         ShutterSound.Status.NOT_RUNNING -> onOpenShizuku

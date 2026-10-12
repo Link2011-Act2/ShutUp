@@ -13,6 +13,7 @@ internal class AudioPolicyException(val failure: AudioPolicyFailure, cause: Thro
 
 /** Keep technical causes in logcat; show an actionable, localized explanation in the UI. */
 internal fun Context.audioPolicyErrorMessage(error: Throwable): String = getString(when {
+    error is ShutterVerificationException -> R.string.shutter_change_unverified
     error is TimeoutCancellationException -> R.string.audio_service_start_timeout
     error is AudioPolicyException -> when (error.failure) {
         AudioPolicyFailure.NOT_RUNNING -> R.string.home_start_shizuku_hint

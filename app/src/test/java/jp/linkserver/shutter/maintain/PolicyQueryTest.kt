@@ -39,14 +39,15 @@ class PolicyQueryTest {
         val finish = CountDownLatch(1)
         val reads = AtomicInteger()
         val writes = AtomicInteger()
+        val currentValue = AtomicInteger(11)
         val policy = object : AudioPolicyConnection {
             override fun read(): Int {
                 reads.incrementAndGet()
                 entered.countDown()
                 check(finish.await(5, TimeUnit.SECONDS))
-                return 11
+                return currentValue.get()
             }
-            override fun write(value: Int) { writes.incrementAndGet() }
+            override fun write(value: Int) { writes.incrementAndGet(); currentValue.set(value) }
         }
         val controller = AutoMaintainController(object : AutoMaintainStore {
             override fun load() = AutoMaintainState()
@@ -72,8 +73,8 @@ class PolicyQueryTest {
             assertEquals(0, withTimeout(2_000) { manual.await() })
             assertEquals(1, writes.get())
             // After the blocked call really completes, future checks can perform a fresh read.
-            assertEquals(11, query.await().getOrThrow())
-            assertEquals(3, reads.get()) // one check, one manual read, one fresh check
+            assertEquals(0, query.await().getOrThrow())
+            assertEquals(4, reads.get()) // check, manual read, write verification, fresh check
         } finally {
             finish.countDown()
             manual?.join()

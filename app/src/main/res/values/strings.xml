@@ -1,5 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="restore_previous">Restore previous setting</string>
+  <string name="home_with_baseline">%1$s (before the change)</string>
+  <string name="home_persistent_note">This change remains after a restart. Restore it before uninstalling the app.</string>
+  <string name="home_before_change">Before the change</string>
+  <string name="result_restored">The previous shutter setting has been restored.</string>
+  <string name="shutter_change_unverified">Could not confirm the setting. Restoration information has been kept. Check Shizuku and refresh before trying again.</string>
+  <string name="notification_restore_failed_common">Could not restore the setting. Start Shizuku and restore from the app.</string>
   <string name="app_name">ShutUp</string>
   <string name="about_forked_from">Forked from</string>
   <string name="home_shutter_sound">Shutter sound</string>
@@ -43,8 +50,9 @@
   <string name="home_expand_notes">Show usage notes</string>
   <string name="home_collapse_notes">Hide usage notes</string>
   <string name="tile_label">ShutUp</string>
-  <string name="about">Devices sold in some regions force the camera shutter sound to play even in silent mode. This app uses Shizuku to switch that enforcement (AudioSystem FOR_SYSTEM) off and back on.</string>
-  <string name="caveats">The change lives in audioserver only: a reboot or an audioserver restart puts the device default back, and nothing else does. Uninstalling the app does not undo it, so restore before removing the app.\n\nWith the enforcement off, the shutter follows the ringer mode: it is silenced in silent or vibrate mode only. Other sounds that use the enforced stream are affected the same way.\n\nRespect the privacy of the people around you and the rules where you live.</string>
+  <string name="about">Devices sold in some regions force the camera shutter sound to play even in silent mode. This app uses Shizuku to release that enforcement and restore the setting, using the method appropriate for your device.</string>
+  <string name="caveats">Depending on the device, the change may remain after a restart. Uninstalling the app does not undo it, so restore before removing the app.\n\nReleasing the setting does not guarantee that every camera app will be silent. Use silent or vibrate mode, or mute system sounds. Other system sounds may also be affected.\n\nRespect the privacy of the people around you and the rules where you live.</string>
+  <string name="notification_changed_persistent">This setting remains after a restart. Restore it before uninstalling.</string>
   <string name="shizuku_not_running">Shizuku: not running</string>
   <string name="shizuku_not_authorized">Shizuku: permission not granted</string>
   <string name="shizuku_ready">Shizuku: ready</string>

@@ -19,10 +19,10 @@ object ShutterSound {
     fun toggle(context: Context, callback: (Result<Int>) -> Unit) =
         AutoMaintainRuntime.get(context).manual(ManualAction.TOGGLE, callback)
 
-    internal fun sync(context: Context, config: Int, changed: Boolean = false) {
+    internal fun sync(context: Context, snapshot: ShutterSnapshot, changed: Boolean) {
         runCatching {
-            if (config == ForceUse.deviceDefault()) Notifications.cancel(context)
-            else Notifications.showChanged(context)
+            if (!snapshot.changed) Notifications.cancel(context)
+            else Notifications.showChanged(context, snapshot.persistent)
             if (changed) TileService.requestListeningState(context, ComponentName(context, ShutterTileService::class.java))
         }.onFailure { Log.w("ShutterSound", "Could not synchronize notification/tile", it) }
     }

@@ -2,6 +2,7 @@ package jp.linkserver.shutter
 
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import jp.linkserver.shutter.maintain.AutoMaintainRuntime
 
 class ShutterTileService : TileService() {
 
@@ -14,10 +15,12 @@ class ShutterTileService : TileService() {
         }
         ShutterSound.query(this) { result ->
             val current = qsTile ?: return@query
-            val deviceDefault = ForceUse.deviceDefault()
+            val snapshot = AutoMaintainRuntime.get(this).snapshot.value
+            val deviceDefault = snapshot?.baseline ?: ForceUse.deviceDefault()
             current.state = result.fold(
                 { when {
                     deviceDefault == null -> Tile.STATE_UNAVAILABLE
+                    snapshot != null -> if (snapshot.changed) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     it != deviceDefault -> Tile.STATE_ACTIVE
                     else -> Tile.STATE_INACTIVE
                 } },

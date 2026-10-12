@@ -51,7 +51,7 @@ internal fun HomeScreen(
     onRelease: () -> Unit,
     onRestore: () -> Unit,
     onRefresh: () -> Unit,
-    deviceDefault: Int? = ForceUse.deviceDefault(),
+    deviceDefault: Int? = state.defaultValue,
     updateAction: @Composable RowScope.() -> Unit = {},
     updateBanner: @Composable () -> Unit = {}
 ) {
@@ -105,7 +105,7 @@ internal fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     HomeIconBubble(rememberVectorPainter(Icons.Default.Info), 36)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stringResource(R.string.home_restart_note),
+                        Text(stringResource(if (state.persistent) R.string.home_persistent_note else R.string.home_restart_note),
                             style = MaterialTheme.typography.bodyMedium)
                         Text(stringResource(R.string.home_uninstall_note),
                             style = MaterialTheme.typography.bodySmall,
@@ -177,7 +177,7 @@ private fun HomeStateHero(
     val subtitleText = stringResource(subtitle)
     val description = if (deviceDefault != null && !state.working && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault) {
-        stringResource(R.string.home_with_default, subtitleText)
+        stringResource(if (state.persistent) R.string.home_with_baseline else R.string.home_with_default, subtitleText)
     } else subtitleText
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
         color = containerColor, contentColor = contentColor) {
@@ -190,7 +190,7 @@ private fun HomeStateHero(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(label), style = MaterialTheme.typography.displayMedium,
                         fontSize = 48.sp, lineHeight = 56.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.home_force_system,
+                    if (!state.persistent) Text(stringResource(R.string.home_force_system,
                         state.current?.toString() ?: "?"),
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
@@ -224,7 +224,7 @@ private fun HomeHeroAction(
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
         state.current == null -> R.string.action_refresh
-        restore -> R.string.home_restore
+        restore -> if (state.persistent) R.string.restore_previous else R.string.home_restore
         else -> R.string.action_release
     }
     val action = when {
@@ -235,7 +235,8 @@ private fun HomeHeroAction(
         else -> onRelease
     }
     val enabled = !state.working && !(state.status == ShutterSound.Status.READY &&
-        restore && (deviceDefault == null || state.current == deviceDefault))
+        restore && (state.restorable == false ||
+            !state.hasChange && (deviceDefault == null || state.current == deviceDefault)))
     Button(
         onClick = action, enabled = enabled,
         modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
@@ -286,7 +287,8 @@ private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int?, onRefre
                 error = state.status == ShutterSound.Status.NOT_RUNNING
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-            HomeStatusItem(rememberVectorPainter(Icons.Default.Settings), stringResource(R.string.home_device_default),
+            HomeStatusItem(rememberVectorPainter(Icons.Default.Settings),
+                stringResource(if (state.persistent) R.string.home_before_change else R.string.home_device_default),
                 stringResource(when (deviceDefault) {
                     ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_default_enforced
                     ForceUse.FORCE_NONE -> R.string.home_default_not_enforced
