@@ -88,7 +88,7 @@ internal fun HomeScreen(
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            if (!state.busy && state.current == ForceUse.FORCE_NONE &&
+            if (!state.working && state.current == ForceUse.FORCE_NONE &&
                 deviceDefault == ForceUse.FORCE_NONE) {
                 Spacer(Modifier.height(16.dp))
                 Text(stringResource(R.string.result_already_none), Modifier.padding(horizontal = 8.dp),
@@ -155,6 +155,7 @@ private fun HomeStateHero(
         else -> R.drawable.ic_error
     }
     val label = when {
+        state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         isUnknown -> R.string.home_unknown
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_enforced
@@ -163,6 +164,7 @@ private fun HomeStateHero(
         else -> R.string.home_other_policy
     }
     val subtitle = when {
+        state.checking -> R.string.home_checking_hint
         state.busy -> R.string.home_applying
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
@@ -173,7 +175,7 @@ private fun HomeStateHero(
         else -> R.string.home_other_policy_hint
     }
     val subtitleText = stringResource(subtitle)
-    val description = if (deviceDefault != null && !state.busy && state.status == ShutterSound.Status.READY &&
+    val description = if (deviceDefault != null && !state.working && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault) {
         stringResource(R.string.home_with_default, subtitleText)
     } else subtitleText
@@ -217,6 +219,7 @@ private fun HomeHeroAction(
 ) {
     val restore = state.current == ForceUse.FORCE_NONE
     val label = when {
+        state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
@@ -231,14 +234,14 @@ private fun HomeHeroAction(
         restore -> onRestore
         else -> onRelease
     }
-    val enabled = !state.busy && !(state.status == ShutterSound.Status.READY &&
+    val enabled = !state.working && !(state.status == ShutterSound.Status.READY &&
         restore && (deviceDefault == null || state.current == deviceDefault))
     Button(
         onClick = action, enabled = enabled,
         modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        if (state.busy) {
+        if (state.working) {
             CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp,
                 color = LocalContentColor.current)
         } else {
@@ -266,7 +269,7 @@ private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int?, onRefre
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.home_system_status), Modifier.weight(1f),
                     style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                FilledTonalIconButton(onClick = onRefresh, enabled = !state.busy) {
+                FilledTonalIconButton(onClick = onRefresh, enabled = !state.working) {
                     Icon(Icons.Default.Refresh, stringResource(R.string.action_refresh))
                 }
             }

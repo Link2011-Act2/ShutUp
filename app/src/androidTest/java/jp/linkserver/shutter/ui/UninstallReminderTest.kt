@@ -69,8 +69,24 @@ class UninstallReminderTest {
         compose.onNodeWithText(text(R.string.action_refresh)).performClick()
         assertEquals(1, refreshes)
         compose.runOnIdle { state = state.copy(error = "Could not query") }
-        compose.onNodeWithText(text(R.string.uninstall_reminder_error)).assertIsDisplayed()
+        compose.onNodeWithText("Could not query").assertIsDisplayed()
         assertEquals(0, restores)
+    }
+
+    @Test fun aStatusCheckDisablesTheActionAndItsFailureIsVisible() {
+        var state by mutableStateOf(ShutterUiState(ShutterSound.Status.READY, checking = true))
+        val error = text(R.string.audio_service_start_timeout)
+        compose.setContent {
+            ShutterTheme {
+                UninstallReminderDialog(state, {}, {}, {}, {}, {},
+                    deviceDefault = ForceUse.FORCE_SYSTEM_ENFORCED)
+            }
+        }
+        compose.onNodeWithText(text(R.string.home_checking)).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.home_checking_hint)).assertIsDisplayed()
+        compose.runOnIdle { state = state.copy(checking = false, error = error) }
+        compose.onNodeWithText(error).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.action_refresh)).assertIsEnabled()
     }
 
     @Test fun unknownDeviceDefaultBlocksRestorationAndKeepsTheReminderVisible() {

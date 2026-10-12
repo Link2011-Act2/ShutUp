@@ -83,8 +83,8 @@ internal fun ShutterNavigation(
     var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
     var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
     val notification = updateState.notificationUpdate
-    val showMaintainOffer = autoMaintainOfferPending && autoMaintainState.armed && !autoMaintainState.enabled && !state.busy
-    val canShowUpdate = updateAllowed && !state.busy && !showMaintainOffer
+    val showMaintainOffer = autoMaintainOfferPending && autoMaintainState.armed && !autoMaintainState.enabled && !state.working
+    val canShowUpdate = updateAllowed && !state.working && !showMaintainOffer
     val openUpdate = {
         updateReturnScreen = screen
         screen = "update"

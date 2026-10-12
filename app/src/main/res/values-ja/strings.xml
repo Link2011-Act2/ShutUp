@@ -8,6 +8,8 @@
   <string name="home_unknown">未確認</string>
   <string name="home_other_policy">その他</string>
   <string name="home_working">処理中</string>
+  <string name="home_checking">確認中</string>
+  <string name="home_checking_hint">現在のシャッター音設定を取得しています</string>
   <string name="home_force_system">(FOR_SYSTEM=%1$s)</string>
   <string name="home_enforced_hint">シャッター音が鳴る状態です</string>
   <string name="home_released_hint">着信音モードに従います</string>
@@ -49,6 +51,11 @@
   <string name="device_forced">端末の既定値: シャッター音を強制</string>
   <string name="device_not_forced">端末の既定値: 強制しない</string>
   <string name="device_default_unavailable">端末の既定値を取得できません。再確認してから復元してください。</string>
+  <string name="audio_service_start_failed">Shizukuは接続済みですが、状態取得用サービスを起動できませんでした。Shizukuを再起動して、再確認してください。</string>
+  <string name="audio_service_start_timeout">Shizukuは接続済みですが、状態取得用サービスへの接続が時間内に完了しませんでした。Shizukuを再起動して、再確認してください。</string>
+  <string name="audio_service_disconnected">状態取得用サービスとの接続が切れました。Shizukuの状態を確認して、もう一度お試しください。</string>
+  <string name="audio_status_read_failed">シャッター音設定を読み取れませんでした。Shizukuを再起動して、再確認してください。</string>
+  <string name="audio_status_check_timeout">状態の確認が時間内に完了しませんでした。Shizukuを再起動して、再確認してください。</string>
   <string name="audio_routing_permission_denied">この端末では、ADB起動のShizukuに音声設定を変更する権限がありません。ADB方式では解除・復元できません。root起動のShizukuなど、必要な権限のある環境が必要です。</string>
   <string name="current_enforced">現在: 強制</string>
   <string name="current_none">現在: 強制なし（着信音モードに従う）</string>

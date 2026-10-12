@@ -8,6 +8,8 @@
   <string name="home_unknown">Unknown</string>
   <string name="home_other_policy">Other setting</string>
   <string name="home_working">Applying…</string>
+  <string name="home_checking">Checking…</string>
+  <string name="home_checking_hint">Reading the current shutter sound setting</string>
   <string name="home_force_system">(FOR_SYSTEM=%1$s)</string>
   <string name="home_enforced_hint">The shutter sound will play.</string>
   <string name="home_released_hint">Follows the ringer mode.</string>
@@ -49,6 +51,11 @@
   <string name="device_forced">Device default: shutter sound enforced</string>
   <string name="device_not_forced">Device default: not enforced</string>
   <string name="device_default_unavailable">Could not read the device default. Check again before restoring.</string>
+  <string name="audio_service_start_failed">Shizuku is connected, but the status service could not start. Restart Shizuku and check again.</string>
+  <string name="audio_service_start_timeout">Shizuku is connected, but the status service did not connect in time. Restart Shizuku and check again.</string>
+  <string name="audio_service_disconnected">The status service disconnected. Check Shizuku and try again.</string>
+  <string name="audio_status_read_failed">Could not read the shutter sound setting. Restart Shizuku and check again.</string>
+  <string name="audio_status_check_timeout">The status check did not finish in time. Restart Shizuku and check again.</string>
   <string name="audio_routing_permission_denied">Shizuku does not have permission to change audio settings on this device. ADB mode cannot release or restore the shutter setting here. A Shizuku session with the required permission, such as root mode, is needed.</string>
   <string name="current_enforced">Now: enforced</string>
   <string name="current_none">Now: not enforced (follows the ringer mode)</string>

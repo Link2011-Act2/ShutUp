@@ -23,8 +23,9 @@ internal fun UninstallReminderDialog(
     deviceDefault: Int? = ForceUse.deviceDefault()
 ) {
     val alreadyDefault = deviceDefault != null && state.status == ShutterSound.Status.READY &&
-        state.current == deviceDefault && !state.busy
+        state.current == deviceDefault && !state.working
     val detail = when {
+        state.checking -> R.string.home_checking_hint
         state.busy -> R.string.current_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
@@ -33,6 +34,7 @@ internal fun UninstallReminderDialog(
         else -> null
     }
     val actionLabel = when {
+        state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
@@ -60,7 +62,7 @@ internal fun UninstallReminderDialog(
                     detail?.let { Text(stringResource(it)) }
                 }
                 if (!alreadyDefault && state.error.isNotBlank()) {
-                    Text(stringResource(R.string.uninstall_reminder_error),
+                    Text(state.error,
                         color = MaterialTheme.colorScheme.error)
                 }
             }
@@ -69,7 +71,7 @@ internal fun UninstallReminderDialog(
             if (alreadyDefault) {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
             } else {
-                TextButton(onClick = action, enabled = !state.busy &&
+                TextButton(onClick = action, enabled = !state.working &&
                     !(state.status == ShutterSound.Status.READY && state.current != null && deviceDefault == null)) {
                     Text(stringResource(actionLabel))
                 }

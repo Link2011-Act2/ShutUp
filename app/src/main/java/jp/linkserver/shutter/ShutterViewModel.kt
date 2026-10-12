@@ -16,16 +16,29 @@ data class ShutterUiState(
     val status: ShutterSound.Status = ShutterSound.Status.NOT_RUNNING,
     val current: Int? = null,
     val busy: Boolean = false,
-    val error: String = ""
+    val error: String = "",
+    val checking: Boolean = false
 ) {
-    val canRelease get() = !busy && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
-    val canRestore get() = !busy && status == ShutterSound.Status.READY && current != null &&
+    val working get() = busy || checking
+    val canRelease get() = !working && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
+    val canRestore get() = !working && status == ShutterSound.Status.READY && current != null &&
         ForceUse.deviceDefault()?.let { current != it } == true
-    val alreadyNone get() = !busy && current == ForceUse.FORCE_NONE && ForceUse.deviceDefault() == ForceUse.FORCE_NONE
+    val alreadyNone get() = !working && current == ForceUse.FORCE_NONE && ForceUse.deviceDefault() == ForceUse.FORCE_NONE
 }
 
 /** Keeps in-flight Shizuku operations alive through configuration and locale changes. */
-class ShutterViewModel(application: Application) : AndroidViewModel(application) {
+class ShutterViewModel private constructor(
+    application: Application,
+    private val statusSource: () -> ShutterSound.Status,
+    private val querySource: ((Result<Int>) -> Unit) -> Unit,
+    private val listenToShizuku: Boolean
+) : AndroidViewModel(application) {
+    constructor(application: Application) : this(application, ShutterSound::status,
+        { ShutterSound.query(application, it) }, true)
+
+    internal constructor(application: Application, statusSource: () -> ShutterSound.Status,
+        querySource: ((Result<Int>) -> Unit) -> Unit) : this(application, statusSource, querySource, false)
+
     private val mutableState = MutableStateFlow(ShutterUiState())
     val state = mutableState.asStateFlow()
     private var cleared = false
@@ -40,13 +53,15 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
     init {
         viewModelScope.launch {
             maintenance.controller.current.collect { current ->
-                if (!state.value.busy && state.value.status == ShutterSound.Status.READY)
+                if (current != null && !state.value.working && state.value.status == ShutterSound.Status.READY)
                     mutableState.update { it.copy(current = current, error = "") }
             }
         }
-        Shizuku.addBinderReceivedListenerSticky(received)
-        Shizuku.addBinderDeadListener(dead)
-        Shizuku.addRequestPermissionResultListener(permission)
+        if (listenToShizuku) {
+            Shizuku.addBinderReceivedListenerSticky(received)
+            Shizuku.addBinderDeadListener(dead)
+            Shizuku.addRequestPermissionResultListener(permission)
+        }
     }
 
     fun authorize() {
@@ -55,21 +70,28 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
 
     fun refresh() {
         if (cleared) return
-        val generation = ++queryGeneration
-        val status = ShutterSound.status()
+        val status = statusSource()
         mutableState.update { it.copy(status = status) }
         if (status != ShutterSound.Status.READY) {
-            mutableState.update { it.copy(current = null, error = "") }
+            ++queryGeneration
+            mutableState.update { it.copy(current = null, checking = false, error = "") }
             return
         }
-        ShutterSound.query(getApplication()) { result ->
+        // Sticky Binder notifications, onResume and button taps share this check.
+        // A duplicate must not invalidate the callback that will report its failure.
+        if (state.value.working) return
+        val generation = ++queryGeneration
+        mutableState.update { it.copy(checking = true, error = "") }
+        querySource query@{ result ->
             if (cleared || generation != queryGeneration || state.value.busy) return@query
             result.onSuccess { config ->
-                mutableState.update { it.copy(current = maintenance.controller.current.value ?: config) }
+                mutableState.update { it.copy(current = maintenance.controller.current.value ?: config,
+                    checking = false, error = "") }
             }
                 .onFailure { error ->
                     Log.e("ShutterSound", "Could not read FOR_SYSTEM", error)
-                    mutableState.update { it.copy(current = null, error = error.message ?: error.toString()) }
+                    mutableState.update { it.copy(current = null, checking = false,
+                        error = getApplication<Application>().audioPolicyErrorMessage(error)) }
                 }
         }
     }
@@ -92,7 +114,7 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun apply(restore: Boolean) {
-        if (state.value.busy || state.value.status != ShutterSound.Status.READY) return
+        if (state.value.working || state.value.status != ShutterSound.Status.READY) return
         val config = if (restore) ForceUse.deviceDefault() else ForceUse.FORCE_NONE
         if (config == null) {
             mutableState.update { it.copy(error = getApplication<Application>().getString(R.string.device_default_unavailable)) }
@@ -114,12 +136,16 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
                     else -> context.getString(R.string.result_changed, label(before), label(config))
                 }
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                refresh()
             }.onFailure { error ->
                 Log.e("ShutterSound", "Could not set FOR_SYSTEM to $config", error)
                 Toast.makeText(context, R.string.result_failed, Toast.LENGTH_LONG).show()
-                mutableState.update { it.copy(error = error.message ?: error.toString()) }
+                mutableState.update { it.copy(current = null, error = when (error) {
+                    is AudioPolicyException -> context.audioPolicyErrorMessage(error)
+                    is SecurityException -> context.getString(R.string.audio_routing_permission_denied)
+                    else -> context.getString(R.string.uninstall_reminder_error)
+                }) }
             }
-            refresh()
         }
     }
 
@@ -132,8 +158,10 @@ class ShutterViewModel(application: Application) : AndroidViewModel(application)
 
     override fun onCleared() {
         cleared = true
-        Shizuku.removeBinderReceivedListener(received)
-        Shizuku.removeBinderDeadListener(dead)
-        Shizuku.removeRequestPermissionResultListener(permission)
+        if (listenToShizuku) {
+            Shizuku.removeBinderReceivedListener(received)
+            Shizuku.removeBinderDeadListener(dead)
+            Shizuku.removeRequestPermissionResultListener(permission)
+        }
     }
 }

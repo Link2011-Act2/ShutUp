@@ -146,6 +146,26 @@ class HomeScreenTest {
         assertEquals(0, policyCalls)
     }
 
+    @Test fun checkingShowsProgressThenTheFailureAndAllowsAnotherCheck() {
+        val state = mutableStateOf(ShutterUiState(ShutterSound.Status.READY, checking = true))
+        val error = text(R.string.audio_service_start_timeout)
+        var refreshCalls = 0
+        compose.setContent {
+            ShutterTheme {
+                HomeScreen(state.value, {}, {}, {}, {}, {}, { refreshCalls++ },
+                    deviceDefault = ForceUse.FORCE_SYSTEM_ENFORCED)
+            }
+        }
+        compose.onNode(hasText(text(R.string.home_checking)) and hasClickAction()).assertIsNotEnabled()
+        compose.onNodeWithContentDescription(text(R.string.action_refresh)).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.home_checking_hint)).assertIsDisplayed()
+        compose.runOnIdle { state.value = state.value.copy(checking = false, error = error) }
+        compose.onNodeWithText(error).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_connected)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.action_refresh)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, refreshCalls)
+    }
+
     @Test fun unknownDeviceDefaultDoesNotOfferRestorationOrClaimTheReleasedStateIsDefault() {
         compose.setContent {
             ShutterTheme {

@@ -15,6 +15,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
     val controller = AutoMaintainController(AutoMaintainPreferences(app), ShizukuAudioPolicy.connector(app))
+    private val statusQuery = PolicyQuery(scope) { controller.query() }
     val offer = AutoMaintainOffer(AutoMaintainOfferPreferences(app))
     private val scheduler by lazy { AutoMaintainScheduler(app) }
     private var initialized = false
@@ -78,7 +79,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         }
     }
     fun query(callback: (Result<Int>) -> Unit) {
-        scope.launch { callback(policyResult { controller.query() }) }
+        scope.launch { callback(statusQuery.await()) }
     }
     private fun updateOffer(block: () -> Unit) {
         runCatching(block).onFailure { Log.w("AutoMaintain", "Could not save first-release offer", it) }
