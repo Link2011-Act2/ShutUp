@@ -20,6 +20,7 @@
   <string name="home_checking">確認中</string>
   <string name="home_checking_hint">現在のシャッター音設定を取得しています</string>
   <string name="home_force_system">(FOR_SYSTEM=%1$s)</string>
+  <string name="home_csc">(CSC=%1$s)</string>
   <string name="home_enforced_hint">シャッター音が鳴る状態です</string>
   <string name="home_released_hint">着信音モードに従います</string>
   <string name="home_default_not_enforced_hint">この端末では、標準でシャッター音は強制されていません</string>

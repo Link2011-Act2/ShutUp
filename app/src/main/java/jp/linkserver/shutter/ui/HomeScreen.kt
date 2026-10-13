@@ -177,7 +177,9 @@ private fun HomeStateHero(
     val subtitleText = stringResource(subtitle)
     val description = if (deviceDefault != null && !state.working && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault) {
-        stringResource(if (state.persistent) R.string.home_with_baseline else R.string.home_with_default, subtitleText)
+        stringResource(
+            if (state.persistent && !state.restoresSystemDefault) R.string.home_with_baseline
+            else R.string.home_with_default, subtitleText)
     } else subtitleText
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp),
         color = containerColor, contentColor = contentColor) {
@@ -190,8 +192,13 @@ private fun HomeStateHero(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(label), style = MaterialTheme.typography.displayMedium,
                         fontSize = 48.sp, lineHeight = 56.sp, fontWeight = FontWeight.Bold)
-                    if (!state.persistent) Text(stringResource(R.string.home_force_system,
-                        state.current?.toString() ?: "?"),
+                    Text(stringResource(
+                        if (state.persistent) R.string.home_csc else R.string.home_force_system,
+                        if (state.persistent) when (state.current) {
+                            ForceUse.FORCE_SYSTEM_ENFORCED -> "1"
+                            ForceUse.FORCE_NONE -> "0"
+                            else -> "?"
+                        } else state.current?.toString() ?: "?"),
                         style = MaterialTheme.typography.bodySmall,
                         fontFamily = FontFamily.Monospace,
                         color = contentColor.copy(alpha = 0.72f))
