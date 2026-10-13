@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="restore_previous">Restore previous setting</string>
+  <string name="result_default_restored">The default shutter setting has been restored.</string>
+  <string name="csc_default_unknown">The system default is unknown. A saved previous setting can be restored, but it may differ from the system default.</string>
   <string name="home_with_baseline">%1$s (before the change)</string>
   <string name="home_persistent_note">This change remains after a restart. Restore it before uninstalling the app.</string>
   <string name="home_before_change">Before the change</string>

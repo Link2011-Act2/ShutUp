@@ -36,6 +36,20 @@ class ShutterJournalFileTest {
         } finally { file.delete(); backup.delete() }
     }
 
+    @Test fun legacyRecordsAndBothNewCscOriginalsSurviveAStorageRestart() {
+        val name = "journal-test-${UUID.randomUUID()}"
+        val file = File(context.noBackupFilesDir, name)
+        try {
+            file.writeText("1\nGALAXY_CSC\n1")
+            assertEquals(ShutterChange(ShutterMethod.GALAXY_CSC, 1), ShutterJournalFile(context, name).load().change)
+            for (original in listOf(null, 0, 1)) {
+                val state = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, original))
+                ShutterJournalFile(context, name).save(state)
+                assertEquals(state, ShutterJournalFile(context, name).load())
+            }
+        } finally { file.delete() }
+    }
+
     @Test fun corruptRestorationInformationFailsClosedRatherThanSelectingANewMethod() {
         val name = "journal-test-${UUID.randomUUID()}"
         val file = File(context.noBackupFilesDir, name)

@@ -20,6 +20,7 @@ data class ShutterUiState(
     val checking: Boolean = false,
     val defaultValue: Int? = ForceUse.deviceDefault(),
     val persistent: Boolean = false,
+    val restoresSystemDefault: Boolean = false,
     val hasChange: Boolean = false,
     val restorable: Boolean? = null
 ) {
@@ -28,6 +29,12 @@ data class ShutterUiState(
     val canRestore get() = !working && status == ShutterSound.Status.READY && current != null &&
         (restorable ?: (hasChange || defaultValue?.let { current != it } == true))
     val alreadyNone get() = !working && current == ForceUse.FORCE_NONE && defaultValue == ForceUse.FORCE_NONE
+
+    internal fun withSnapshot(snapshot: ShutterSnapshot) = copy(
+        defaultValue = snapshot.baseline, persistent = snapshot.persistent,
+        hasChange = snapshot.hasChange, restorable = snapshot.restorable,
+        restoresSystemDefault = snapshot.systemDefault != null,
+        current = if (snapshot.persistent && snapshot.enforcement == Enforcement.UNKNOWN) null else current)
 }
 
 /** Keeps in-flight Shizuku operations alive through configuration and locale changes. */
@@ -134,7 +141,8 @@ class ShutterViewModel private constructor(
             result.onSuccess {
                 Log.i("ShutterSound", "Shutter setting operation completed (restore=$restore)")
                 val message = context.getString(when {
-                    restore -> R.string.result_restored
+                    restore -> if (maintenance.snapshot.value?.restoredToSystemDefault == true)
+                        R.string.result_default_restored else R.string.result_restored
                     else -> R.string.result_released
                 })
                 Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -155,9 +163,7 @@ class ShutterViewModel private constructor(
     private fun withSnapshot(state: ShutterUiState): ShutterUiState {
         if (!listenToShizuku) return state // Preserve isolated refresh test fixtures.
         val snapshot = maintenance.snapshot.value ?: return state
-        return state.copy(defaultValue = snapshot.baseline, persistent = snapshot.persistent,
-            hasChange = snapshot.hasChange, restorable = snapshot.hasChange,
-            current = if (snapshot.persistent && snapshot.enforcement == Enforcement.UNKNOWN) null else state.current)
+        return state.withSnapshot(snapshot)
     }
 
     override fun onCleared() {

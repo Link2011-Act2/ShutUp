@@ -31,7 +31,7 @@ internal object ShizukuAudioPolicy {
     private val args = Shizuku.UserServiceArgs(ComponentName(BuildConfig.APPLICATION_ID, ShutterService::class.java.name))
         // Include the IPC revision so a running pre-CSC service is recreated
         // even when a locally installed APK retains the same app version code.
-        .daemon(false).processNameSuffix("audio").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE * 100 + 2)
+        .daemon(false).processNameSuffix("audio").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE * 100 + 3)
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             binding = false
@@ -105,9 +105,12 @@ internal object ShizukuAudioPolicy {
                     // when ShutUp is installed in another Android user/profile.
                     private val userId = Process.myUid() / 100_000
                     override fun readCsc(): String? = bound.getGalaxyShutter(userId).takeUnless { it == "null" }
-                    override fun writeCsc(value: Int) {
+                    override fun readCscInfo(): GalaxyCscSetting? = GalaxyCscSetting.decode(bound.getGalaxyShutterInfo(userId))
+                    override fun writeCsc(value: Int?) {
                         try {
-                            if (!bound.setGalaxyShutter(userId, value)) throw ShutterWriteUncertainException()
+                            val written = if (value == null) bound.deleteGalaxyShutter(userId)
+                                else bound.setGalaxyShutter(userId, value)
+                            if (!written) throw ShutterWriteUncertainException()
                         }
                         catch (error: RemoteException) { throw ShutterWriteUncertainException(error) }
                     }

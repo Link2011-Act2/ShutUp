@@ -19,8 +19,8 @@ class ShutterTileService : TileService() {
             val deviceDefault = snapshot?.baseline ?: ForceUse.deviceDefault()
             current.state = result.fold(
                 { when {
-                    deviceDefault == null -> Tile.STATE_UNAVAILABLE
                     snapshot != null -> if (snapshot.changed) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                    deviceDefault == null -> Tile.STATE_UNAVAILABLE
                     it != deviceDefault -> Tile.STATE_ACTIVE
                     else -> Tile.STATE_INACTIVE
                 } },

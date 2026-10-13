@@ -7,6 +7,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import jp.linkserver.shutter.R
 import jp.linkserver.shutter.ShutterSound
 import jp.linkserver.shutter.ShutterUiState
+import jp.linkserver.shutter.ShutterSnapshot
+import jp.linkserver.shutter.ShutterMethod
+import jp.linkserver.shutter.Enforcement
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -43,6 +46,25 @@ class GalaxyHomeTest {
         assertEquals(1, restores)
     }
 
+    @Test fun anotherToolsReleaseOffersTheSystemDefaultWithoutOurOwnChangeRecord() {
+        val snapshot = ShutterSnapshot(ShutterMethod.GALAXY_CSC, Enforcement.RELEASED, 0, 1, false, 1)
+        val state = ShutterUiState(ShutterSound.Status.READY, current = 0).withSnapshot(snapshot)
+        var restores = 0
+        compose.setContent { ShutterTheme { HomeScreen(state, {}, {}, {}, {}, { restores++ }, {}) } }
+        compose.onNodeWithText(text(R.string.restore_previous)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.home_restore)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, restores)
+    }
+
+    @Test fun theUninstallDialogUsesDefaultWordingWhenTheDefaultIsTrusted() {
+        val snapshot = ShutterSnapshot(ShutterMethod.GALAXY_CSC, Enforcement.RELEASED, 0, 1, false, 1)
+        val state = ShutterUiState(ShutterSound.Status.READY, current = 0).withSnapshot(snapshot)
+        compose.setContent { ShutterTheme { UninstallReminderDialog(state, {}, {}, {}, {}, {}) } }
+        compose.onNodeWithText(text(R.string.restore_previous)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.home_restore)).assertIsEnabled()
+        compose.onNodeWithText(text(R.string.uninstall_reminder_ready_title)).assertDoesNotExist()
+    }
+
     @Test fun anUncertainPersistentSettingCannotClaimUninstallIsSafe() {
         compose.setContent {
             ShutterTheme {
@@ -53,5 +75,18 @@ class GalaxyHomeTest {
         }
         compose.onNodeWithText(text(R.string.uninstall_reminder_ready_title)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.restore_previous)).assertIsEnabled()
+    }
+
+    @Test fun aFallbackCurrentValueCannotBeCalledTheSystemDefault() {
+        compose.setContent {
+            ShutterTheme {
+                UninstallReminderDialog(ShutterUiState(ShutterSound.Status.READY,
+                    current = 11, defaultValue = 11, persistent = true, restorable = false),
+                    {}, {}, {}, {}, {})
+            }
+        }
+        compose.onNodeWithText(text(R.string.uninstall_reminder_ready_title)).assertDoesNotExist()
+        compose.onNodeWithText(text(R.string.csc_default_unknown)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.restore_previous)).assertIsNotEnabled()
     }
 }

@@ -42,6 +42,16 @@ class ShutterService : IShutterService.Stub() {
         return galaxySettings(userId, "put", value.toString()) != null
     }
 
+    override fun deleteGalaxyShutter(userId: Int): Boolean = galaxySettings(userId, "delete") != null
+
+    override fun getGalaxyShutterInfo(userId: Int): String {
+        require(userId >= 0)
+        return runCatching {
+            val output = ShutterCommand().run(listOf("/system/bin/dumpsys", "settings"))
+            GalaxyCscDump.fromCommand(output, userId)?.encode() ?: "unavailable"
+        }.getOrDefault("unavailable")
+    }
+
     private fun galaxySettings(userId: Int, operation: String, value: String? = null): String? {
         require(userId >= 0)
         // No shell interpolation or arbitrary command/key IPC. The subprocess
@@ -54,7 +64,7 @@ class ShutterService : IShutterService.Stub() {
         val process = ProcessBuilder(args).redirectErrorStream(true).start()
         try {
             if (!process.waitFor(4, TimeUnit.SECONDS)) {
-                if (operation == "put") return null
+                if (operation != "get") return null
                 error("Settings read timed out")
             }
             val output = process.inputStream.bufferedReader().use { it.readText() }.trim()

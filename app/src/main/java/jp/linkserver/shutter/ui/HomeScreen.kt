@@ -224,7 +224,7 @@ private fun HomeHeroAction(
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
         state.current == null -> R.string.action_refresh
-        restore -> if (state.persistent) R.string.restore_previous else R.string.home_restore
+        restore -> if (state.persistent && !state.restoresSystemDefault) R.string.restore_previous else R.string.home_restore
         else -> R.string.action_release
     }
     val action = when {
@@ -288,7 +288,7 @@ private fun HomeSystemStatus(state: ShutterUiState, deviceDefault: Int?, onRefre
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
             HomeStatusItem(rememberVectorPainter(Icons.Default.Settings),
-                stringResource(if (state.persistent) R.string.home_before_change else R.string.home_device_default),
+                stringResource(if (state.persistent && !state.restoresSystemDefault) R.string.home_before_change else R.string.home_device_default),
                 stringResource(when (deviceDefault) {
                     ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_default_enforced
                     ForceUse.FORCE_NONE -> R.string.home_default_not_enforced

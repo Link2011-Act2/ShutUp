@@ -10,6 +10,10 @@ import jp.linkserver.shutter.ForceUse
 import jp.linkserver.shutter.R
 import jp.linkserver.shutter.ShutterSound
 import jp.linkserver.shutter.ShutterUiState
+import jp.linkserver.shutter.ShutterBackend
+import jp.linkserver.shutter.ShutterChangeStore
+import jp.linkserver.shutter.ShutterDevice
+import jp.linkserver.shutter.ShutterJournal
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -69,6 +73,41 @@ class HomeScreenTest {
         assertEquals(1, restoreCalls)
         assertEquals(1, refreshCalls)
         assertEquals(1, settingsCalls)
+    }
+
+    @Test fun anUnrecordedNonSamsungReleaseCanRestoreFromTheHomeButton() {
+        var current = ForceUse.FORCE_NONE
+        val store = object : ShutterChangeStore {
+            var journal = ShutterJournal(initialized = true)
+            override fun load() = journal
+            override fun save(journal: ShutterJournal) { this.journal = journal }
+        }
+        val backend = ShutterBackend(object : ShutterDevice {
+            override fun readAudio() = current
+            override fun writeAudio(value: Int) { current = value }
+            override fun readCsc(): String? = error("Non-Samsung must not read CSC")
+            override fun writeCsc(value: Int?) { error("Non-Samsung must not write CSC") }
+            override fun canWriteCsc() = false
+        }, store, samsung = false, deviceDefault = ForceUse.FORCE_SYSTEM_ENFORCED)
+        val state = mutableStateOf(ShutterUiState(ShutterSound.Status.READY, current,
+            defaultValue = ForceUse.FORCE_SYSTEM_ENFORCED).withSnapshot(backend.inspect()))
+        var restores = 0
+        compose.setContent {
+            ShutterTheme {
+                HomeScreen(state.value, {}, {}, {}, {}, {
+                    restores++
+                    val restored = backend.restore()
+                    state.value = state.value.copy(current = restored.policyValue).withSnapshot(restored)
+                }, {})
+            }
+        }
+        compose.onNodeWithText("(FOR_SYSTEM=0)").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_restore)).assertIsEnabled().performClick()
+        compose.onNodeWithText("(FOR_SYSTEM=11)").assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.action_release)).assertIsEnabled()
+        assertEquals(1, restores)
+        assertEquals(ForceUse.FORCE_SYSTEM_ENFORCED, current)
+        assertEquals(null, store.load().change)
     }
 
     @Test fun unavailableShizukuAndPermissionHaveTheirOwnActions() {

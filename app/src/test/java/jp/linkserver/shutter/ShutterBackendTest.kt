@@ -18,7 +18,10 @@ class ShutterBackendTest {
         var permission = true
         var audioReadable = true
         var cscReadable = true
-        var cscWrite: ((Int) -> Unit)? = null
+        var cscInfo: GalaxyCscSetting? = null
+        var cscInfoReadable = true
+        var cscInfoReads = 0
+        var cscWrite: ((Int?) -> Unit)? = null
         var audioWrite: ((Int) -> Unit)? = null
         var beforeCscRead: (() -> Unit)? = null
         override fun readAudio(): Int { check(audioReadable); return audio }
@@ -27,9 +30,10 @@ class ShutterBackendTest {
             audioWrite?.invoke(value) ?: run { audio = value }
         }
         override fun readCsc(): String? { beforeCscRead?.invoke(); check(cscReadable); return csc }
-        override fun writeCsc(value: Int) {
+        override fun readCscInfo(): GalaxyCscSetting? { cscInfoReads++; check(cscInfoReadable); return cscInfo }
+        override fun writeCsc(value: Int?) {
             writes += "csc:$value"
-            cscWrite?.invoke(value) ?: run { csc = value.toString() }
+            cscWrite?.invoke(value) ?: run { csc = value?.toString() }
         }
         override fun canWriteCsc() = permission
     }
@@ -53,10 +57,215 @@ class ShutterBackendTest {
             }, connector())
     }
 
+    @Test fun knownSystemDefaultsAreAdoptedForAllCurrentValuesWithoutWriting() {
+        for (current in 0..1) for (default in 0..1) {
+            val f = Fixture()
+            f.device.audio = 0
+            f.device.csc = current.toString()
+            f.device.cscInfo = GalaxyCscSetting(true, current, default, true)
+            val state = f.backend().inspect()
+            assertEquals(ShutterMethod.GALAXY_CSC, state.method)
+            assertEquals(current, state.rawValue)
+            assertEquals(default, state.restoreValue)
+            assertEquals(default, state.systemDefault)
+            assertEquals(current != default, state.restorable)
+            assertTrue(f.device.writes.isEmpty())
+            assertNull(f.store.journal.change)
+        }
+    }
+    @Test fun anotherToolsZeroCanBeRestoredAfterReinstallWithoutAnOldJournal() {
+        for (initialized in listOf(false, true)) {
+            val f = Fixture()
+            f.store.journal = ShutterJournal(initialized)
+            f.device.audio = 0
+            f.device.csc = "0"
+            f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+            f.device.cscWrite = {
+                assertEquals(0, f.store.journal.change!!.original)
+                f.device.csc = it?.toString()
+            }
+            val restored = f.backend().restore()
+            assertEquals("1", f.device.csc)
+            assertEquals(listOf("csc:1"), f.device.writes)
+            assertTrue(restored.restoredToSystemDefault == true)
+            assertNull(f.store.journal.change)
+        }
+    }
+    @Test fun currentOneCanBeRestoredToSystemDefaultZero() {
+        val f = Fixture()
+        f.device.cscInfo = GalaxyCscSetting(true, 1, 0, true)
+        f.backend().restore()
+        assertEquals("0", f.device.csc)
+        assertEquals(listOf("csc:0"), f.device.writes)
+        assertNull(f.store.journal.change)
+    }
+    @Test fun systemDefaultOverridesEverySavedCurrentValue() {
+        for (original in listOf(null, 0, 1)) for (default in 0..1) {
+            val f = Fixture()
+            f.device.audio = 0
+            f.store.journal = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, original))
+            f.device.csc = (1 - default).toString()
+            f.device.cscInfo = GalaxyCscSetting(true, 1 - default, default, true)
+            f.backend().restore()
+            assertEquals(default.toString(), f.device.csc)
+            assertEquals(listOf("csc:$default"), f.device.writes)
+            assertNull(f.store.journal.change)
+        }
+    }
+    @Test fun defaultsAreReadAgainRatherThanPersistentlyReplacingTheOriginal() {
+        val f = Fixture()
+        f.device.cscInfo = GalaxyCscSetting(true, 1, 1, true)
+        f.backend().release()
+        assertEquals(1, f.store.journal.change!!.original)
+        f.device.cscInfo = GalaxyCscSetting(true, 0, 0, true)
+        val after = f.backend().restore()
+        assertEquals("0", f.device.csc)
+        assertEquals(listOf("csc:0"), f.device.writes)
+        assertTrue(after.restoredToSystemDefault == true)
+        assertNull(f.store.journal.change)
+    }
+    @Test fun missingUntrustedOrFailedMetadataDoesNotDisableExistingCscOperations() {
+        for (kind in 0..3) {
+            val f = Fixture()
+            when (kind) {
+                0 -> f.device.cscInfo = null
+                1 -> f.device.cscInfo = GalaxyCscSetting(true, 1, 0, false)
+                2 -> f.device.cscInfoReadable = false
+                3 -> f.device.cscInfo = GalaxyCscSetting(false, null)
+            }
+            f.backend().release()
+            val restored = f.backend().restore()
+            assertEquals(listOf("csc:0", "csc:1"), f.device.writes)
+            assertEquals(false, restored.restoredToSystemDefault)
+        }
+    }
+    @Test fun zeroWithUnknownDefaultAndNoJournalIsNeverGuessedAsDefaultOne() {
+        val f = Fixture()
+        f.device.audio = 0
+        f.device.csc = "0"
+        f.device.cscInfo = GalaxyCscSetting(true, 0)
+        f.backend().restore()
+        assertTrue(f.device.writes.isEmpty())
+        assertNull(f.store.journal.change)
+    }
+    @Test fun metadataAloneDoesNotSelectAnAbsentOrUnwritableCscKey() {
+        for (absent in listOf(true, false)) {
+            val f = Fixture()
+            f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+            if (absent) f.device.csc = null else f.device.permission = false
+            assertEquals(ShutterMethod.AUDIO_POLICY, f.backend().release().method)
+            assertEquals(listOf("audio:0"), f.device.writes)
+        }
+    }
+    @Test fun releaseNeverSetsAnInitialZeroToOneEvenWithDefaultOne() {
+        val f = Fixture()
+        f.device.csc = "0"
+        f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+        f.backend().release()
+        assertEquals(listOf("audio:0"), f.device.writes)
+        assertEquals("0", f.device.csc)
+    }
+    @Test fun restoringASavedAbsentStateDeletesTheKeyOnlyWhenDefaultIsUnknown() {
+        val f = Fixture()
+        f.device.csc = "0"
+        f.store.journal = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, null))
+        f.backend().restore()
+        assertNull(f.device.csc)
+        assertEquals(listOf("csc:null"), f.device.writes)
+        assertNull(f.store.journal.change)
+    }
+    @Test fun anInvalidReadbackCannotConfirmRestorationToAnAbsentState() {
+        val f = Fixture()
+        f.device.csc = "0"
+        f.store.journal = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, null))
+        f.device.cscWrite = { f.device.csc = "garbage" }
+        assertTrue(runCatching { f.backend().restore() }.exceptionOrNull() is ShutterVerificationException)
+        assertNotNull(f.store.journal.change)
+    }
+    @Test fun aFailedDefaultRestorationRetainsOriginalAndNeverSwitchesMethods() {
+        val f = Fixture()
+        f.device.csc = "0"
+        f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+        f.device.cscWrite = { throw ShutterWriteUncertainException() }
+        assertTrue(runCatching { f.backend().restore() }.isFailure)
+        assertEquals(ShutterChange(ShutterMethod.GALAXY_CSC, 0), f.store.journal.change)
+        assertEquals(listOf("csc:1"), f.device.writes)
+        f.device.cscWrite = null
+        f.backend().restore()
+        assertEquals("1", f.device.csc)
+        assertNull(f.store.journal.change)
+    }
+    @Test fun defaultZeroReleaseAlreadyMatchesFactoryAndDoesNotRetainAChangedRecord() {
+        val f = Fixture()
+        f.device.audio = 0
+        f.device.cscInfo = GalaxyCscSetting(true, 1, 0, true)
+        val after = f.backend().release()
+        assertEquals(0, after.systemDefault)
+        assertFalse(after.changed)
+        assertNull(f.store.journal.change)
+    }
+    @Test fun toggleRestoresAnotherToolsZeroAndPausesAutomaticMaintenance() = runBlocking {
+        val f = Fixture()
+        f.device.audio = 0
+        f.device.csc = "0"
+        f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+        val controller = f.controller(AutoMaintainState(true, true))
+        assertEquals(0, controller.query())
+        assertTrue(f.published.last().changed)
+        assertFalse(f.published.last().hasChange)
+        assertEquals(11, controller.performManual(controller.requestManual(ManualAction.TOGGLE), 11))
+        assertEquals(MaintainResult.INACTIVE, controller.maintain())
+        assertEquals(listOf("csc:1"), f.device.writes)
+    }
+    @Test fun oldAudioTransactionsStayPinnedDespiteTrustedCscMetadata() {
+        val f = Fixture()
+        f.device.audio = 0
+        f.device.cscInfo = GalaxyCscSetting(true, 0, 1, true)
+        f.store.journal = ShutterJournal(true, ShutterChange(ShutterMethod.AUDIO_POLICY, 11))
+        f.device.audioWrite = { assertEquals(0, f.device.cscInfoReads); f.device.audio = it }
+        f.backend().restore()
+        assertEquals(listOf("audio:11"), f.device.writes)
+    }
     @Test fun nonSamsungUsesAudioEvenWhenACscKeyExists() {
         val f = Fixture(samsung = false)
         assertEquals(ShutterMethod.AUDIO_POLICY, f.backend().release().method)
         assertEquals(listOf("audio:0"), f.device.writes)
+        assertEquals(0, f.device.cscInfoReads)
+    }
+    @Test fun alreadyReleasedNonSamsungCanRestoreWithoutAnExistingChangeRecord() {
+        for (initialized in listOf(false, true)) {
+            val f = Fixture(samsung = false)
+            f.store.journal = ShutterJournal(initialized)
+            f.device.audio = 0
+            f.device.beforeCscRead = { fail("Non-Samsung must not read CSC") }
+            val state = f.backend().inspect()
+            assertTrue(state.hasChange)
+            assertTrue(state.changed)
+            assertEquals(11, state.baseline)
+            assertTrue(f.device.writes.isEmpty())
+            f.device.audioWrite = {
+                assertEquals(ShutterChange(ShutterMethod.AUDIO_POLICY, 11), f.store.journal.change)
+                f.device.audio = it
+            }
+            val restored = f.backend().restore()
+            assertEquals(11, restored.policyValue)
+            assertFalse(restored.hasChange)
+            assertNull(f.store.journal.change)
+            assertEquals(listOf("audio:11"), f.device.writes)
+        }
+    }
+    @Test fun tileToggleRestoresAnUnrecordedAudioReleaseAndPausesMaintenance() = runBlocking {
+        val f = Fixture(samsung = false)
+        f.store.journal = ShutterJournal(true)
+        f.device.audio = 0
+        val controller = f.controller(AutoMaintainState(true, true))
+        assertEquals(0, controller.query())
+        assertTrue(f.published.last().changed)
+        assertEquals(11, controller.performManual(controller.requestManual(ManualAction.TOGGLE), 11))
+        assertEquals(11, controller.query())
+        assertFalse(f.published.last().changed)
+        assertEquals(MaintainResult.INACTIVE, controller.maintain())
+        assertEquals(listOf("audio:11"), f.device.writes)
     }
     @Test fun samsungWithKnownCscUsesGalaxyAndMapsOnlyAtTheUiBoundary() {
         val f = Fixture()
@@ -94,6 +303,7 @@ class ShutterBackendTest {
         f.backend().restore()
         assertTrue(f.device.writes.isEmpty())
         assertNull(f.store.journal.change)
+        assertEquals(0, f.device.cscInfoReads)
     }
     @Test fun defaultNoneDoesNotMaskAnActuallyEnforcedAudioPolicy() {
         val f = Fixture(default = 0)

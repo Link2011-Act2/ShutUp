@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="restore_previous">変更前に戻す</string>
+  <string name="result_default_restored">既定の設定に戻しました。</string>
+  <string name="csc_default_unknown">システムの既定値は不明です。保存した変更前の設定があれば復元できますが、既定値と一致するとは限りません。</string>
   <string name="home_with_baseline">%1$s（変更前）</string>
   <string name="home_persistent_note">この変更は再起動後も残ります。アプリを削除する前に復元してください。</string>
   <string name="home_before_change">変更前の状態</string>

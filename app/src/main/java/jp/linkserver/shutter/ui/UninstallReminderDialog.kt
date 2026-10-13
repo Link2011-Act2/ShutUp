@@ -22,14 +22,18 @@ internal fun UninstallReminderDialog(
     onOpenShizuku: () -> Unit, onAuthorize: () -> Unit, onRefresh: () -> Unit,
     deviceDefault: Int? = state.defaultValue
 ) {
-    val alreadyDefault = deviceDefault != null && state.status == ShutterSound.Status.READY &&
+    val alreadyDefault = (!state.persistent || state.restoresSystemDefault) &&
+        deviceDefault != null && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault && !state.working && !state.hasChange
+    val canRestore = state.restorable ?: (state.hasChange ||
+        deviceDefault?.let { state.current != it } == true)
     val detail = when {
         state.checking -> R.string.home_checking_hint
         state.busy -> R.string.current_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
         state.current == null -> R.string.home_refresh_hint
+        state.persistent && !state.restoresSystemDefault -> R.string.csc_default_unknown
         deviceDefault == null -> R.string.device_default_unavailable
         else -> null
     }
@@ -39,7 +43,7 @@ internal fun UninstallReminderDialog(
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.action_authorize
         state.current == null -> R.string.action_refresh
-        else -> if (state.persistent) R.string.restore_previous else R.string.home_restore
+        else -> if (state.persistent && !state.restoresSystemDefault) R.string.restore_previous else R.string.home_restore
     }
     val action = when (state.status) {
         ShutterSound.Status.NOT_RUNNING -> onOpenShizuku
@@ -72,7 +76,7 @@ internal fun UninstallReminderDialog(
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
             } else {
                 TextButton(onClick = action, enabled = !state.working &&
-                    !(state.status == ShutterSound.Status.READY && state.current != null && deviceDefault == null)) {
+                    !(state.status == ShutterSound.Status.READY && state.current != null && !canRestore)) {
                     Text(stringResource(actionLabel))
                 }
             }
