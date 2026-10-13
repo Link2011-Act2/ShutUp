@@ -20,7 +20,7 @@ val buildNumberFiles = (
     ).filter { it.isFile }
 ).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
-val appCodeName = "Lethe"
+val appCodeName = "Lethe" // トリッカル、定期。
 val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.0-IntDev_rev0"
 // Increase this for each distributed APK, regardless of its release channel.
 val appVersionCode = 4
