@@ -28,6 +28,7 @@ internal fun UninstallReminderDialog(
     val canRestore = state.restorable ?: (state.hasChange ||
         deviceDefault?.let { state.current != it } == true)
     val detail = when {
+        state.requestingPermission -> R.string.shizuku_permission_requesting_hint
         state.checking -> R.string.home_checking_hint
         state.busy -> R.string.current_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
@@ -38,6 +39,7 @@ internal fun UninstallReminderDialog(
         else -> null
     }
     val actionLabel = when {
+        state.requestingPermission -> R.string.shizuku_permission_requesting
         state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku
@@ -68,6 +70,11 @@ internal fun UninstallReminderDialog(
                 if (!alreadyDefault && state.error.isNotBlank()) {
                     Text(state.error,
                         color = MaterialTheme.colorScheme.error)
+                    if (state.status != ShutterSound.Status.READY) {
+                        TextButton(onClick = onOpenShizuku) {
+                            Text(stringResource(R.string.home_open_shizuku))
+                        }
+                    }
                 }
             }
         },

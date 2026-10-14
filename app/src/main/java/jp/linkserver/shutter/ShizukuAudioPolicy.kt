@@ -8,8 +8,6 @@ import android.os.Handler
 import android.os.DeadObjectException
 import android.os.IBinder
 import android.os.Looper
-import android.os.Build
-import android.os.Process
 import android.os.RemoteException
 import android.util.Log
 import jp.linkserver.shutter.maintain.AudioPolicyConnection
@@ -89,6 +87,7 @@ internal object ShizukuAudioPolicy {
 
     fun shutterConnector(context: Context, store: ShutterChangeStore,
         legacyMaintainArmed: Boolean, legacyInstallation: Boolean,
+        environment: AppUserEnvironment = AppUserEnvironment.current(),
         publish: (ShutterSnapshot) -> Unit): AudioPolicyConnector =
         object : AudioPolicyConnector {
             override val storedRestoration = true
@@ -103,7 +102,7 @@ internal object ShizukuAudioPolicy {
                     }
                     // Settings.System is per-user; never implicitly write user 0
                     // when ShutUp is installed in another Android user/profile.
-                    private val userId = Process.myUid() / 100_000
+                    private val userId = environment.userId
                     override fun readCsc(): String? = bound.getGalaxyShutter(userId).takeUnless { it == "null" }
                     override fun readCscInfo(): GalaxyCscSetting? = GalaxyCscSetting.decode(bound.getGalaxyShutterInfo(userId))
                     override fun writeCsc(value: Int?) {
@@ -116,7 +115,7 @@ internal object ShizukuAudioPolicy {
                     }
                     override fun canWriteCsc() =
                         Shizuku.checkRemotePermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
-                }, store, Build.MANUFACTURER.equals("samsung", ignoreCase = true),
+                }, store, environment.samsung,
                     ForceUse.deviceDefault(), legacyMaintainArmed, legacyInstallation)
                 return BackendPolicyConnection(backend, store, publish)
             }

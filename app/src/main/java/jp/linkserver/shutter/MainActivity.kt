@@ -29,16 +29,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         showUninstallReminder = savedInstanceState?.getBoolean(STATE_UNINSTALL_REMINDER)
             ?: (intent.action == ACTION_PREPARE_UNINSTALL)
+        if (savedInstanceState?.getBoolean(STATE_CONFIRM_RELEASE) ?: (intent.action == ACTION_CONFIRM_RELEASE))
+            shutter.requestReleaseConfirmation()
         enableEdgeToEdge()
         setContent {
             ShutterTheme {
-                ShutterApp(shutter, showUninstallReminder, { showUninstallReminder = false }, updates) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                        notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    shutter.release()
-                }
+                ShutterApp(shutter, showUninstallReminder, { showUninstallReminder = false }, updates,
+                    onConfirmedRelease = { release(it) }) { release() }
             }
         }
     }
@@ -46,11 +43,18 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.action == ACTION_PREPARE_UNINSTALL) showUninstallReminder = true
+        if (intent.action == ACTION_PREPARE_UNINSTALL) {
+            shutter.cancelReleaseConfirmation()
+            showUninstallReminder = true
+        } else if (intent.action == ACTION_CONFIRM_RELEASE) {
+            showUninstallReminder = false
+            shutter.requestReleaseConfirmation()
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean(STATE_UNINSTALL_REMINDER, showUninstallReminder)
+        outState.putBoolean(STATE_CONFIRM_RELEASE, shutter.state.value.releaseConfirmationPending)
         super.onSaveInstanceState(outState)
     }
 
@@ -61,8 +65,21 @@ class MainActivity : ComponentActivity() {
         updates.checkForUpdates()
     }
 
+    private fun release(permit: ReleasePermit? = null) {
+        if (permit == null && shutter.releaseConfirmationRequired) {
+            shutter.requestReleaseConfirmation()
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        shutter.release(permit)
+    }
+
     companion object {
         const val ACTION_PREPARE_UNINSTALL = "jp.linkserver.shutter.action.PREPARE_UNINSTALL"
+        const val ACTION_CONFIRM_RELEASE = "jp.linkserver.shutter.action.CONFIRM_RELEASE"
         private const val STATE_UNINSTALL_REMINDER = "show_uninstall_reminder"
+        private const val STATE_CONFIRM_RELEASE = "confirm_release"
     }
 }

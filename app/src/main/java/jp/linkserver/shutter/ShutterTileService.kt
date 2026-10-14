@@ -1,5 +1,8 @@
 package jp.linkserver.shutter
 
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import jp.linkserver.shutter.maintain.AutoMaintainRuntime
@@ -32,7 +35,23 @@ class ShutterTileService : TileService() {
 
     override fun onClick() {
         if (ShutterSound.status() != ShutterSound.Status.READY) return
-        ShutterSound.toggle(this) { onStartListening() }
+        ShutterSound.toggle(this) { result ->
+            if (result.exceptionOrNull() is SamsungUserConfirmationRequired)
+                unlockAndRun { openReleaseConfirmation() }
+            onStartListening()
+        }
+    }
+
+    private fun openReleaseConfirmation() {
+        val intent = Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_CONFIRM_RELEASE)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        if (Build.VERSION.SDK_INT >= 34) {
+            startActivityAndCollapse(PendingIntent.getActivity(this, 1, intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+        } else {
+            @Suppress("DEPRECATION")
+            startActivityAndCollapse(intent)
+        }
     }
 
     companion object {

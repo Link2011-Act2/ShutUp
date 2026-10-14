@@ -130,6 +130,28 @@ class HomeScreenTest {
         assertEquals(1, authorized)
     }
 
+    @Test fun permissionFailureOffersShizukuWhileABlockedRequestCannotBeRepeated() {
+        var opens = 0
+        var authorizations = 0
+        val state = mutableStateOf(ShutterUiState(ShutterSound.Status.NOT_AUTHORIZED,
+            requestingPermission = true))
+        compose.setContent {
+            ShutterTheme {
+                HomeScreen(state.value, {}, { opens++ }, { authorizations++ }, {}, {}, {})
+            }
+        }
+        compose.onNode(hasText(text(R.string.shizuku_permission_requesting)) and hasClickAction()).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.shizuku_permission_requesting_hint)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(text(R.string.action_refresh)).assertIsNotEnabled()
+        compose.runOnIdle { state.value = state.value.copy(error = text(R.string.shizuku_permission_request_timeout)) }
+        compose.onNodeWithText(text(R.string.shizuku_permission_request_timeout)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_open_shizuku)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(1, opens)
+        assertEquals(0, authorizations)
+        compose.runOnIdle { state.value = state.value.copy(requestingPermission = false) }
+        compose.onNodeWithText(text(R.string.action_authorize)).assertIsEnabled()
+    }
+
     @Test fun busyStatePreventsConflictingOperations() {
         compose.setContent {
             ShutterTheme {

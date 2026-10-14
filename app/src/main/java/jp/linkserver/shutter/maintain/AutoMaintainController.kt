@@ -1,6 +1,9 @@
 package jp.linkserver.shutter.maintain
 
 import jp.linkserver.shutter.ForceUse
+import jp.linkserver.shutter.ReleaseAuthorization
+import jp.linkserver.shutter.ReleasePermit
+import jp.linkserver.shutter.UnrestrictedReleaseAuthorization
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -52,7 +55,7 @@ internal fun interface AudioPolicyConnector {
 }
 
 internal enum class ManualAction { RELEASE, RESTORE, TOGGLE }
-internal class ManualRequest(val generation: Long, val action: ManualAction)
+internal class ManualRequest(val generation: Long, val action: ManualAction, val releasePermit: ReleasePermit? = null)
 internal enum class MaintainResult { INACTIVE, BUSY, UNAVAILABLE, ALREADY_RELEASED, RESTORED, UNKNOWN, SUPERSEDED }
 internal class SupersededPolicyOperation : IllegalStateException("A newer manual operation superseded this request")
 
@@ -60,7 +63,8 @@ internal class SupersededPolicyOperation : IllegalStateException("A newer manual
 internal class AutoMaintainController(
     private val store: AutoMaintainStore,
     private val connector: AudioPolicyConnector,
-    private val connectionTimeoutMs: Long = 10_000
+    private val connectionTimeoutMs: Long = 10_000,
+    private val releaseAuthorization: ReleaseAuthorization = UnrestrictedReleaseAuthorization
 ) {
     private val intentLock = Any()
     private val operations = Mutex()
@@ -68,27 +72,34 @@ internal class AutoMaintainController(
     private var manualGeneration = 0L
     private var pendingManual: Long? = null
     private var activeAutomatic: Deferred<MaintainResult>? = null
-    private val mutableState = MutableStateFlow(store.load())
+    private val mutableState = MutableStateFlow(store.load().let {
+        // Keep armed restoration evidence, but never resume an old enabled flag
+        // until this environment has explicitly authorized automatic releases.
+        if (releaseAuthorization.automaticAllowed) it else it.copy(enabled = false)
+    })
     val state = mutableState.asStateFlow()
     private val mutableCurrent = MutableStateFlow<Int?>(null)
     val current = mutableCurrent.asStateFlow()
 
     fun setEnabled(enabled: Boolean) = synchronized(intentLock) {
         if (state.value.enabled == enabled) return@synchronized
+        if (enabled) releaseAuthorization.enableAutomatic()
         updateIntent(if (enabled) AutoMaintainState(true, true) else state.value.copy(enabled = false))
     }
 
     /** Record intent synchronously, before a coroutine or service connection can be delayed. */
-    fun requestManual(action: ManualAction): ManualRequest = synchronized(intentLock) {
+    fun requestManual(action: ManualAction, releasePermit: ReleasePermit? = null): ManualRequest = synchronized(intentLock) {
+        val request = ManualRequest(manualGeneration + 1, action, releasePermit)
+        if (action == ManualAction.RELEASE) releaseAuthorization.requireManualRelease(request, releasePermit)
         val armed = when (action) {
             ManualAction.RESTORE -> false
             ManualAction.RELEASE -> true
-            ManualAction.TOGGLE -> false // Safely pause until an actual serialized read resolves intent.
+            ManualAction.TOGGLE -> if (releaseAuthorization.confirmationRequired) state.value.armed else false
         }
         manualGeneration++
         updateIntent(state.value.copy(armed = armed))
         pendingManual = manualGeneration
-        ManualRequest(manualGeneration, action)
+        request
     }
 
     private fun updateIntent(next: AutoMaintainState) {
@@ -120,13 +131,20 @@ internal class AutoMaintainController(
                 val action = if (request.action == ManualAction.TOGGLE) {
                     if (connection.shouldRestore(before, deviceDefault)) ManualAction.RESTORE else ManualAction.RELEASE
                 } else request.action
+                if (action == ManualAction.RELEASE)
+                    releaseAuthorization.requireManualRelease(request, request.releasePermit)
                 // An OFF operation stops only automatic work, never a pending manual restoration.
                 // Reassert manual intent if the toggle changed while connecting.
                 val next = state.value.copy(armed = action == ManualAction.RELEASE)
                 if (next != state.value) saveState(next)
                 val target = if (action == ManualAction.RESTORE) connection.baseline(deviceDefault) else ForceUse.FORCE_NONE
                 val actual = if (connector.storedRestoration || before != target) {
-                    val beforeWrite = { context.ensureActive(); requireCurrent(request) }
+                    val beforeWrite = {
+                        context.ensureActive()
+                        requireCurrent(request)
+                        if (action == ManualAction.RELEASE)
+                            releaseAuthorization.requireManualRelease(request, request.releasePermit)
+                    }
                     if (action == ManualAction.RESTORE) connection.restore(deviceDefault, beforeWrite)
                     else connection.release(beforeWrite)
                 } else before
@@ -150,7 +168,7 @@ internal class AutoMaintainController(
 
     suspend fun maintain(): MaintainResult = coroutineScope {
         val attempt = synchronized(intentLock) {
-            if (!state.value.active) return@coroutineScope MaintainResult.INACTIVE
+            if (!state.value.active || !releaseAuthorization.automaticAllowed) return@coroutineScope MaintainResult.INACTIVE
             if (pendingManual != null || activeAutomatic?.isCancelled == false) return@coroutineScope MaintainResult.BUSY
             val ticket = generation
             // Queue behind a UI read, but coalesce all duplicate automatic triggers.
@@ -186,7 +204,10 @@ internal class AutoMaintainController(
                 ForceUse.FORCE_NONE -> MaintainResult.ALREADY_RELEASED
                 ForceUse.FORCE_SYSTEM_ENFORCED -> {
                     // Intent check and synchronous IPC write share one lock.
-                    mutableCurrent.value = connection.release { context.ensureActive() }
+                    mutableCurrent.value = connection.release {
+                        context.ensureActive()
+                        releaseAuthorization.requireAutomaticRelease()
+                    }
                     MaintainResult.RESTORED
                 }
                 else -> MaintainResult.UNKNOWN
@@ -195,7 +216,7 @@ internal class AutoMaintainController(
     }
 
     private fun eligible(ticket: Long) = synchronized(intentLock) {
-        ticket == generation && state.value.active && pendingManual == null
+        ticket == generation && state.value.active && pendingManual == null && releaseAuthorization.automaticAllowed
     }
 
     private suspend fun connection() = withTimeout(connectionTimeoutMs) { connector.connect() }

@@ -14,10 +14,12 @@ object ShutterSound {
     fun query(context: Context, callback: (Result<Int>) -> Unit) = AutoMaintainRuntime.get(context).query(callback)
     fun release(context: Context, callback: (Result<Unit>) -> Unit) =
         AutoMaintainRuntime.get(context).manual(ManualAction.RELEASE) { callback(it.map {}) }
+    internal fun releaseConfirmed(context: Context, permit: ReleasePermit, callback: (Result<Unit>) -> Unit) =
+        AutoMaintainRuntime.get(context).manual(ManualAction.RELEASE, permit) { callback(it.map {}) }
     fun restore(context: Context, callback: (Result<Unit>) -> Unit) =
         AutoMaintainRuntime.get(context).manual(ManualAction.RESTORE) { callback(it.map {}) }
     fun toggle(context: Context, callback: (Result<Int>) -> Unit) =
-        AutoMaintainRuntime.get(context).manual(ManualAction.TOGGLE, callback)
+        AutoMaintainRuntime.get(context).manual(ManualAction.TOGGLE, callback = callback)
 
     internal fun sync(context: Context, snapshot: ShutterSnapshot, changed: Boolean) {
         runCatching {

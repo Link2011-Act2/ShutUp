@@ -73,6 +73,23 @@ class UninstallReminderTest {
         assertEquals(0, restores)
     }
 
+    @Test fun permissionFailureKeepsTheShizukuRecoveryActionAvailable() {
+        var opens = 0
+        var authorizations = 0
+        compose.setContent {
+            ShutterTheme {
+                UninstallReminderDialog(ShutterUiState(ShutterSound.Status.NOT_AUTHORIZED,
+                    error = text(R.string.shizuku_permission_request_timeout), requestingPermission = true),
+                    {}, {}, { opens++ }, { authorizations++ }, {})
+            }
+        }
+        compose.onNodeWithText(text(R.string.shizuku_permission_requesting)).assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.shizuku_permission_request_timeout)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.home_open_shizuku)).assertIsEnabled().performClick()
+        assertEquals(1, opens)
+        assertEquals(0, authorizations)
+    }
+
     @Test fun aStatusCheckDisablesTheActionAndItsFailureIsVisible() {
         var state by mutableStateOf(ShutterUiState(ShutterSound.Status.READY, checking = true))
         val error = text(R.string.audio_service_start_timeout)

@@ -40,6 +40,7 @@ import jp.linkserver.shutter.maintain.AutoMaintainState
 @Composable
 internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolean = false,
     onDismissUninstallReminder: () -> Unit = {}, updates: AppUpdateViewModel? = null,
+    onConfirmedRelease: (ReleasePermit) -> Unit = { shutter.release(it) },
     onRelease: () -> Unit) {
     val state by shutter.state.collectAsStateWithLifecycle()
     val autoMaintainState by shutter.autoMaintainState.collectAsStateWithLifecycle()
@@ -53,6 +54,11 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
         developerSettings, { updates?.setIgnoreVersionComparison(it) }, { updates?.setIgnoreInterval(it) },
         autoMaintainState, shutter::setAutoMaintainEnabled,
         offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer)
+    if (state.releaseConfirmationPending && !state.working && !showUninstallReminder) {
+        SamsungUserWarningDialog(shutter::cancelReleaseConfirmation) { remember ->
+            shutter.confirmRelease(remember)?.let(onConfirmedRelease)
+        }
+    }
     if (showUninstallReminder) {
         val context = LocalContext.current
         UninstallReminderDialog(state, onDismissUninstallReminder,
@@ -83,8 +89,9 @@ internal fun ShutterNavigation(
     var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
     var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
     val notification = updateState.notificationUpdate
-    val showMaintainOffer = autoMaintainOfferPending && autoMaintainState.armed && !autoMaintainState.enabled && !state.working
-    val canShowUpdate = updateAllowed && !state.working && !showMaintainOffer
+    val showMaintainOffer = autoMaintainOfferPending && autoMaintainState.armed && !autoMaintainState.enabled &&
+        !state.working && !state.releaseConfirmationPending && (!state.nonMainUserWarning || state.nonMainUserConfirmed)
+    val canShowUpdate = updateAllowed && !state.working && !showMaintainOffer && !state.releaseConfirmationPending
     val openUpdate = {
         updateReturnScreen = screen
         screen = "update"

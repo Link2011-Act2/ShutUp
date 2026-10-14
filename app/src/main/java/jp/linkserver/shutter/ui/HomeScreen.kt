@@ -77,21 +77,32 @@ internal fun HomeScreen(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             updateBanner()
+            if (state.nonMainUserWarning) {
+                SamsungUserWarningCard()
+                Spacer(Modifier.height(12.dp))
+            }
             HomeStateHero(state, deviceDefault, onOpenShizuku, onAuthorize, onRelease, onRestore, onRefresh)
             if (state.error.isNotBlank()) {
                 Spacer(Modifier.height(16.dp))
                 Surface(color = MaterialTheme.colorScheme.errorContainer,
                     shape = RoundedCornerShape(24.dp)) {
-                    Text(state.error, Modifier.fillMaxWidth().padding(20.dp)
-                        .semantics { liveRegion = LiveRegionMode.Polite },
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        style = MaterialTheme.typography.bodyMedium)
+                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                        Text(state.error, Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodyMedium)
+                        if (state.status != ShutterSound.Status.READY) {
+                            TextButton(onClick = onOpenShizuku) {
+                                Text(stringResource(R.string.home_open_shizuku))
+                            }
+                        }
+                    }
                 }
             }
             if (!state.working && state.current == ForceUse.FORCE_NONE &&
                 deviceDefault == ForceUse.FORCE_NONE) {
                 Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.result_already_none), Modifier.padding(horizontal = 8.dp),
+                Text(stringResource(if (state.nonMainUserWarning) R.string.samsung_user_already_released
+                    else R.string.result_already_none), Modifier.padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -159,17 +170,20 @@ private fun HomeStateHero(
         state.busy -> R.string.home_working
         isUnknown -> R.string.home_unknown
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_enforced
+        isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting
         isUnenforcedByDefault -> R.string.home_default_not_enforced
         state.current == ForceUse.FORCE_NONE -> R.string.home_not_enforced
         else -> R.string.home_other_policy
     }
     val subtitle = when {
+        state.requestingPermission -> R.string.shizuku_permission_requesting_hint
         state.checking -> R.string.home_checking_hint
         state.busy -> R.string.home_applying
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
         state.current == null -> R.string.home_refresh_hint
         isEnforced -> R.string.home_enforced_hint
+        isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting_hint
         isUnenforcedByDefault -> R.string.home_default_not_enforced_hint
         isReleased -> R.string.home_released_hint
         else -> R.string.home_other_policy_hint
@@ -226,6 +240,7 @@ private fun HomeHeroAction(
 ) {
     val restore = state.current == ForceUse.FORCE_NONE
     val label = when {
+        state.requestingPermission -> R.string.shizuku_permission_requesting
         state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_open_shizuku

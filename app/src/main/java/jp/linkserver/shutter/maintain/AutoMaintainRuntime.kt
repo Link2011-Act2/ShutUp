@@ -5,6 +5,10 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import jp.linkserver.shutter.ForceUse
+import jp.linkserver.shutter.AppUserEnvironment
+import jp.linkserver.shutter.ReleasePermit
+import jp.linkserver.shutter.SamsungUserWarning
+import jp.linkserver.shutter.SamsungUserWarningPreferences
 import jp.linkserver.shutter.ShizukuAudioPolicy
 import jp.linkserver.shutter.ShutterJournalFile
 import jp.linkserver.shutter.ShutterSnapshot
@@ -19,6 +23,8 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val app = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
+    private val environment = AppUserEnvironment.current()
+    val userWarning = SamsungUserWarning(environment, SamsungUserWarningPreferences(app))
     private val preferences = AutoMaintainPreferences(app)
     private val mutableSnapshot = MutableStateFlow<ShutterSnapshot?>(null)
     val snapshot = mutableSnapshot.asStateFlow()
@@ -26,11 +32,11 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         app.packageManager.getPackageInfo(app.packageName, 0).let { it.firstInstallTime < it.lastUpdateTime }
     }.getOrDefault(true)
     val controller = AutoMaintainController(preferences,
-        ShizukuAudioPolicy.shutterConnector(app, ShutterJournalFile(app), preferences.load().armed, legacyInstallation) {
+        ShizukuAudioPolicy.shutterConnector(app, ShutterJournalFile(app), preferences.load().armed, legacyInstallation, environment) {
             val changed = mutableSnapshot.value != it
             mutableSnapshot.value = it
             ShutterSound.sync(app, it, changed)
-        })
+        }, releaseAuthorization = userWarning)
     private val statusQuery = PolicyQuery(scope) { controller.query() }
     val offer = AutoMaintainOffer(AutoMaintainOfferPreferences(app))
     private val scheduler by lazy { AutoMaintainScheduler(app) }
@@ -82,8 +88,8 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
             catch (error: Exception) { Log.w("AutoMaintain", "Automatic recovery deferred", error) }
         }
     }
-    fun manual(action: ManualAction, callback: (Result<Int>) -> Unit) {
-        val request = try { controller.requestManual(action) }
+    fun manual(action: ManualAction, releasePermit: ReleasePermit? = null, callback: (Result<Int>) -> Unit) {
+        val request = try { controller.requestManual(action, releasePermit) }
         catch (error: Exception) { callback(Result.failure(error)); return }
         updateOffer { offer.manualRequested(action) }
         automatic?.cancel()
