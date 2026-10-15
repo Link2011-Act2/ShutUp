@@ -197,11 +197,11 @@
   <string name="about_channel_unknown_description">No description is available for this channel.</string>
   <string name="about_channel_dialog_title">Development channel: %1$s</string>
   <string name="developer_force_samsung_title">Recognize as a Samsung device</string>
-  <string name="developer_force_samsung_description">Force the warning feature to recognize Samsung. When off, use the actual manufacturer.</string>
+  <string name="developer_force_samsung_description">Override Samsung detection throughout the app, including Galaxy settings and CSC method selection. When off, use the actual manufacturer.</string>
   <string name="developer_force_non_main_user_title">Recognize as a non-main user</string>
-  <string name="developer_force_non_main_user_description">Force the warning feature to recognize a non-main user. When off, use the actual user.</string>
-  <string name="developer_warning_simulation_note">Test warnings, confirmation dialogs, and automatic maintenance. Changes apply immediately and reset simulated consent. The actual setting method and target user stay the same. Continuing changes real settings.</string>
-  <string name="developer_warning_save_failed">Could not save warning simulation settings.</string>
+  <string name="developer_force_non_main_user_description">Override non-main user detection throughout the app, including warnings and automatic maintenance rules. When off, use the actual user.</string>
+  <string name="developer_warning_simulation_note">Home, advanced settings, QS, notifications, and maintenance share this environment. Changes apply immediately and reset simulated consent. CSC reads and writes still target the actual app user. Release and restore change real settings. Restore first if the control method will change.</string>
+  <string name="developer_warning_save_failed">Could not change the developer environment settings.</string>
   <string name="galaxy_settings_title">Galaxy advanced settings</string>
   <string name="galaxy_force_audio_title">Force standard Android method</string>
   <string name="galaxy_force_audio_description">Use AudioPolicy instead of CSC settings. Switching methods pauses automatic maintenance.</string>
@@ -211,6 +211,7 @@
   <string name="galaxy_method_restore_first">Restore the saved original state before switching methods.</string>
   <string name="galaxy_method_save_failed">Could not change methods. Wait for any operation to finish and try again.</string>
   <string name="galaxy_csc_absent_value">(CSC key absent)</string>
+  <string name="galaxy_csc_absent_status_hint">No CSC enforcement setting was found, so the shutter sound is probably already silent.</string>
   <string name="galaxy_csc_absent_hint">There is no CSC enforcement setting. Shutter sound behavior depends on the camera app and device settings.</string>
   <string name="galaxy_csc_released">No CSC force</string>
   <string name="galaxy_csc_released_hint">The CSC setting does not enforce the shutter sound.</string>

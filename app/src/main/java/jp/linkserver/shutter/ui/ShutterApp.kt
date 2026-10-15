@@ -245,7 +245,7 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
             if (developerSettings.available) {
                 DeveloperUpdateSettingsSection(developerSettings,
                     onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
-                    warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange)
+                    warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange, shutterState.working)
             }
         }
     }

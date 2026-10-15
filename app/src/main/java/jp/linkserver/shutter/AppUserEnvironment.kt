@@ -13,3 +13,12 @@ internal data class AppUserEnvironment(val manufacturer: String, val userId: Int
         fun current() = fromAppUid(Build.MANUFACTURER, Process.myUid())
     }
 }
+
+/** App behavior uses recognized identity; SettingsProvider always uses the real app user. */
+internal data class AppEnvironment(
+    val actual: AppUserEnvironment,
+    val recognized: AppUserEnvironment = actual
+) {
+    val samsung get() = recognized.samsung
+    val settingsUserId get() = actual.userId
+}

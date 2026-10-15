@@ -6,6 +6,7 @@ import android.os.Looper
 import android.util.Log
 import jp.linkserver.shutter.GalaxyControlPreferences
 import jp.linkserver.shutter.ForceUse
+import jp.linkserver.shutter.AppEnvironment
 import jp.linkserver.shutter.AppUserEnvironment
 import jp.linkserver.shutter.ReleasePermit
 import jp.linkserver.shutter.SamsungUserWarning
@@ -16,6 +17,8 @@ import jp.linkserver.shutter.ShizukuAudioPolicy
 import jp.linkserver.shutter.ShutterJournalFile
 import jp.linkserver.shutter.ShutterSnapshot
 import jp.linkserver.shutter.ShutterSound
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.*
@@ -26,16 +29,20 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val app = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
-    private val environment = AppUserEnvironment.current()
-    private val galaxyPreferences = GalaxyControlPreferences(app, samsung = environment.samsung)
-    private val mutableGalaxySettings = MutableStateFlow(galaxyPreferences.load())
-    val galaxySettings = mutableGalaxySettings.asStateFlow()
-    private val journal = ShutterJournalFile(app)
+    private val controlSettingsChanges = Mutex()
+    private val actualEnvironment = AppUserEnvironment.current()
     private val warningDeveloperPreferences = WarningDeveloperPreferences(app)
     private val mutableWarningDeveloperSettings = MutableStateFlow(warningDeveloperPreferences.load())
     val warningDeveloperSettings = mutableWarningDeveloperSettings.asStateFlow()
-    private fun warning(settings: WarningDeveloperSettings) = SamsungUserWarning(settings.warningEnvironment(environment),
-        if (settings.simulated) warningDeveloperPreferences.simulationConsent else SamsungUserWarningPreferences(app))
+    private val mutableEnvironment = MutableStateFlow(warningDeveloperSettings.value.environment(actualEnvironment))
+    val environment = mutableEnvironment.asStateFlow()
+    private val galaxyPreferences = GalaxyControlPreferences(app, samsung = { environment.value.samsung })
+    private val mutableGalaxySettings = MutableStateFlow(galaxyPreferences.load())
+    val galaxySettings = mutableGalaxySettings.asStateFlow()
+    private val journal = ShutterJournalFile(app)
+    private fun warning(settings: WarningDeveloperSettings, selected: AppEnvironment = environment.value) =
+        SamsungUserWarning(selected.recognized,
+            if (settings.simulated) warningDeveloperPreferences.simulationConsent else SamsungUserWarningPreferences(app))
     private val mutableUserWarning = MutableStateFlow(warning(warningDeveloperSettings.value))
     val userWarningState = mutableUserWarning.asStateFlow()
     val userWarning get() = userWarningState.value
@@ -43,7 +50,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val mutableSnapshot = MutableStateFlow<ShutterSnapshot?>(null)
     val snapshot = mutableSnapshot.asStateFlow()
     val controller = AutoMaintainController(preferences,
-        ShizukuAudioPolicy.shutterConnector(app, journal, preferences.load().armed, environment,
+        ShizukuAudioPolicy.shutterConnector(app, journal, preferences.load().armed, { environment.value },
             forceAudioPolicy = { galaxySettings.value.forceAudioPolicy }) {
             val changed = mutableSnapshot.value != it
             mutableSnapshot.value = it
@@ -64,20 +71,34 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         reconcile()
         checkNow()
     }
-    fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) {
-        if (!warningDeveloperSettings.value.available || settings == warningDeveloperSettings.value) return
-        warningDeveloperPreferences.save(settings)
-        val saved = warningDeveloperPreferences.load()
-        val next = warning(saved)
-        try { controller.updateReleaseAuthorization(next) }
-        finally {
-            mutableUserWarning.value = next
-            mutableWarningDeveloperSettings.value = saved
-            reconcile()
+    suspend fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) = controlSettingsChanges.withLock {
+        if (!warningDeveloperSettings.value.available || settings == warningDeveloperSettings.value) return@withLock
+        val changesMethod = settings.environment(actualEnvironment).samsung != environment.value.samsung
+        val apply = {
+            warningDeveloperPreferences.save(settings)
+            val saved = warningDeveloperPreferences.load()
+            val selected = saved.environment(actualEnvironment)
+            val next = warning(saved, selected)
+            try { controller.updateReleaseAuthorization(next) }
+            finally {
+                mutableEnvironment.value = selected
+                mutableGalaxySettings.value = galaxyPreferences.load()
+                mutableUserWarning.value = next
+                mutableWarningDeveloperSettings.value = saved
+                if (changesMethod) {
+                    statusQuery.invalidate()
+                    mutableSnapshot.value = null
+                }
+            }
         }
+        try {
+            withContext(Dispatchers.IO) {
+                if (changesMethod) controller.updateControlMethod(journal, apply) else apply()
+            }
+        } finally { withContext(NonCancellable + Dispatchers.Main.immediate) { reconcile() } }
     }
-    suspend fun setGalaxyAudioPolicy(enabled: Boolean) {
-        if (!galaxySettings.value.available || galaxySettings.value.forceAudioPolicy == enabled) return
+    suspend fun setGalaxyAudioPolicy(enabled: Boolean) = controlSettingsChanges.withLock {
+        if (!galaxySettings.value.available || galaxySettings.value.forceAudioPolicy == enabled) return@withLock
         try {
             withContext(Dispatchers.IO) {
                 controller.updateControlMethod(journal) {

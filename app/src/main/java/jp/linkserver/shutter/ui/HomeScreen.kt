@@ -188,7 +188,7 @@ private fun HomeStateHero(
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
         state.current == null -> R.string.home_refresh_hint
         !state.releaseAllowed -> R.string.galaxy_method_restore_first
-        state.cscAbsent -> R.string.galaxy_csc_absent_hint
+        state.cscAbsent -> R.string.galaxy_csc_absent_status_hint
         isEnforced -> R.string.home_enforced_hint
         isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting_hint
         isReleased && state.persistent -> R.string.galaxy_csc_released_hint
@@ -197,7 +197,7 @@ private fun HomeStateHero(
         else -> R.string.home_other_policy_hint
     }
     val subtitleText = stringResource(subtitle)
-    val description = if (deviceDefault != null && !state.working && state.status == ShutterSound.Status.READY &&
+    val description = if (!state.cscAbsent && deviceDefault != null && !state.working && state.status == ShutterSound.Status.READY &&
         state.current == deviceDefault) {
         stringResource(
             if (state.persistent && !state.restoresSystemDefault) R.string.home_with_baseline

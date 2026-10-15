@@ -18,7 +18,7 @@ class GalaxyControlSettingsTest {
     @Test fun enablingRequiresConfirmationAndPersistsWhileOtherDevicesIgnoreTheOverride() {
         val prefs = context.getSharedPreferences("galaxy_control_test", 0)
         prefs.edit().clear().commit()
-        val store = GalaxyControlPreferences(context, prefs, samsung = true)
+        val store = GalaxyControlPreferences(context, prefs, samsung = { true })
         var settings by mutableStateOf(store.load())
         try {
             compose.setContent { ShutterTheme {
@@ -33,11 +33,11 @@ class GalaxyControlSettingsTest {
             compose.onNodeWithText(text(R.string.galaxy_force_audio_title)).assertIsOff().performClick()
             compose.onNodeWithText(text(R.string.galaxy_force_audio_enable)).performClick()
             compose.onNodeWithText(text(R.string.galaxy_force_audio_title)).assertIsOn()
-            assertTrue(GalaxyControlPreferences(context, prefs, samsung = true).load().forceAudioPolicy)
+            assertTrue(GalaxyControlPreferences(context, prefs, samsung = { true }).load().forceAudioPolicy)
             compose.onNodeWithText(text(R.string.galaxy_force_audio_title)).performClick().assertIsOff()
             assertFalse(store.load().forceAudioPolicy)
             store.save(true)
-            val otherDevice = GalaxyControlPreferences(context, prefs, samsung = false)
+            val otherDevice = GalaxyControlPreferences(context, prefs, samsung = { false })
             assertEquals(GalaxyControlSettings(), otherDevice.load())
             otherDevice.save(false)
             assertTrue(store.load().forceAudioPolicy)

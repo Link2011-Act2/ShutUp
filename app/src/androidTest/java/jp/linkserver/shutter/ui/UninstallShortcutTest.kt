@@ -42,7 +42,10 @@ class UninstallShortcutTest {
                     .setAction(MainActivity.ACTION_PREPARE_UNINSTALL)
                     .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
             }
-            compose.onNodeWithText(title).assertIsDisplayed()
+            // startActivity returns before the existing activity receives onNewIntent.
+            compose.waitUntil(timeoutMillis = 5_000) {
+                runCatching { compose.onNodeWithText(title).assertIsDisplayed() }.isSuccess
+            }
             scenario.recreate()
             compose.onNodeWithText(title).assertIsDisplayed()
             compose.onNodeWithText(close).performClick()

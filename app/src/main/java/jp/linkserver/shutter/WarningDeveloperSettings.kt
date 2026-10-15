@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import jp.linkserver.shutter.update.isIntDevUpdateBuild
 
-/** Overrides warning policy only. Never pass the simulated identity to the device backend. */
+/** One recognized environment for app behavior, separate from the actual SettingsProvider user. */
 internal data class WarningDeveloperSettings(
     val available: Boolean = false,
     val forceSamsung: Boolean = false,
@@ -12,10 +12,10 @@ internal data class WarningDeveloperSettings(
 ) {
     val simulated get() = available && (forceSamsung || forceNonMainUser)
 
-    fun warningEnvironment(actual: AppUserEnvironment) = if (available) actual.copy(
+    fun environment(actual: AppUserEnvironment) = AppEnvironment(actual, if (available) actual.copy(
         manufacturer = if (forceSamsung) "samsung" else actual.manufacturer,
         userId = if (forceNonMainUser && actual.userId == 0) 1 else actual.userId
-    ) else actual
+    ) else actual)
 }
 
 internal class WarningDeveloperPreferences(

@@ -180,13 +180,7 @@ class ShutterViewModel private constructor(
                 Toast.makeText(getApplication(), if (error is ShutterMethodChangeBlocked)
                     R.string.galaxy_method_restore_first else R.string.galaxy_method_save_failed, Toast.LENGTH_LONG).show()
             } finally {
-                mutableState.update {
-                    if (galaxySettings.value != previous) it.copy(changingMethod = false, current = null,
-                        defaultValue = null, persistent = !galaxySettings.value.forceAudioPolicy,
-                        restoresSystemDefault = false, restorable = null, cscAbsent = false, releaseAllowed = true)
-                    else it.copy(changingMethod = false)
-                }
-                refresh()
+                finishMethodChange(previous)
             }
         }
     }
@@ -198,10 +192,28 @@ class ShutterViewModel private constructor(
         warningDeveloperSettings.value.copy(forceNonMainUser = enabled))
 
     private fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) {
-        runCatching { maintenance.setWarningDeveloperSettings(settings) }.onFailure {
-            Log.w("ShutterSound", "Could not save warning developer settings", it)
-            Toast.makeText(getApplication(), R.string.developer_warning_save_failed, Toast.LENGTH_LONG).show()
+        if (cleared || state.value.working) return
+        val previous = galaxySettings.value
+        mutableState.update { it.copy(changingMethod = true, releaseConfirmationPending = false) }
+        viewModelScope.launch {
+            try { maintenance.setWarningDeveloperSettings(settings) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                Log.w("ShutterSound", "Could not change developer environment", error)
+                Toast.makeText(getApplication(), if (error is ShutterMethodChangeBlocked)
+                    R.string.galaxy_method_restore_first else R.string.developer_warning_save_failed, Toast.LENGTH_LONG).show()
+            } finally { finishMethodChange(previous) }
         }
+    }
+
+    private fun finishMethodChange(previous: GalaxyControlSettings) {
+        mutableState.update {
+            if (galaxySettings.value != previous) it.copy(changingMethod = false, current = null,
+                defaultValue = null, persistent = galaxySettings.value.available && !galaxySettings.value.forceAudioPolicy,
+                restoresSystemDefault = false, restorable = null, cscAbsent = false, releaseAllowed = true)
+            else it.copy(changingMethod = false)
+        }
+        refresh()
     }
 
     fun release() = release(null)

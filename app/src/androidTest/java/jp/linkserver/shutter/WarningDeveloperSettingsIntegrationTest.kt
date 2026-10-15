@@ -13,6 +13,7 @@ import jp.linkserver.shutter.maintain.AutoMaintainRuntime
 import jp.linkserver.shutter.ui.ShutterApp
 import jp.linkserver.shutter.ui.ShutterTheme
 import jp.linkserver.shutter.update.AppUpdateViewModel
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -38,7 +39,7 @@ class WarningDeveloperSettingsIntegrationTest {
             val restarted = WarningDeveloperPreferences(context, prefs, "1.1.0-IntDev_rev0")
             assertEquals(WarningDeveloperSettings(true, true, false), restarted.load())
             restarted.save(restarted.load().copy(forceNonMainUser = true))
-            val warning = SamsungUserWarning(store.load().warningEnvironment(AppUserEnvironment("Google", 0)),
+            val warning = SamsungUserWarning(store.load().environment(AppUserEnvironment("Google", 0)).recognized,
                 store.simulationConsent)
             warning.confirm(true)
             warning.enableAutomatic()
@@ -59,7 +60,7 @@ class WarningDeveloperSettingsIntegrationTest {
         }
     }
 
-    @Test fun switchesUpdateTheLiveWarningAndResetConsentWithoutRecreatingTheBackend() {
+    @Test fun switchesUpdateGalaxyBehaviorSettingsAndWarningWithoutChangingTheActualUser() {
         val runtime = AutoMaintainRuntime.get(context)
         val original = runtime.warningDeveloperSettings.value
         val owner = ViewModelStore()
@@ -78,8 +79,8 @@ class WarningDeveloperSettingsIntegrationTest {
             } as T
         }
         try {
+            runBlocking { runtime.setWarningDeveloperSettings(WarningDeveloperSettings(available = true)) }
             compose.runOnUiThread {
-                runtime.setWarningDeveloperSettings(WarningDeveloperSettings(available = true))
                 val provider = ViewModelProvider(owner, factory)
                 model = provider[ShutterViewModel::class.java]
                 updates = provider[AppUpdateViewModel::class.java]
@@ -88,12 +89,25 @@ class WarningDeveloperSettingsIntegrationTest {
             compose.setContent { ShutterTheme { ShutterApp(model, updates = updates, onRelease = model::release) } }
             compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
             compose.onNodeWithText(text(R.string.developer_force_samsung_title)).performScrollTo()
-                .assertIsOff().performClick().assertIsOn()
+                .assertIsOff().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && runtime.warningDeveloperSettings.value.forceSamsung }
+            compose.onNodeWithText(text(R.string.developer_force_samsung_title)).assertIsOn()
             compose.runOnIdle {
+                assertTrue(runtime.galaxySettings.value.available)
+                assertTrue(model.state.value.persistent)
+                assertTrue(runtime.environment.value.samsung)
+                assertEquals(actual.userId, runtime.environment.value.settingsUserId)
                 assertEquals(actual.copy(manufacturer = "samsung").needsSamsungUserWarning, model.state.value.nonMainUserWarning)
             }
+            compose.onNodeWithText(text(R.string.galaxy_force_audio_title)).performScrollTo().assertIsOff().performClick()
+            compose.onNodeWithText(text(R.string.galaxy_force_audio_enable)).performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && runtime.galaxySettings.value.forceAudioPolicy }
+            compose.onNodeWithText(text(R.string.galaxy_force_audio_title)).assertIsOn().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && !runtime.galaxySettings.value.forceAudioPolicy }
             compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).performScrollTo()
-                .assertIsOff().performClick().assertIsOn()
+                .assertIsOff().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && runtime.warningDeveloperSettings.value.forceNonMainUser }
+            compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).assertIsOn()
             compose.runOnIdle {
                 assertTrue(model.state.value.nonMainUserWarning)
                 assertFalse(model.state.value.nonMainUserConfirmed)
@@ -115,8 +129,11 @@ class WarningDeveloperSettingsIntegrationTest {
                 assertTrue(runtime.userWarning.confirmed)
             }
             compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
-            compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).performScrollTo()
-                .performClick().assertIsOff().performClick().assertIsOn()
+            compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).performScrollTo().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && !runtime.warningDeveloperSettings.value.forceNonMainUser }
+            compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).assertIsOff().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && runtime.warningDeveloperSettings.value.forceNonMainUser }
+            compose.onNodeWithText(text(R.string.developer_force_non_main_user_title)).assertIsOn()
             compose.runOnIdle {
                 assertTrue(runtime.userWarning.confirmationRequired)
                 assertFalse(model.state.value.nonMainUserConfirmed)
@@ -126,6 +143,9 @@ class WarningDeveloperSettingsIntegrationTest {
                 assertTrue(recreated.warningDeveloperSettings.value.forceNonMainUser)
                 assertSame(controller, runtime.controller)
                 assertEquals(actual, AppUserEnvironment.current())
+                assertEquals(actual, runtime.environment.value.actual)
+                assertEquals(actual.userId, runtime.environment.value.settingsUserId)
+                assertTrue(runtime.environment.value.recognized.userId != 0)
                 assertEquals(snapshot, runtime.snapshot.value)
             }
             compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
@@ -134,12 +154,15 @@ class WarningDeveloperSettingsIntegrationTest {
             compose.onNodeWithText(text(R.string.samsung_user_confirmation_cancel)).performClick()
             compose.runOnIdle {
                 model.setForceSamsung(false)
-                model.setForceNonMainUser(false)
             }
+            compose.waitUntil(10_000) { !model.state.value.working && !runtime.warningDeveloperSettings.value.forceSamsung }
+            compose.runOnIdle { model.setForceNonMainUser(false) }
+            compose.waitUntil(10_000) { !model.state.value.working && !runtime.warningDeveloperSettings.value.forceNonMainUser }
+            compose.runOnIdle { assertEquals(actual.samsung, runtime.galaxySettings.value.available) }
             compose.runOnIdle { assertEquals(actual.needsSamsungUserWarning, model.state.value.nonMainUserWarning) }
         } finally {
+            runBlocking { runtime.setWarningDeveloperSettings(original) }
             compose.runOnUiThread {
-                runtime.setWarningDeveloperSettings(original)
                 owner.clear()
                 recreatedOwner.clear()
             }

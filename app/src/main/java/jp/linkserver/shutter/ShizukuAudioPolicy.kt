@@ -87,13 +87,14 @@ internal object ShizukuAudioPolicy {
 
     fun shutterConnector(context: Context, store: ShutterChangeStore,
         legacyMaintainArmed: Boolean,
-        environment: AppUserEnvironment = AppUserEnvironment.current(),
+        environment: () -> AppEnvironment = { AppEnvironment(AppUserEnvironment.current()) },
         forceAudioPolicy: () -> Boolean = { false },
         publish: (ShutterSnapshot) -> Unit): AudioPolicyConnector =
         object : AudioPolicyConnector {
             override val storedRestoration = true
             override suspend fun connect(): AudioPolicyConnection {
                 val bound = withContext(Dispatchers.Main.immediate) { awaitService() }
+                val selectedEnvironment = environment()
                 val backend = ShutterBackend(object : ShutterDevice {
                     override fun readAudio() = bound.forSystem
                     override fun writeAudio(value: Int) {
@@ -103,7 +104,7 @@ internal object ShizukuAudioPolicy {
                     }
                     // Settings.System is per-user; never implicitly write user 0
                     // when ShutUp is installed in another Android user/profile.
-                    private val userId = environment.userId
+                    private val userId = selectedEnvironment.settingsUserId
                     override fun readCsc(): String? = bound.getGalaxyShutter(userId).takeUnless { it == "null" }
                     override fun readCscInfo(): GalaxyCscSetting? = GalaxyCscSetting.decode(bound.getGalaxyShutterInfo(userId))
                     override fun writeCsc(value: Int?) {
@@ -116,7 +117,7 @@ internal object ShizukuAudioPolicy {
                     }
                     override fun canWriteCsc() =
                         Shizuku.checkRemotePermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
-                }, store, environment.samsung,
+                }, store, selectedEnvironment.samsung,
                     ForceUse.deviceDefault(), legacyMaintainArmed, forceAudioPolicy())
                 return BackendPolicyConnection(backend, store, publish)
             }

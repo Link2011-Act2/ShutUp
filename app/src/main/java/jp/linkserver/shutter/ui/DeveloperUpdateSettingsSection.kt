@@ -26,7 +26,8 @@ internal fun DeveloperUpdateSettingsSection(
     onIgnoreIntervalChange: (Boolean) -> Unit,
     warningSettings: WarningDeveloperSettings = WarningDeveloperSettings(),
     onForceSamsungChange: (Boolean) -> Unit = {},
-    onForceNonMainUserChange: (Boolean) -> Unit = {}
+    onForceNonMainUserChange: (Boolean) -> Unit = {},
+    environmentBusy: Boolean = false
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         AboutSectionTitle(stringResource(R.string.settings_developer))
@@ -43,11 +44,11 @@ internal fun DeveloperUpdateSettingsSection(
                 SettingsDividerGap()
                 DeveloperUpdateToggle(stringResource(R.string.developer_force_samsung_title),
                     stringResource(R.string.developer_force_samsung_description), warningSettings.forceSamsung,
-                    SettingsGroupPosition.Middle, onForceSamsungChange)
+                    SettingsGroupPosition.Middle, onForceSamsungChange, enabled = !environmentBusy)
                 SettingsDividerGap()
                 DeveloperUpdateToggle(stringResource(R.string.developer_force_non_main_user_title),
                     stringResource(R.string.developer_force_non_main_user_description), warningSettings.forceNonMainUser,
-                    SettingsGroupPosition.Bottom, onForceNonMainUserChange)
+                    SettingsGroupPosition.Bottom, onForceNonMainUserChange, enabled = !environmentBusy)
             }
         }
         if (warningSettings.available) Text(stringResource(R.string.developer_warning_simulation_note),
@@ -59,10 +60,10 @@ internal fun DeveloperUpdateSettingsSection(
 @Composable
 private fun DeveloperUpdateToggle(
     title: String, description: String, checked: Boolean, position: SettingsGroupPosition,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true
 ) {
     SettingsItemSurface(false, position) {
-        Row(Modifier.fillMaxWidth().toggleable(checked, role = Role.Switch, onValueChange = onCheckedChange)
+        Row(Modifier.fillMaxWidth().toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
             .padding(horizontal = 22.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)) {

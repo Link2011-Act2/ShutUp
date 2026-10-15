@@ -9,11 +9,14 @@ internal class ShutterMethodChangeBlocked : IllegalStateException("Restore the e
 internal class GalaxyControlPreferences(
     context: Context,
     private val prefs: SharedPreferences = context.applicationContext.getSharedPreferences("galaxy_control", Context.MODE_PRIVATE),
-    private val samsung: Boolean = AppUserEnvironment.current().samsung
+    private val samsung: () -> Boolean = { AppUserEnvironment.current().samsung }
 ) {
-    fun load() = GalaxyControlSettings(samsung, samsung && prefs.getBoolean("forceAudioPolicy", false))
+    fun load(): GalaxyControlSettings {
+        val available = samsung()
+        return GalaxyControlSettings(available, available && prefs.getBoolean("forceAudioPolicy", false))
+    }
     fun save(forceAudioPolicy: Boolean) {
-        if (!samsung) return
+        if (!samsung()) return
         check(prefs.edit().putBoolean("forceAudioPolicy", forceAudioPolicy).commit()) { "Could not save Galaxy control method" }
     }
 }
