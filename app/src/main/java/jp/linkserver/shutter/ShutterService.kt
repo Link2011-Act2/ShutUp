@@ -53,7 +53,7 @@ class ShutterService : IShutterService.Stub() {
     }
 
     private fun galaxySettings(userId: Int, operation: String, value: String? = null): String? {
-        require(userId >= 0)
+        require(userId == 0)
         // No shell interpolation or arbitrary command/key IPC. The subprocess
         // inherits the UserService's shell/root UID rather than the app caller's.
         // Invoke the binary directly rather than the settings shell wrapper, so
