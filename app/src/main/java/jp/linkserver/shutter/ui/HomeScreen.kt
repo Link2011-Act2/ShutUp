@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +53,7 @@ internal fun HomeScreen(
     onRestore: () -> Unit,
     onRefresh: () -> Unit,
     deviceDefault: Int? = state.defaultValue,
+    galaxyMode: Boolean = false,
     updateAction: @Composable RowScope.() -> Unit = {},
     updateBanner: @Composable () -> Unit = {}
 ) {
@@ -59,8 +61,16 @@ internal fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(stringResource(R.string.app_name), Modifier.alignByBaseline(),
+                            style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        if (galaxyMode) Text(stringResource(R.string.home_galaxy_mode), Modifier.alignByBaseline(),
+                            style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                },
                 actions = {
                     updateAction()
                     IconButton(onClick = onSettings) {
@@ -180,6 +190,7 @@ private fun HomeStateHero(
         isUnknown -> R.string.home_unknown
         !state.releaseAllowed -> R.string.galaxy_legacy_restore_pending
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_enforced
+        isReleased && state.cscAbsent -> R.string.home_default_not_enforced
         isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting
         isReleased && state.persistent -> R.string.galaxy_csc_released
         isUnenforcedByDefault -> R.string.home_default_not_enforced
@@ -218,8 +229,7 @@ private fun HomeStateHero(
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(label), style = MaterialTheme.typography.displayMedium,
-                        fontSize = 48.sp, lineHeight = 56.sp, fontWeight = FontWeight.Bold)
+                    HomeStatusLabel(stringResource(label))
                     Text(if (state.cscAbsent) stringResource(R.string.galaxy_csc_absent_value) else stringResource(
                         if (state.persistent) R.string.home_csc else R.string.home_force_system,
                         if (state.persistent) when (state.current) {

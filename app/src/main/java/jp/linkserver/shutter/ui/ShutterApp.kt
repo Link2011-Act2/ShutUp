@@ -146,6 +146,7 @@ internal fun ShutterNavigation(
                     "licenses" -> OssLicensesScreen(back)
                     else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
                         onRelease, onRestore, onRefresh,
+                        galaxyMode = galaxySettings.available,
                         updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(openPrompt) },
                         updateBanner = {
                             if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {

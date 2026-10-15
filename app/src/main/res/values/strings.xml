@@ -10,6 +10,7 @@
   <string name="shutter_change_unverified">Could not confirm the setting. Restoration information has been kept. Check Shizuku and refresh before trying again.</string>
   <string name="notification_restore_failed_common">Could not restore the setting. Start Shizuku and restore from the app.</string>
   <string name="app_name">ShutUp</string>
+  <string name="home_galaxy_mode">Galaxy mode</string>
   <string name="about_forked_from">Forked from</string>
   <string name="home_shutter_sound">Shutter sound</string>
   <string name="home_enforced">Will play</string>
@@ -216,7 +217,7 @@
   <string name="galaxy_csc_absent_value">(CSC key absent)</string>
   <string name="galaxy_csc_absent_status_hint">No CSC enforcement setting was found, so the shutter sound is probably already silent.</string>
   <string name="galaxy_csc_absent_hint">No CSC enforcement setting was found. This is probably a model intended for a market outside Japan and similar regions, or a nonstandard device.</string>
-  <string name="galaxy_csc_released">No CSC force</string>
+  <string name="galaxy_csc_released">Released</string>
   <string name="galaxy_csc_released_hint">Follows the ringer mode.</string>
   <string name="galaxy_legacy_restore_pending">Restore pending</string>
 </resources>

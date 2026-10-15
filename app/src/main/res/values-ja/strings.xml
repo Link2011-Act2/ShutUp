@@ -10,6 +10,7 @@
   <string name="shutter_change_unverified">設定を確認できませんでした。復元情報は保持しています。Shizukuを確認し、状態を更新してから再試行してください。</string>
   <string name="notification_restore_failed_common">復元できませんでした。Shizukuを起動し、アプリから復元してください。</string>
   <string name="app_name">ShutUp</string>
+  <string name="home_galaxy_mode">Galaxy mode</string>
   <string name="about_forked_from">Forked from</string>
   <string name="home_shutter_sound">シャッター音</string>
   <string name="home_enforced">鳴ります</string>
@@ -215,7 +216,7 @@
   <string name="galaxy_csc_absent_value">(CSCキーなし)</string>
   <string name="galaxy_csc_absent_status_hint">CSCの強制設定がないため、おそらくすでにシャッター音はありません</string>
   <string name="galaxy_csc_absent_hint">CSCの強制設定が見つかりません。日本など以外のリージョンか、特殊な端末だと思います</string>
-  <string name="galaxy_csc_released">強制なし</string>
+  <string name="galaxy_csc_released">解除済み</string>
   <string name="galaxy_csc_released_hint">着信音モードに従います</string>
   <string name="galaxy_legacy_restore_pending">復元待ち</string>
 </resources>
