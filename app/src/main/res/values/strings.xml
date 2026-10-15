@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="restore_previous">Restore previous setting</string>
-  <string name="result_default_restored">The default shutter setting has been restored.</string>
+  <string name="result_default_restored">The shutter sound will play as before.</string>
   <string name="csc_default_unknown">The system default is unknown. A saved previous setting can be restored, but it may differ from the system default.</string>
   <string name="home_with_baseline">%1$s (before the change)</string>
   <string name="home_persistent_note">This change remains after a restart. Restore it before uninstalling the app.</string>
@@ -53,8 +53,8 @@
   <string name="home_expand_notes">Show usage notes</string>
   <string name="home_collapse_notes">Hide usage notes</string>
   <string name="tile_label">ShutUp</string>
-  <string name="about">Devices sold in some regions force the camera shutter sound to play even in silent mode. This app uses Shizuku to release that enforcement and restore the setting, using the method appropriate for your device.</string>
-  <string name="caveats">Depending on the device, the change may remain after a restart. Uninstalling the app does not undo it, so restore before removing the app.\n\nReleasing the setting does not guarantee that every camera app will be silent. Use silent or vibrate mode, or mute system sounds. Other system sounds may also be affected.\n\nRespect the privacy of the people around you and the rules where you live.</string>
+  <string name="about">Some devices, such as those intended for Japan, force the camera shutter sound to play even in silent mode. This app uses Shizuku to change setting values to release that enforcement or restore the settings.</string>
+  <string name="caveats">Restarting restores the original setting. On Galaxy devices, however, restarting does not restore it.\nUninstalling the app does not restore it either, so restore the setting before uninstalling.\n\nReleasing enforcement does not guarantee that every camera app will be silent. In general, the shutter sound will remain unless the ringer mode is set to silent or vibrate.\n\nRespect the privacy of the people around you and the rules where you live.</string>
   <string name="notification_changed_persistent">This setting remains after a restart. Restore it before uninstalling.</string>
   <string name="shizuku_not_running">Shizuku: not running</string>
   <string name="shizuku_not_authorized">Shizuku: permission not granted</string>
@@ -86,9 +86,9 @@
   <string name="samsung_user_confirmation_continue">Continue</string>
   <string name="samsung_user_confirmation_remember">Do not show again</string>
   <string name="samsung_user_confirmation_save_failed">Could not save the warning confirmation. Please try again.</string>
-  <string name="samsung_user_auto_maintain_confirm_first">Before enabling automatic maintenance, confirm the warning by using the release action on the home screen.</string>
+  <string name="samsung_user_auto_maintain_confirm_first">Before enabling automatic maintenance, use the release action and confirm the warning.</string>
   <string name="samsung_user_release_setting">Release set</string>
-  <string name="samsung_user_release_setting_hint">The settings indicate release. Check the actual shutter sound.</string>
+  <string name="samsung_user_release_setting_hint">The settings now indicate release, but the shutter sound may still play.</string>
   <string name="samsung_user_release_result">Settings changed. Check whether the actual shutter sound has been disabled.</string>
   <string name="samsung_user_already_released">The settings already indicate release. This app cannot verify whether the actual shutter sound is disabled.</string>
   <string name="action_restore">Restore the device default</string>
@@ -207,16 +207,16 @@
   <string name="developer_warning_save_failed">Could not change the developer environment settings.</string>
   <string name="galaxy_settings_title">Galaxy advanced settings</string>
   <string name="galaxy_force_audio_title">Force standard Android method</string>
-  <string name="galaxy_force_audio_description">Use AudioPolicy instead of CSC settings. Switching methods pauses automatic maintenance.</string>
+  <string name="galaxy_force_audio_description">Use the standard Android method instead of the Galaxy-specific method.</string>
   <string name="galaxy_force_audio_confirmation_title">Use the standard Android method?</string>
-  <string name="galaxy_force_audio_confirmation_description">This method may not work correctly on Galaxy devices. The AudioPolicy value may not reflect actual shutter sound enforcement.\n\nWhen enabled, setting changes and automatic maintenance use this method. Check the actual shutter sound after making changes.</string>
+  <string name="galaxy_force_audio_confirmation_description">This method may not work correctly on Galaxy devices. Even if the setting is changed successfully, the shutter sound will probably still play.\n\nWhen enabled, this method is used for setting changes and automatic maintenance. Check the actual shutter sound after making changes.</string>
   <string name="galaxy_force_audio_enable">Enable</string>
   <string name="galaxy_method_restore_first">Restore the saved original state before switching methods.</string>
   <string name="galaxy_method_save_failed">Could not change methods. Wait for any operation to finish and try again.</string>
   <string name="galaxy_csc_absent_value">(CSC key absent)</string>
   <string name="galaxy_csc_absent_status_hint">No CSC enforcement setting was found, so the shutter sound is probably already silent.</string>
-  <string name="galaxy_csc_absent_hint">There is no CSC enforcement setting. Shutter sound behavior depends on the camera app and device settings.</string>
+  <string name="galaxy_csc_absent_hint">No CSC enforcement setting was found. This is probably a model intended for a market outside Japan and similar regions, or a nonstandard device.</string>
   <string name="galaxy_csc_released">No CSC force</string>
-  <string name="galaxy_csc_released_hint">The CSC setting does not enforce the shutter sound.</string>
+  <string name="galaxy_csc_released_hint">Follows the ringer mode.</string>
   <string name="galaxy_legacy_restore_pending">Restore pending</string>
 </resources>
