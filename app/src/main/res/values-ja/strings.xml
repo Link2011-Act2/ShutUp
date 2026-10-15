@@ -196,10 +196,13 @@
   <string name="about_channel_unknown_description">このチャネルの説明は未登録です。</string>
   <string name="about_channel_dialog_title">開発チャネル: %1$s</string>
   <string name="developer_force_samsung_title">Samsung端末として認識</string>
-  <string name="developer_force_samsung_description">アプリ全体のSamsung判定を有効にします。Galaxy詳細設定やCSC方式の選択にも反映します。OFFでは実際のメーカーを使用します。</string>
+  <string name="developer_force_samsung_description">Galaxy詳細設定やCSC方式の選択を含む、アプリ全体のSamsung判定を有効にします。</string>
   <string name="developer_force_non_main_user_title">メインユーザー以外として認識</string>
   <string name="developer_force_non_main_user_description">アプリ全体の非メインユーザー判定を有効にします。警告や自動維持の条件にも反映します。OFFでは実際のユーザーを使用します。</string>
-  <string name="developer_warning_simulation_note">環境判定をホーム・詳細設定・QS・通知・自動維持で共有します。即時反映され、変更時に模擬環境の同意をリセットします。CSCの読み書き先は実際の実行ユーザーです。解除・復元は実際の設定を変更します。制御方式が変わる場合は先に復元してください。</string>
+  <string name="developer_warning_simulation_note">環境判定をホーム・詳細設定・QS・通知・自動維持で共有します。即時反映され、変更時に模擬環境の同意をリセットします。実際のCSCを扱う場合、読み書き先は実行ユーザーです。CSCエミュレーション以外の解除・復元は実設定を変更します。方式やエミュレーションを切り替える前に復元してください。</string>
+  <string name="developer_emulate_csc_title">CSCキーをエミュレート</string>
+  <string name="developer_emulate_csc_description">初期値1の仮想CSCキーを使い、実際のCSCを変更せずに解除・復元を検証します。Samsung端末としても認識します。「通常Android方式を強制使用」がOFFの間に適用されます。Shizukuへの接続は必要です。</string>
+  <string name="developer_emulate_csc_active">CSCエミュレーション中：仮想値を操作しています。実際のシャッター音には反映されません。</string>
   <string name="developer_warning_save_failed">開発者向けの環境設定を変更できませんでした。</string>
   <string name="galaxy_settings_title">Galaxyの詳細設定</string>
   <string name="galaxy_force_audio_title">通常Android方式を強制使用</string>
@@ -210,7 +213,7 @@
   <string name="galaxy_method_restore_first">方式を切り替える前に、保存した変更前の状態へ復元してください。</string>
   <string name="galaxy_method_save_failed">方式を変更できませんでした。操作の完了を待ち、もう一度お試しください。</string>
   <string name="galaxy_csc_absent_value">(CSCキーなし)</string>
-  <string name="galaxy_csc_absent_status_hint">CSCの強制設定がないため、おそらくすでにシャッター音はありません。</string>
+  <string name="galaxy_csc_absent_status_hint">CSCの強制設定がないため、おそらくすでにシャッター音はありません</string>
   <string name="galaxy_csc_absent_hint">CSCの強制設定が見つかりません。日本など以外のリージョンか、特殊な端末だと思います</string>
   <string name="galaxy_csc_released">強制なし</string>
   <string name="galaxy_csc_released_hint">CSC設定ではシャッター音を強制していません。</string>

@@ -77,6 +77,12 @@ internal fun HomeScreen(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             updateBanner()
+            if (state.emulatingCsc) {
+                Text(stringResource(R.string.developer_emulate_csc_active),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp))
+                Spacer(Modifier.height(12.dp))
+            }
             if (state.nonMainUserWarning) {
                 SamsungUserWarningCard()
                 Spacer(Modifier.height(12.dp))

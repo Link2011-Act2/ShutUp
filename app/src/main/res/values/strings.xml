@@ -197,10 +197,13 @@
   <string name="about_channel_unknown_description">No description is available for this channel.</string>
   <string name="about_channel_dialog_title">Development channel: %1$s</string>
   <string name="developer_force_samsung_title">Recognize as a Samsung device</string>
-  <string name="developer_force_samsung_description">Override Samsung detection throughout the app, including Galaxy settings and CSC method selection. When off, use the actual manufacturer.</string>
+  <string name="developer_force_samsung_description">Override Samsung detection throughout the app, including Galaxy settings and CSC method selection.</string>
   <string name="developer_force_non_main_user_title">Recognize as a non-main user</string>
   <string name="developer_force_non_main_user_description">Override non-main user detection throughout the app, including warnings and automatic maintenance rules. When off, use the actual user.</string>
-  <string name="developer_warning_simulation_note">Home, advanced settings, QS, notifications, and maintenance share this environment. Changes apply immediately and reset simulated consent. CSC reads and writes still target the actual app user. Release and restore change real settings. Restore first if the control method will change.</string>
+  <string name="developer_warning_simulation_note">Home, advanced settings, QS, notifications, and maintenance share this environment. Changes apply immediately and reset simulated consent. Real CSC reads and writes target the actual app user. Operations outside CSC emulation change real settings. Restore before changing the method or emulation mode.</string>
+  <string name="developer_emulate_csc_title">Emulate a CSC key</string>
+  <string name="developer_emulate_csc_description">Test release and restore with a virtual CSC key initially set to 1, without modifying the real CSC setting. Also recognize this device as Samsung. Applies while Force standard Android method is off. A Shizuku connection is still required.</string>
+  <string name="developer_emulate_csc_active">CSC emulation active: operations change virtual values and do not affect the actual shutter sound.</string>
   <string name="developer_warning_save_failed">Could not change the developer environment settings.</string>
   <string name="galaxy_settings_title">Galaxy advanced settings</string>
   <string name="galaxy_force_audio_title">Force standard Android method</string>

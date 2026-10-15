@@ -6,6 +6,9 @@ import android.os.Looper
 import android.util.Log
 import jp.linkserver.shutter.GalaxyControlPreferences
 import jp.linkserver.shutter.ForceUse
+import jp.linkserver.shutter.CscEmulation
+import jp.linkserver.shutter.ShutterChangeStore
+import jp.linkserver.shutter.ShutterJournal
 import jp.linkserver.shutter.AppEnvironment
 import jp.linkserver.shutter.AppUserEnvironment
 import jp.linkserver.shutter.ReleasePermit
@@ -39,25 +42,47 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val galaxyPreferences = GalaxyControlPreferences(app, samsung = { environment.value.samsung })
     private val mutableGalaxySettings = MutableStateFlow(galaxyPreferences.load())
     val galaxySettings = mutableGalaxySettings.asStateFlow()
-    private val journal = ShutterJournalFile(app)
+    private val realJournal = ShutterJournalFile(app)
+    private val cscEmulation = CscEmulation.create(app)
+    private val emulatingCsc get() = warningDeveloperSettings.value.emulatesCsc && !galaxySettings.value.forceAudioPolicy
+    private val journal = object : ShutterChangeStore {
+        private fun selected(): ShutterChangeStore = if (emulatingCsc) cscEmulation else realJournal
+        override fun load() = selected().load()
+        override fun save(journal: ShutterJournal) = selected().save(journal)
+    }
     private fun warning(settings: WarningDeveloperSettings, selected: AppEnvironment = environment.value) =
         SamsungUserWarning(selected.recognized,
             if (settings.simulated) warningDeveloperPreferences.simulationConsent else SamsungUserWarningPreferences(app))
     private val mutableUserWarning = MutableStateFlow(warning(warningDeveloperSettings.value))
     val userWarningState = mutableUserWarning.asStateFlow()
     val userWarning get() = userWarningState.value
-    private val preferences = AutoMaintainPreferences(app)
+    private val realPreferences = AutoMaintainPreferences(app)
+    private val simulatedPreferences = AutoMaintainPreferences(app,
+        app.getSharedPreferences("developer_csc_maintenance", Context.MODE_PRIVATE))
+    private val preferences = object : AutoMaintainStore {
+        private fun selected() = if (emulatingCsc) simulatedPreferences else realPreferences
+        override fun load() = selected().load()
+        override fun save(state: AutoMaintainState) = selected().save(state)
+    }
     private val mutableSnapshot = MutableStateFlow<ShutterSnapshot?>(null)
     val snapshot = mutableSnapshot.asStateFlow()
     val controller = AutoMaintainController(preferences,
         ShizukuAudioPolicy.shutterConnector(app, journal, preferences.load().armed, { environment.value },
-            forceAudioPolicy = { galaxySettings.value.forceAudioPolicy }) {
+            forceAudioPolicy = { galaxySettings.value.forceAudioPolicy },
+            emulatedDevice = { if (emulatingCsc) cscEmulation.device else null }) {
             val changed = mutableSnapshot.value != it
             mutableSnapshot.value = it
             ShutterSound.sync(app, it, changed)
         }, releaseAuthorization = userWarning)
     private val statusQuery = PolicyQuery(scope) { controller.query() }
-    val offer = AutoMaintainOffer(AutoMaintainOfferPreferences(app))
+    private val realOffer = AutoMaintainOfferPreferences(app)
+    private val simulatedOffer = AutoMaintainOfferPreferences(app,
+        app.getSharedPreferences("developer_csc_maintenance", Context.MODE_PRIVATE))
+    val offer = AutoMaintainOffer(object : AutoMaintainOfferStore {
+        private fun selected() = if (emulatingCsc) simulatedOffer else realOffer
+        override fun load() = selected().load()
+        override fun save(stage: AutoMaintainOfferStage) = selected().save(stage)
+    })
     private val scheduler by lazy { AutoMaintainScheduler(app) }
     private var initialized = false
     private var listening = false
@@ -73,7 +98,8 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     }
     suspend fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) = controlSettingsChanges.withLock {
         if (!warningDeveloperSettings.value.available || settings == warningDeveloperSettings.value) return@withLock
-        val changesMethod = settings.environment(actualEnvironment).samsung != environment.value.samsung
+        val changesEmulation = settings.emulatesCsc != warningDeveloperSettings.value.emulatesCsc
+        val changesMethod = changesEmulation || settings.environment(actualEnvironment).samsung != environment.value.samsung
         val apply = {
             warningDeveloperPreferences.save(settings)
             val saved = warningDeveloperPreferences.load()
@@ -85,6 +111,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
                 mutableGalaxySettings.value = galaxyPreferences.load()
                 mutableUserWarning.value = next
                 mutableWarningDeveloperSettings.value = saved
+                if (changesEmulation) offer.reload()
                 if (changesMethod) {
                     statusQuery.invalidate()
                     mutableSnapshot.value = null
@@ -93,7 +120,7 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         }
         try {
             withContext(Dispatchers.IO) {
-                if (changesMethod) controller.updateControlMethod(journal, apply) else apply()
+                if (changesMethod) controller.updateControlMethod(journal, resetMaintenance = changesEmulation, update = apply) else apply()
             }
         } finally { withContext(NonCancellable + Dispatchers.Main.immediate) { reconcile() } }
     }
@@ -101,9 +128,10 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         if (!galaxySettings.value.available || galaxySettings.value.forceAudioPolicy == enabled) return@withLock
         try {
             withContext(Dispatchers.IO) {
-                controller.updateControlMethod(journal) {
+                controller.updateControlMethod(journal, resetMaintenance = warningDeveloperSettings.value.emulatesCsc) {
                     galaxyPreferences.save(enabled)
                     mutableGalaxySettings.value = galaxyPreferences.load()
+                    if (warningDeveloperSettings.value.emulatesCsc) offer.reload()
                     statusQuery.invalidate()
                     mutableSnapshot.value = null
                 }

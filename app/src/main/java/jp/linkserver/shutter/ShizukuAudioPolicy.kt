@@ -89,13 +89,14 @@ internal object ShizukuAudioPolicy {
         legacyMaintainArmed: Boolean,
         environment: () -> AppEnvironment = { AppEnvironment(AppUserEnvironment.current()) },
         forceAudioPolicy: () -> Boolean = { false },
+        emulatedDevice: () -> ShutterDevice? = { null },
         publish: (ShutterSnapshot) -> Unit): AudioPolicyConnector =
         object : AudioPolicyConnector {
             override val storedRestoration = true
             override suspend fun connect(): AudioPolicyConnection {
                 val bound = withContext(Dispatchers.Main.immediate) { awaitService() }
                 val selectedEnvironment = environment()
-                val backend = ShutterBackend(object : ShutterDevice {
+                val backend = ShutterBackend(emulatedDevice() ?: object : ShutterDevice {
                     override fun readAudio() = bound.forSystem
                     override fun writeAudio(value: Int) {
                         if (Shizuku.checkRemotePermission(AUDIO_ROUTING_PERMISSION) != PackageManager.PERMISSION_GRANTED)

@@ -32,7 +32,8 @@ data class ShutterUiState(
     val releaseConfirmationPending: Boolean = false,
     val changingMethod: Boolean = false,
     val cscAbsent: Boolean = false,
-    val releaseAllowed: Boolean = true
+    val releaseAllowed: Boolean = true,
+    val emulatingCsc: Boolean = false
 ) {
     val working get() = busy || checking || requestingPermission || changingMethod
     val canRelease get() = releaseAllowed && !working && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
@@ -68,6 +69,7 @@ class ShutterViewModel private constructor(
     private val mutableState = MutableStateFlow(ShutterUiState(
         defaultValue = if (initialGalaxySettings.available && !initialGalaxySettings.forceAudioPolicy) null else ForceUse.deviceDefault(),
         persistent = initialGalaxySettings.available && !initialGalaxySettings.forceAudioPolicy,
+        emulatingCsc = maintenance.warningDeveloperSettings.value.emulatesCsc && !initialGalaxySettings.forceAudioPolicy,
         nonMainUserWarning = initialUserWarning.affected, nonMainUserConfirmed = initialUserWarning.confirmed))
     val state = mutableState.asStateFlow()
     private var cleared = false
@@ -94,6 +96,11 @@ class ShutterViewModel private constructor(
     }
 
     init {
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(maintenance.warningDeveloperSettings, maintenance.galaxySettings) { settings, galaxy ->
+                settings.emulatesCsc && !galaxy.forceAudioPolicy
+            }.collect { emulated -> mutableState.update { it.copy(emulatingCsc = emulated) } }
+        }
         viewModelScope.launch {
             maintenance.userWarningState.collect { warning ->
                 mutableState.update { it.copy(nonMainUserWarning = warning.affected,
@@ -191,8 +198,12 @@ class ShutterViewModel private constructor(
     internal fun setForceNonMainUser(enabled: Boolean) = setWarningDeveloperSettings(
         warningDeveloperSettings.value.copy(forceNonMainUser = enabled))
 
+    internal fun setEmulateCsc(enabled: Boolean) = setWarningDeveloperSettings(
+        warningDeveloperSettings.value.copy(emulateCsc = enabled))
+
     private fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) {
         if (cleared || state.value.working) return
+        val previousEmulation = warningDeveloperSettings.value.emulatesCsc
         val previous = galaxySettings.value
         mutableState.update { it.copy(changingMethod = true, releaseConfirmationPending = false) }
         viewModelScope.launch {
@@ -202,13 +213,13 @@ class ShutterViewModel private constructor(
                 Log.w("ShutterSound", "Could not change developer environment", error)
                 Toast.makeText(getApplication(), if (error is ShutterMethodChangeBlocked)
                     R.string.galaxy_method_restore_first else R.string.developer_warning_save_failed, Toast.LENGTH_LONG).show()
-            } finally { finishMethodChange(previous) }
+            } finally { finishMethodChange(previous, previousEmulation != warningDeveloperSettings.value.emulatesCsc) }
         }
     }
 
-    private fun finishMethodChange(previous: GalaxyControlSettings) {
+    private fun finishMethodChange(previous: GalaxyControlSettings, changedEmulation: Boolean = false) {
         mutableState.update {
-            if (galaxySettings.value != previous) it.copy(changingMethod = false, current = null,
+            if (changedEmulation || galaxySettings.value != previous) it.copy(changingMethod = false, current = null,
                 defaultValue = null, persistent = galaxySettings.value.available && !galaxySettings.value.forceAudioPolicy,
                 restoresSystemDefault = false, restorable = null, cscAbsent = false, releaseAllowed = true)
             else it.copy(changingMethod = false)

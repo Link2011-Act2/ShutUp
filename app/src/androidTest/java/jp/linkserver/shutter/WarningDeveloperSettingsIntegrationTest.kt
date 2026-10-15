@@ -160,6 +160,24 @@ class WarningDeveloperSettingsIntegrationTest {
             compose.waitUntil(10_000) { !model.state.value.working && !runtime.warningDeveloperSettings.value.forceNonMainUser }
             compose.runOnIdle { assertEquals(actual.samsung, runtime.galaxySettings.value.available) }
             compose.runOnIdle { assertEquals(actual.needsSamsungUserWarning, model.state.value.nonMainUserWarning) }
+            compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
+            compose.onNodeWithText(text(R.string.developer_emulate_csc_title)).performScrollTo().assertIsOff().performClick()
+            compose.waitUntil(10_000) {
+                !model.state.value.working && runtime.warningDeveloperSettings.value.emulatesCsc && model.state.value.emulatingCsc
+            }
+            compose.runOnIdle {
+                assertTrue(runtime.galaxySettings.value.available)
+                assertTrue(runtime.environment.value.samsung)
+                assertEquals(actual, runtime.environment.value.actual)
+                assertFalse(controller.state.value.enabled)
+            }
+            compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+            compose.onNodeWithText(text(R.string.developer_emulate_csc_active)).assertIsDisplayed()
+            compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
+            compose.onNodeWithText(text(R.string.developer_emulate_csc_title)).performScrollTo().assertIsOn().performClick()
+            compose.waitUntil(10_000) { !model.state.value.working && !runtime.warningDeveloperSettings.value.emulatesCsc }
+            compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+            compose.onNodeWithText(text(R.string.developer_emulate_csc_active)).assertDoesNotExist()
         } finally {
             runBlocking { runtime.setWarningDeveloperSettings(original) }
             compose.runOnUiThread {

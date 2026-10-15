@@ -27,7 +27,8 @@ internal fun DeveloperUpdateSettingsSection(
     warningSettings: WarningDeveloperSettings = WarningDeveloperSettings(),
     onForceSamsungChange: (Boolean) -> Unit = {},
     onForceNonMainUserChange: (Boolean) -> Unit = {},
-    environmentBusy: Boolean = false
+    environmentBusy: Boolean = false,
+    onEmulateCscChange: (Boolean) -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         AboutSectionTitle(stringResource(R.string.settings_developer))
@@ -48,7 +49,11 @@ internal fun DeveloperUpdateSettingsSection(
                 SettingsDividerGap()
                 DeveloperUpdateToggle(stringResource(R.string.developer_force_non_main_user_title),
                     stringResource(R.string.developer_force_non_main_user_description), warningSettings.forceNonMainUser,
-                    SettingsGroupPosition.Bottom, onForceNonMainUserChange, enabled = !environmentBusy)
+                    SettingsGroupPosition.Middle, onForceNonMainUserChange, enabled = !environmentBusy)
+                SettingsDividerGap()
+                DeveloperUpdateToggle(stringResource(R.string.developer_emulate_csc_title),
+                    stringResource(R.string.developer_emulate_csc_description), warningSettings.emulateCsc,
+                    SettingsGroupPosition.Bottom, onEmulateCscChange, enabled = !environmentBusy)
             }
         }
         if (warningSettings.available) Text(stringResource(R.string.developer_warning_simulation_note),

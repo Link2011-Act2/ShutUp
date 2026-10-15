@@ -92,12 +92,15 @@ internal class AutoMaintainController(
     }
 
     /** A mode change cannot race a manual request or a background device write. */
-    suspend fun updateControlMethod(journal: ShutterChangeStore, update: () -> Unit) = operations.withLock {
+    suspend fun updateControlMethod(journal: ShutterChangeStore, resetMaintenance: Boolean = false, update: () -> Unit) = operations.withLock {
         synchronized(intentLock) {
             check(pendingManual == null) { "A shutter operation is pending" }
             if (journal.load().change != null) throw ShutterMethodChangeBlocked()
+            // Pause the old store before swapping real/emulated persistence. A restart
+            // or channel change must never inherit a simulated automatic release.
+            if (resetMaintenance) updateIntent(AutoMaintainState())
             update() // Durably commit the selection under the same locks.
-            updateIntent(state.value.copy(armed = false))
+            updateIntent(if (resetMaintenance) AutoMaintainState() else state.value.copy(armed = false))
             mutableCurrent.value = null
         }
     }
