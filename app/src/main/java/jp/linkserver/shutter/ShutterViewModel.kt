@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import jp.linkserver.shutter.maintain.AutoMaintainRuntime
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -28,10 +29,13 @@ data class ShutterUiState(
     val requestingPermission: Boolean = false,
     val nonMainUserWarning: Boolean = false,
     val nonMainUserConfirmed: Boolean = false,
-    val releaseConfirmationPending: Boolean = false
+    val releaseConfirmationPending: Boolean = false,
+    val changingMethod: Boolean = false,
+    val cscAbsent: Boolean = false,
+    val releaseAllowed: Boolean = true
 ) {
-    val working get() = busy || checking || requestingPermission
-    val canRelease get() = !working && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
+    val working get() = busy || checking || requestingPermission || changingMethod
+    val canRelease get() = releaseAllowed && !working && status == ShutterSound.Status.READY && current != null && current != ShutterTileService.released()
     val canRestore get() = !working && status == ShutterSound.Status.READY && current != null &&
         (restorable ?: (hasChange || defaultValue?.let { current != it } == true))
     val alreadyNone get() = !working && current == ForceUse.FORCE_NONE && defaultValue == ForceUse.FORCE_NONE
@@ -39,7 +43,7 @@ data class ShutterUiState(
     internal fun withSnapshot(snapshot: ShutterSnapshot) = copy(
         defaultValue = snapshot.baseline, persistent = snapshot.persistent,
         hasChange = snapshot.hasChange, restorable = snapshot.restorable,
-        restoresSystemDefault = snapshot.systemDefault != null,
+        restoresSystemDefault = snapshot.systemDefault != null || snapshot.cscAbsent, cscAbsent = snapshot.cscAbsent, releaseAllowed = snapshot.releaseAllowed,
         current = if (snapshot.persistent && snapshot.enforcement == Enforcement.UNKNOWN) null else current)
 }
 
@@ -59,13 +63,19 @@ class ShutterViewModel private constructor(
         { error("Permission requests are unavailable in this test fixture") })
 
     private val maintenance = AutoMaintainRuntime.get(application)
-    private val mutableState = MutableStateFlow(ShutterUiState(nonMainUserWarning = maintenance.userWarning.affected,
-        nonMainUserConfirmed = maintenance.userWarning.confirmed))
+    private val initialUserWarning = maintenance.userWarning
+    private val initialGalaxySettings = maintenance.galaxySettings.value
+    private val mutableState = MutableStateFlow(ShutterUiState(
+        defaultValue = if (initialGalaxySettings.available && !initialGalaxySettings.forceAudioPolicy) null else ForceUse.deviceDefault(),
+        persistent = initialGalaxySettings.available && !initialGalaxySettings.forceAudioPolicy,
+        nonMainUserWarning = initialUserWarning.affected, nonMainUserConfirmed = initialUserWarning.confirmed))
     val state = mutableState.asStateFlow()
     private var cleared = false
     private var queryGeneration = 0
     internal val autoMaintainState = maintenance.controller.state
     internal val autoMaintainOfferPending = maintenance.offer.pending
+    internal val warningDeveloperSettings = maintenance.warningDeveloperSettings
+    internal val galaxySettings = maintenance.galaxySettings
     private val permissionRequest = ShizukuPermissionRequest(viewModelScope, requestPermission, {
         mutableState.update { it.copy(requestingPermission = false, error = "") }
         refresh()
@@ -84,6 +94,13 @@ class ShutterViewModel private constructor(
     }
 
     init {
+        viewModelScope.launch {
+            maintenance.userWarningState.collect { warning ->
+                mutableState.update { it.copy(nonMainUserWarning = warning.affected,
+                    nonMainUserConfirmed = warning.confirmed,
+                    releaseConfirmationPending = it.releaseConfirmationPending && warning === initialUserWarning) }
+            }
+        }
         viewModelScope.launch {
             permissionRequest.state.collect { request ->
                 mutableState.update { it.copy(requestingPermission = request.requesting,
@@ -150,6 +167,42 @@ class ShutterViewModel private constructor(
     }
 
     internal val releaseConfirmationRequired get() = maintenance.userWarning.confirmationRequired
+
+    internal fun setGalaxyAudioPolicy(enabled: Boolean) {
+        if (cleared || state.value.working) return
+        val previous = galaxySettings.value
+        mutableState.update { it.copy(changingMethod = true, releaseConfirmationPending = false) }
+        viewModelScope.launch {
+            try { maintenance.setGalaxyAudioPolicy(enabled) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) {
+                Log.w("ShutterSound", "Could not change Galaxy control method", error)
+                Toast.makeText(getApplication(), if (error is ShutterMethodChangeBlocked)
+                    R.string.galaxy_method_restore_first else R.string.galaxy_method_save_failed, Toast.LENGTH_LONG).show()
+            } finally {
+                mutableState.update {
+                    if (galaxySettings.value != previous) it.copy(changingMethod = false, current = null,
+                        defaultValue = null, persistent = !galaxySettings.value.forceAudioPolicy,
+                        restoresSystemDefault = false, restorable = null, cscAbsent = false, releaseAllowed = true)
+                    else it.copy(changingMethod = false)
+                }
+                refresh()
+            }
+        }
+    }
+
+    internal fun setForceSamsung(enabled: Boolean) = setWarningDeveloperSettings(
+        warningDeveloperSettings.value.copy(forceSamsung = enabled))
+
+    internal fun setForceNonMainUser(enabled: Boolean) = setWarningDeveloperSettings(
+        warningDeveloperSettings.value.copy(forceNonMainUser = enabled))
+
+    private fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) {
+        runCatching { maintenance.setWarningDeveloperSettings(settings) }.onFailure {
+            Log.w("ShutterSound", "Could not save warning developer settings", it)
+            Toast.makeText(getApplication(), R.string.developer_warning_save_failed, Toast.LENGTH_LONG).show()
+        }
+    }
 
     fun release() = release(null)
     internal fun release(permit: ReleasePermit?) {
@@ -233,6 +286,7 @@ class ShutterViewModel private constructor(
                 Log.e("ShutterSound", "Could not change shutter setting (restore=$restore)", error)
                 Toast.makeText(context, R.string.result_failed, Toast.LENGTH_LONG).show()
                 mutableState.update { withSnapshot(it.copy(current = null, error = when (error) {
+                    is ShutterMethodChangeBlocked -> context.getString(R.string.galaxy_method_restore_first)
                     is AudioPolicyException -> context.audioPolicyErrorMessage(error)
                     is ShutterVerificationException -> context.getString(R.string.shutter_change_unverified)
                     is SecurityException -> context.getString(R.string.audio_routing_permission_denied)

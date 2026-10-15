@@ -47,13 +47,17 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
     val offerPending by shutter.autoMaintainOfferPending.collectAsStateWithLifecycle()
     val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: AppUpdateState()
     val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
+    val warningDeveloperSettings by shutter.warningDeveloperSettings.collectAsStateWithLifecycle()
+    val galaxySettings by shutter.galaxySettings.collectAsStateWithLifecycle()
     ShutterNavigation(state, shutter::authorize, onRelease,
         shutter::restore, shutter::refresh,
         updateState, { updates?.checkManually() ?: Result.success(null) },
         { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder,
         developerSettings, { updates?.setIgnoreVersionComparison(it) }, { updates?.setIgnoreInterval(it) },
         autoMaintainState, shutter::setAutoMaintainEnabled,
-        offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer)
+        offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer,
+        warningDeveloperSettings, shutter::setForceSamsung, shutter::setForceNonMainUser,
+        galaxySettings, shutter::setGalaxyAudioPolicy)
     if (state.releaseConfirmationPending && !state.working && !showUninstallReminder) {
         SamsungUserWarningDialog(shutter::cancelReleaseConfirmation) { remember ->
             shutter.confirmRelease(remember)?.let(onConfirmedRelease)
@@ -81,7 +85,12 @@ internal fun ShutterNavigation(
     autoMaintainState: AutoMaintainState = AutoMaintainState(),
     onAutoMaintainChange: (Boolean) -> Unit = {},
     autoMaintainOfferPending: Boolean = false,
-    onAutoMaintainOfferChoice: (Boolean) -> Unit = {}
+    onAutoMaintainOfferChoice: (Boolean) -> Unit = {},
+    warningDeveloperSettings: WarningDeveloperSettings = WarningDeveloperSettings(),
+    onForceSamsungChange: (Boolean) -> Unit = {},
+    onForceNonMainUserChange: (Boolean) -> Unit = {},
+    galaxySettings: GalaxyControlSettings = GalaxyControlSettings(),
+    onGalaxyAudioPolicyChange: (Boolean) -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val holder = rememberSaveableStateHolder()
@@ -125,7 +134,9 @@ internal fun ShutterNavigation(
                 when (targetScreen) {
                     "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
                         onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
-                        autoMaintainState, onAutoMaintainChange)
+                        autoMaintainState, onAutoMaintainChange,
+                        warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
+                        galaxySettings, onGalaxyAudioPolicyChange, state, onRestore)
                     "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
                     "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
                         ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
@@ -199,7 +210,14 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
     onIgnoreVersionComparisonChange: (Boolean) -> Unit = {},
     onIgnoreIntervalChange: (Boolean) -> Unit = {},
     autoMaintainState: AutoMaintainState = AutoMaintainState(),
-    onAutoMaintainChange: (Boolean) -> Unit = {}) {
+    onAutoMaintainChange: (Boolean) -> Unit = {},
+    warningDeveloperSettings: WarningDeveloperSettings = WarningDeveloperSettings(),
+    onForceSamsungChange: (Boolean) -> Unit = {},
+    onForceNonMainUserChange: (Boolean) -> Unit = {},
+    galaxySettings: GalaxyControlSettings = GalaxyControlSettings(),
+    onGalaxyAudioPolicyChange: (Boolean) -> Unit = {},
+    shutterState: ShutterUiState = ShutterUiState(),
+    onRestore: () -> Unit = {}) {
     val context = LocalContext.current
     ScreenScaffold(stringResource(R.string.settings_title), onBack) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp),
@@ -222,9 +240,12 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
                 SettingsEntry(stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_description),
                     onAbout, false, SettingsGroupPosition.Single)
             }
+            if (galaxySettings.available) GalaxyControlSettingsSection(galaxySettings, shutterState.working,
+                shutterState.hasChange, shutterState.canRestore, onRestore, onGalaxyAudioPolicyChange)
             if (developerSettings.available) {
                 DeveloperUpdateSettingsSection(developerSettings,
-                    onIgnoreVersionComparisonChange, onIgnoreIntervalChange)
+                    onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
+                    warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange)
             }
         }
     }

@@ -16,13 +16,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import jp.linkserver.shutter.R
+import jp.linkserver.shutter.WarningDeveloperSettings
 import jp.linkserver.shutter.update.UpdateDeveloperSettings
 
 @Composable
 internal fun DeveloperUpdateSettingsSection(
     settings: UpdateDeveloperSettings,
     onIgnoreVersionComparisonChange: (Boolean) -> Unit,
-    onIgnoreIntervalChange: (Boolean) -> Unit
+    onIgnoreIntervalChange: (Boolean) -> Unit,
+    warningSettings: WarningDeveloperSettings = WarningDeveloperSettings(),
+    onForceSamsungChange: (Boolean) -> Unit = {},
+    onForceNonMainUserChange: (Boolean) -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         AboutSectionTitle(stringResource(R.string.settings_developer))
@@ -33,8 +37,22 @@ internal fun DeveloperUpdateSettingsSection(
             SettingsDividerGap()
             DeveloperUpdateToggle(stringResource(R.string.developer_ignore_interval_title),
                 stringResource(R.string.developer_ignore_interval_description), settings.ignoreInterval,
-                SettingsGroupPosition.Bottom, onIgnoreIntervalChange)
+                if (warningSettings.available) SettingsGroupPosition.Middle else SettingsGroupPosition.Bottom,
+                onIgnoreIntervalChange)
+            if (warningSettings.available) {
+                SettingsDividerGap()
+                DeveloperUpdateToggle(stringResource(R.string.developer_force_samsung_title),
+                    stringResource(R.string.developer_force_samsung_description), warningSettings.forceSamsung,
+                    SettingsGroupPosition.Middle, onForceSamsungChange)
+                SettingsDividerGap()
+                DeveloperUpdateToggle(stringResource(R.string.developer_force_non_main_user_title),
+                    stringResource(R.string.developer_force_non_main_user_description), warningSettings.forceNonMainUser,
+                    SettingsGroupPosition.Bottom, onForceNonMainUserChange)
+            }
         }
+        if (warningSettings.available) Text(stringResource(R.string.developer_warning_simulation_note),
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp))
     }
 }
 

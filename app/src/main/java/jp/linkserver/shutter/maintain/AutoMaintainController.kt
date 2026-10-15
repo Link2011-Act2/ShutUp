@@ -1,5 +1,7 @@
 package jp.linkserver.shutter.maintain
 
+import jp.linkserver.shutter.ShutterChangeStore
+import jp.linkserver.shutter.ShutterMethodChangeBlocked
 import jp.linkserver.shutter.ForceUse
 import jp.linkserver.shutter.ReleaseAuthorization
 import jp.linkserver.shutter.ReleasePermit
@@ -32,6 +34,8 @@ internal interface AutoMaintainStore {
 }
 
 internal interface AudioPolicyConnection {
+    val canRelease: Boolean get() = true
+    val releaseWouldChangeSetting: Boolean get() = true
     fun read(): Int
     fun write(value: Int)
     fun baseline(deviceDefault: Int?): Int? = deviceDefault
@@ -64,7 +68,7 @@ internal class AutoMaintainController(
     private val store: AutoMaintainStore,
     private val connector: AudioPolicyConnector,
     private val connectionTimeoutMs: Long = 10_000,
-    private val releaseAuthorization: ReleaseAuthorization = UnrestrictedReleaseAuthorization
+    private var releaseAuthorization: ReleaseAuthorization = UnrestrictedReleaseAuthorization
 ) {
     private val intentLock = Any()
     private val operations = Mutex()
@@ -80,6 +84,23 @@ internal class AutoMaintainController(
     val state = mutableState.asStateFlow()
     private val mutableCurrent = MutableStateFlow<Int?>(null)
     val current = mutableCurrent.asStateFlow()
+
+    /** Serialize a warning simulation change with the final check before every device write. */
+    fun updateReleaseAuthorization(authorization: ReleaseAuthorization) = synchronized(intentLock) {
+        releaseAuthorization = authorization
+        updateIntent(if (authorization.automaticAllowed) state.value else state.value.copy(enabled = false))
+    }
+
+    /** A mode change cannot race a manual request or a background device write. */
+    suspend fun updateControlMethod(journal: ShutterChangeStore, update: () -> Unit) = operations.withLock {
+        synchronized(intentLock) {
+            check(pendingManual == null) { "A shutter operation is pending" }
+            if (journal.load().change != null) throw ShutterMethodChangeBlocked()
+            update() // Durably commit the selection under the same locks.
+            updateIntent(state.value.copy(armed = false))
+            mutableCurrent.value = null
+        }
+    }
 
     fun setEnabled(enabled: Boolean) = synchronized(intentLock) {
         if (state.value.enabled == enabled) return@synchronized
@@ -131,6 +152,12 @@ internal class AutoMaintainController(
                 val action = if (request.action == ManualAction.TOGGLE) {
                     if (connection.shouldRestore(before, deviceDefault)) ManualAction.RESTORE else ManualAction.RELEASE
                 } else request.action
+                // A tile on an already released, non-restorable setting is a no-op.
+                if (request.action == ManualAction.TOGGLE && action == ManualAction.RELEASE &&
+                    !connection.releaseWouldChangeSetting && before == ForceUse.FORCE_NONE) {
+                    mutableCurrent.value = before
+                    return@synchronized before
+                }
                 if (action == ManualAction.RELEASE)
                     releaseAuthorization.requireManualRelease(request, request.releasePermit)
                 // An OFF operation stops only automatic work, never a pending manual restoration.
@@ -200,6 +227,7 @@ internal class AutoMaintainController(
             context.ensureActive()
             if (!eligible(ticket)) return@synchronized MaintainResult.SUPERSEDED
             mutableCurrent.value = before
+            if (!connection.canRelease) return@synchronized MaintainResult.INACTIVE
             when (before) {
                 ForceUse.FORCE_NONE -> MaintainResult.ALREADY_RELEASED
                 ForceUse.FORCE_SYSTEM_ENFORCED -> {

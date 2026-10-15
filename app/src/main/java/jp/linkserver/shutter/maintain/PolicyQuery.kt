@@ -22,23 +22,35 @@ internal class PolicyQuery(
     private val lock = Any()
     private var pending: Deferred<Result<Int>>? = null
 
-    suspend fun await(): Result<Int> {
-        val query = synchronized(lock) {
-            pending?.takeUnless { it.isCompleted } ?: scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-                try { Result.success(read()) }
-                catch (timeout: TimeoutCancellationException) { Result.failure(timeout) }
-                catch (cancelled: CancellationException) { throw cancelled }
-                catch (error: Exception) { Result.failure(error) }
-            }.also { pending = it }
+    private var generation = 0L
+
+    /** Called after a serialized method change; an old result must not reach any waiter. */
+    fun invalidate() = synchronized(lock) {
+        generation++
+        pending = null
+    }
+
+    suspend fun await(): Result<Int> = try {
+        withTimeout(timeoutMs) { awaitCurrent() }
+    } catch (timeout: TimeoutCancellationException) {
+        currentCoroutineContext().ensureActive()
+        Result.failure(AudioPolicyException(AudioPolicyFailure.QUERY_TIMEOUT, timeout))
+    }
+
+    private suspend fun awaitCurrent(): Result<Int> {
+        while (true) {
+            val (ticket, query) = synchronized(lock) {
+                generation to (pending?.takeUnless { it.isCompleted } ?: scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+                    try { Result.success(read()) }
+                    catch (timeout: TimeoutCancellationException) { Result.failure(timeout) }
+                    catch (cancelled: CancellationException) { throw cancelled }
+                    catch (error: Exception) { Result.failure(error) }
+                }.also { pending = it })
+            }
+            query.start()
+            val result = query.await()
+            if (synchronized(lock) { ticket == generation }) return result
         }
-        query.start()
-        return try {
-            withTimeout(timeoutMs) { query.await() }
-        } catch (timeout: TimeoutCancellationException) {
-            currentCoroutineContext().ensureActive()
-            Result.failure(AudioPolicyException(AudioPolicyFailure.QUERY_TIMEOUT, timeout))
-        }
-        // The application scope owns the IPC. Cancellation/timeout of a caller must
-        // neither cancel it nor let a subsequent query queue another blocked read.
+        // The application scope owns IPC; caller cancellation never abandons its mutex.
     }
 }

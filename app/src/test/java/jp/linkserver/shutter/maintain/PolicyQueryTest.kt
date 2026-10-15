@@ -104,6 +104,31 @@ class PolicyQueryTest {
         } finally { scope.cancel() }
     }
 
+    @Test fun aMethodChangeInvalidatesOldResultsWithoutCancellingAnInFlightRead() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val entered = CompletableDeferred<Unit>()
+        val finishOld = CompletableDeferred<Unit>()
+        val reads = AtomicInteger()
+        var finishedOld = false
+        val query = PolicyQuery(scope) {
+            if (reads.incrementAndGet() == 1) {
+                entered.complete(Unit)
+                finishOld.await()
+                finishedOld = true
+                11
+            } else 0
+        }
+        try {
+            val screen = async(start = CoroutineStart.UNDISPATCHED) { query.await() }
+            withTimeout(2_000) { entered.await() }
+            query.invalidate()
+            finishOld.complete(Unit)
+            assertEquals(0, withTimeout(2_000) { screen.await() }.getOrThrow())
+            assertTrue(finishedOld)
+            assertEquals(2, reads.get())
+        } finally { finishOld.complete(Unit); scope.cancel() }
+    }
+
     @Test fun aConnectionTimeoutRetainsItsCauseInsteadOfLookingLikeAReadTimeout() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val query = PolicyQuery(scope) { withTimeout(20) { awaitCancellation() } }

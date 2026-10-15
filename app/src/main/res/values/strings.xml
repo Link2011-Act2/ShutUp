@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="restore_previous">Restore previous setting</string>
   <string name="result_default_restored">The default shutter setting has been restored.</string>
@@ -115,7 +115,7 @@
   <string name="auto_maintain_title">Maintain released state</string>
   <string name="auto_maintain_description">Automatically release shutter sound enforcement if it returns. Checks every hour.</string>
   <string name="auto_maintain_state_active">Enabled</string>
-  <string name="auto_maintain_state_paused">Paused after manual restoration</string>
+  <string name="auto_maintain_state_paused">Paused until you release again</string>
   <string name="auto_maintain_save_failed">Could not save automatic maintenance settings</string>
   <string name="auto_maintain_offer_title">Automatically maintain the released state?</string>
   <string name="auto_maintain_offer_description">Automatically releases shutter sound enforcement if it returns. When Shizuku is available, it can also release enforcement after a restart.</string>
@@ -196,4 +196,23 @@
   <string name="about_channel_unknown">Unknown</string>
   <string name="about_channel_unknown_description">No description is available for this channel.</string>
   <string name="about_channel_dialog_title">Development channel: %1$s</string>
+  <string name="developer_force_samsung_title">Recognize as a Samsung device</string>
+  <string name="developer_force_samsung_description">Force the warning feature to recognize Samsung. When off, use the actual manufacturer.</string>
+  <string name="developer_force_non_main_user_title">Recognize as a non-main user</string>
+  <string name="developer_force_non_main_user_description">Force the warning feature to recognize a non-main user. When off, use the actual user.</string>
+  <string name="developer_warning_simulation_note">Test warnings, confirmation dialogs, and automatic maintenance. Changes apply immediately and reset simulated consent. The actual setting method and target user stay the same. Continuing changes real settings.</string>
+  <string name="developer_warning_save_failed">Could not save warning simulation settings.</string>
+  <string name="galaxy_settings_title">Galaxy advanced settings</string>
+  <string name="galaxy_force_audio_title">Force standard Android method</string>
+  <string name="galaxy_force_audio_description">Use AudioPolicy instead of CSC settings. Switching methods pauses automatic maintenance.</string>
+  <string name="galaxy_force_audio_confirmation_title">Use the standard Android method?</string>
+  <string name="galaxy_force_audio_confirmation_description">This method may not work correctly on Galaxy devices. The AudioPolicy value may not reflect actual shutter sound enforcement.\n\nWhen enabled, setting changes and automatic maintenance use this method. Check the actual shutter sound after making changes.</string>
+  <string name="galaxy_force_audio_enable">Enable</string>
+  <string name="galaxy_method_restore_first">Restore the saved original state before switching methods.</string>
+  <string name="galaxy_method_save_failed">Could not change methods. Wait for any operation to finish and try again.</string>
+  <string name="galaxy_csc_absent_value">(CSC key absent)</string>
+  <string name="galaxy_csc_absent_hint">There is no CSC enforcement setting. Shutter sound behavior depends on the camera app and device settings.</string>
+  <string name="galaxy_csc_released">No CSC force</string>
+  <string name="galaxy_csc_released_hint">The CSC setting does not enforce the shutter sound.</string>
+  <string name="galaxy_legacy_restore_pending">Restore pending</string>
 </resources>

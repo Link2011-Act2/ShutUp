@@ -101,7 +101,9 @@ internal fun HomeScreen(
             if (!state.working && state.current == ForceUse.FORCE_NONE &&
                 deviceDefault == ForceUse.FORCE_NONE) {
                 Spacer(Modifier.height(16.dp))
-                Text(stringResource(if (state.nonMainUserWarning) R.string.samsung_user_already_released
+                Text(stringResource(if (state.cscAbsent) R.string.galaxy_csc_absent_hint
+                    else if (state.persistent) R.string.galaxy_csc_released_hint
+                    else if (state.nonMainUserWarning) R.string.samsung_user_already_released
                     else R.string.result_already_none), Modifier.padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -116,7 +118,8 @@ internal fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     HomeIconBubble(rememberVectorPainter(Icons.Default.Info), 36)
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stringResource(if (state.persistent) R.string.home_persistent_note else R.string.home_restart_note),
+                        Text(stringResource(if (state.cscAbsent) R.string.galaxy_csc_absent_hint
+                            else if (state.persistent) R.string.home_persistent_note else R.string.home_restart_note),
                             style = MaterialTheme.typography.bodyMedium)
                         Text(stringResource(R.string.home_uninstall_note),
                             style = MaterialTheme.typography.bodySmall,
@@ -169,8 +172,10 @@ private fun HomeStateHero(
         state.checking -> R.string.home_checking
         state.busy -> R.string.home_working
         isUnknown -> R.string.home_unknown
+        !state.releaseAllowed -> R.string.galaxy_legacy_restore_pending
         state.current == ForceUse.FORCE_SYSTEM_ENFORCED -> R.string.home_enforced
         isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting
+        isReleased && state.persistent -> R.string.galaxy_csc_released
         isUnenforcedByDefault -> R.string.home_default_not_enforced
         state.current == ForceUse.FORCE_NONE -> R.string.home_not_enforced
         else -> R.string.home_other_policy
@@ -182,8 +187,11 @@ private fun HomeStateHero(
         state.status == ShutterSound.Status.NOT_RUNNING -> R.string.home_start_shizuku_hint
         state.status == ShutterSound.Status.NOT_AUTHORIZED -> R.string.home_authorize_hint
         state.current == null -> R.string.home_refresh_hint
+        !state.releaseAllowed -> R.string.galaxy_method_restore_first
+        state.cscAbsent -> R.string.galaxy_csc_absent_hint
         isEnforced -> R.string.home_enforced_hint
         isReleased && state.nonMainUserWarning -> R.string.samsung_user_release_setting_hint
+        isReleased && state.persistent -> R.string.galaxy_csc_released_hint
         isUnenforcedByDefault -> R.string.home_default_not_enforced_hint
         isReleased -> R.string.home_released_hint
         else -> R.string.home_other_policy_hint
@@ -206,7 +214,7 @@ private fun HomeStateHero(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(label), style = MaterialTheme.typography.displayMedium,
                         fontSize = 48.sp, lineHeight = 56.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(
+                    Text(if (state.cscAbsent) stringResource(R.string.galaxy_csc_absent_value) else stringResource(
                         if (state.persistent) R.string.home_csc else R.string.home_force_system,
                         if (state.persistent) when (state.current) {
                             ForceUse.FORCE_SYSTEM_ENFORCED -> "1"
@@ -238,7 +246,7 @@ private fun HomeHeroAction(
     onOpenShizuku: () -> Unit, onAuthorize: () -> Unit,
     onRelease: () -> Unit, onRestore: () -> Unit, onRefresh: () -> Unit
 ) {
-    val restore = state.current == ForceUse.FORCE_NONE
+    val restore = state.current == ForceUse.FORCE_NONE || !state.releaseAllowed && state.hasChange
     val label = when {
         state.requestingPermission -> R.string.shizuku_permission_requesting
         state.checking -> R.string.home_checking

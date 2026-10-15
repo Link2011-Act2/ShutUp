@@ -4,11 +4,14 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import jp.linkserver.shutter.GalaxyControlPreferences
 import jp.linkserver.shutter.ForceUse
 import jp.linkserver.shutter.AppUserEnvironment
 import jp.linkserver.shutter.ReleasePermit
 import jp.linkserver.shutter.SamsungUserWarning
 import jp.linkserver.shutter.SamsungUserWarningPreferences
+import jp.linkserver.shutter.WarningDeveloperPreferences
+import jp.linkserver.shutter.WarningDeveloperSettings
 import jp.linkserver.shutter.ShizukuAudioPolicy
 import jp.linkserver.shutter.ShutterJournalFile
 import jp.linkserver.shutter.ShutterSnapshot
@@ -24,15 +27,24 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val main = Handler(Looper.getMainLooper())
     private val environment = AppUserEnvironment.current()
-    val userWarning = SamsungUserWarning(environment, SamsungUserWarningPreferences(app))
+    private val galaxyPreferences = GalaxyControlPreferences(app, samsung = environment.samsung)
+    private val mutableGalaxySettings = MutableStateFlow(galaxyPreferences.load())
+    val galaxySettings = mutableGalaxySettings.asStateFlow()
+    private val journal = ShutterJournalFile(app)
+    private val warningDeveloperPreferences = WarningDeveloperPreferences(app)
+    private val mutableWarningDeveloperSettings = MutableStateFlow(warningDeveloperPreferences.load())
+    val warningDeveloperSettings = mutableWarningDeveloperSettings.asStateFlow()
+    private fun warning(settings: WarningDeveloperSettings) = SamsungUserWarning(settings.warningEnvironment(environment),
+        if (settings.simulated) warningDeveloperPreferences.simulationConsent else SamsungUserWarningPreferences(app))
+    private val mutableUserWarning = MutableStateFlow(warning(warningDeveloperSettings.value))
+    val userWarningState = mutableUserWarning.asStateFlow()
+    val userWarning get() = userWarningState.value
     private val preferences = AutoMaintainPreferences(app)
     private val mutableSnapshot = MutableStateFlow<ShutterSnapshot?>(null)
     val snapshot = mutableSnapshot.asStateFlow()
-    private val legacyInstallation = runCatching {
-        app.packageManager.getPackageInfo(app.packageName, 0).let { it.firstInstallTime < it.lastUpdateTime }
-    }.getOrDefault(true)
     val controller = AutoMaintainController(preferences,
-        ShizukuAudioPolicy.shutterConnector(app, ShutterJournalFile(app), preferences.load().armed, legacyInstallation, environment) {
+        ShizukuAudioPolicy.shutterConnector(app, journal, preferences.load().armed, environment,
+            forceAudioPolicy = { galaxySettings.value.forceAudioPolicy }) {
             val changed = mutableSnapshot.value != it
             mutableSnapshot.value = it
             ShutterSound.sync(app, it, changed)
@@ -51,6 +63,31 @@ internal class AutoMaintainRuntime private constructor(context: Context) {
         initialized = true
         reconcile()
         checkNow()
+    }
+    fun setWarningDeveloperSettings(settings: WarningDeveloperSettings) {
+        if (!warningDeveloperSettings.value.available || settings == warningDeveloperSettings.value) return
+        warningDeveloperPreferences.save(settings)
+        val saved = warningDeveloperPreferences.load()
+        val next = warning(saved)
+        try { controller.updateReleaseAuthorization(next) }
+        finally {
+            mutableUserWarning.value = next
+            mutableWarningDeveloperSettings.value = saved
+            reconcile()
+        }
+    }
+    suspend fun setGalaxyAudioPolicy(enabled: Boolean) {
+        if (!galaxySettings.value.available || galaxySettings.value.forceAudioPolicy == enabled) return
+        try {
+            withContext(Dispatchers.IO) {
+                controller.updateControlMethod(journal) {
+                    galaxyPreferences.save(enabled)
+                    mutableGalaxySettings.value = galaxyPreferences.load()
+                    statusQuery.invalidate()
+                    mutableSnapshot.value = null
+                }
+            }
+        } finally { reconcile() }
     }
     fun setEnabled(enabled: Boolean) {
         try { controller.setEnabled(enabled) } finally { reconcile() }

@@ -146,6 +146,36 @@ class SamsungUserReleaseGuardTest {
         } finally { finishRead.countDown() }
     }
 
+    @Test fun enteringSimulationDisablesOldMaintenanceAndRechecksPendingReleases() = runBlocking {
+        val f = Fixture(AutoMaintainState(true, true), environment = AppUserEnvironment("Google", 0))
+        val pending = f.controller.requestManual(ManualAction.RELEASE)
+        val warning = SamsungUserWarning(AppUserEnvironment("samsung", 1), ConsentStore())
+        f.controller.updateReleaseAuthorization(warning)
+        assertFalse(f.controller.state.value.enabled)
+        assertFalse(f.store.saved.enabled)
+        assertTrue(f.controller.state.value.armed)
+        assertEquals(MaintainResult.INACTIVE, f.controller.maintain())
+        assertTrue(runCatching { f.controller.performManual(pending, 11) }.exceptionOrNull() is SamsungUserConfirmationRequired)
+        assertTrue(f.policy.writes.isEmpty())
+        assertEquals(11, f.manual(ManualAction.RESTORE))
+    }
+
+    @Test fun resetSimulationRejectsOldPermitsButKeepsPendingRestoration() = runBlocking {
+        val f = Fixture(value = 0)
+        val oldPermit = f.warning.confirm(remember = false)
+        val restore = f.controller.requestManual(ManualAction.RESTORE)
+        val reset = SamsungUserWarning(AppUserEnvironment("samsung", 95), ConsentStore())
+        f.controller.updateReleaseAuthorization(reset)
+        assertThrows(SamsungUserConfirmationRequired::class.java) {
+            f.controller.requestManual(ManualAction.RELEASE, oldPermit)
+        }
+        assertEquals(11, f.controller.performManual(restore, 11))
+        assertEquals(listOf(11), f.policy.writes)
+        f.controller.updateReleaseAuthorization(UnrestrictedReleaseAuthorization)
+        assertEquals(0, f.manual(ManualAction.RELEASE))
+        assertFalse(f.controller.state.value.enabled)
+    }
+
     @Test fun mainSamsungUserAndOtherManufacturersPreserveExistingAutomaticAndManualBehavior() = runBlocking {
         for (environment in listOf(AppUserEnvironment("samsung", 0), AppUserEnvironment("Google", 95))) {
             val f = Fixture(AutoMaintainState(true, true), environment = environment)

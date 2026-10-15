@@ -86,8 +86,9 @@ internal object ShizukuAudioPolicy {
     }
 
     fun shutterConnector(context: Context, store: ShutterChangeStore,
-        legacyMaintainArmed: Boolean, legacyInstallation: Boolean,
+        legacyMaintainArmed: Boolean,
         environment: AppUserEnvironment = AppUserEnvironment.current(),
+        forceAudioPolicy: () -> Boolean = { false },
         publish: (ShutterSnapshot) -> Unit): AudioPolicyConnector =
         object : AudioPolicyConnector {
             override val storedRestoration = true
@@ -116,7 +117,7 @@ internal object ShizukuAudioPolicy {
                     override fun canWriteCsc() =
                         Shizuku.checkRemotePermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
                 }, store, environment.samsung,
-                    ForceUse.deviceDefault(), legacyMaintainArmed, legacyInstallation)
+                    ForceUse.deviceDefault(), legacyMaintainArmed, forceAudioPolicy())
                 return BackendPolicyConnection(backend, store, publish)
             }
         }

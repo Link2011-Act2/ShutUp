@@ -24,7 +24,7 @@ internal class BackendPolicyConnection(
         val value = operation()
         snapshot = value
         publish(value)
-        if (value.persistent && value.enforcement == Enforcement.UNKNOWN)
+        if (value.persistent && value.enforcement == Enforcement.UNKNOWN && value.restoredToSystemDefault == null)
             throw ShutterVerificationException()
         value.policyValue
     } catch (error: Exception) {
@@ -36,11 +36,15 @@ internal class BackendPolicyConnection(
         throw error
     }
 
+    override val canRelease get() = snapshot?.releaseAllowed ?: true
+    override val releaseWouldChangeSetting get() = snapshot?.let {
+        !(it.persistent && it.enforcement == Enforcement.RELEASED && !it.restorable)
+    } ?: true
     override fun read() = perform(backend::inspect)
     override fun write(value: Int) { error("Use the explicit release/restore operations") }
     override fun baseline(deviceDefault: Int?) = snapshot?.baseline ?: deviceDefault
     override fun shouldRestore(current: Int, deviceDefault: Int?) =
-        snapshot?.let { it.restorable && (it.changed || it.enforcement == Enforcement.RELEASED) }
+        snapshot?.let { it.restorable && (!it.releaseAllowed || it.changed || it.enforcement == Enforcement.RELEASED) }
             ?: (current != baseline(deviceDefault))
     override fun release(beforeWrite: () -> Unit) = perform { backend.release(beforeWrite) }
     override fun restore(deviceDefault: Int?, beforeWrite: () -> Unit) = perform { backend.restore(beforeWrite) }
@@ -62,7 +66,9 @@ internal data class ShutterSnapshot(
     val hasChange: Boolean,
     val systemDefault: Int? = null,
     val currentKnown: Boolean = rawValue != null,
-    val restoredToSystemDefault: Boolean? = null
+    val restoredToSystemDefault: Boolean? = null,
+    val cscAbsent: Boolean = false,
+    val releaseAllowed: Boolean = true
 ) {
     val persistent get() = method == ShutterMethod.GALAXY_CSC
     // Compatibility boundary for the existing UI/coordinator. These are logical
@@ -72,13 +78,14 @@ internal data class ShutterSnapshot(
         Enforcement.ENFORCED -> ForceUse.FORCE_SYSTEM_ENFORCED
         Enforcement.UNKNOWN -> if (method == ShutterMethod.AUDIO_POLICY) rawValue ?: -1 else -1
     }
-    val baseline: Int? get() = restoreValue?.let {
+    val baseline: Int? get() = if (cscAbsent) ForceUse.FORCE_NONE else restoreValue?.let {
         if (method == ShutterMethod.GALAXY_CSC) {
             if (it == 1) ForceUse.FORCE_SYSTEM_ENFORCED else ForceUse.FORCE_NONE
         } else it
     }
     val restorable get() = hasChange || persistent && systemDefault != null && currentKnown && rawValue != restoreValue
-    val changed get() = (hasChange || persistent && systemDefault != null) && rawValue != restoreValue
+    val changed get() = hasChange && (!currentKnown || rawValue != restoreValue) ||
+        persistent && systemDefault != null && currentKnown && rawValue != restoreValue
 }
 
 internal class ShutterVerificationException(cause: Throwable? = null) :
@@ -95,58 +102,37 @@ internal class ShutterBackend(
     private val samsung: Boolean,
     private val deviceDefault: Int?,
     private val legacyMaintainArmed: Boolean = false,
-    private val legacyInstallation: Boolean = false
+    private val forceAudioPolicy: Boolean = false
 ) {
     fun inspect(): ShutterSnapshot {
         var journal = store.load()
         journal.change?.let { return readPinned(it) }
-        val audio = runCatching { device.readAudio() }
-        // AudioPolicy can restore a known device default even without a prior
-        // record. Recover non-Samsung releases after migration has run as well.
-        // Samsung still requires legacy evidence so untouched CSC 0 stays intact.
-        val recoverAudio = !samsung || (!journal.initialized && (legacyMaintainArmed || legacyInstallation))
-        if (recoverAudio &&
-            audio.getOrNull() == ForceUse.FORCE_NONE && deviceDefault == ForceUse.FORCE_SYSTEM_ENFORCED) {
-            val existing = ShutterChange(ShutterMethod.AUDIO_POLICY, ForceUse.FORCE_SYSTEM_ENFORCED)
-            store.save(ShutterJournal(true, existing))
-            return readPinned(existing)
-        }
-        if (!journal.initialized) {
-            // Existing releases must remain restorable with the old method. Also
-            // preserve an old armed maintenance intent after a device reboot.
-            val legacy = legacyMaintainArmed && deviceDefault == ForceUse.FORCE_SYSTEM_ENFORCED &&
-                audio.getOrNull() == ForceUse.FORCE_SYSTEM_ENFORCED
-            journal = ShutterJournal(true, if (legacy)
-                ShutterChange(ShutterMethod.AUDIO_POLICY, ForceUse.FORCE_SYSTEM_ENFORCED) else null)
-            store.save(journal)
-            journal.change?.let { return readPinned(it) }
-        }
-        // Preserve the existing default-none/current-none behavior even if a
-        // Samsung CSC key happens to exist and disagrees with the audio policy.
-        if (deviceDefault == ForceUse.FORCE_NONE && audio.getOrNull() == ForceUse.FORCE_NONE)
-            return audioSnapshot(ForceUse.FORCE_NONE, null)
-        if (samsung) {
-            val csc = runCatching { device.readCsc() }.getOrNull()
-            if (csc in listOf("0", "1") && runCatching { device.canWriteCsc() }.getOrDefault(false)) {
-                val default = cscDefault()
-                // An existing, writable key is required; metadata alone cannot
-                // select CSC. A known non-default 0 can be restored explicitly.
-                // Default 0 does not hide independently enforced AudioPolicy.
-                if (csc == "1" || default == 1 || default == 0 && audio.getOrNull() != ForceUse.FORCE_SYSTEM_ENFORCED)
-                    return snapshot(ShutterMethod.GALAXY_CSC, csc!!.toInt(), default ?: 1, false, default)
+        val audioMode = !samsung || forceAudioPolicy
+        // Only migration evidence may recover an unjournaled old Galaxy audio
+        // transaction. Ordinary Galaxy detection never consults AudioPolicy.
+        val recoverLegacy = !journal.initialized && legacyMaintainArmed
+        if (audioMode || recoverLegacy) {
+            val audio = device.readAudio()
+            if (audio == ForceUse.FORCE_NONE && deviceDefault == ForceUse.FORCE_SYSTEM_ENFORCED ||
+                recoverLegacy && legacyMaintainArmed && deviceDefault == ForceUse.FORCE_SYSTEM_ENFORCED &&
+                audio == ForceUse.FORCE_SYSTEM_ENFORCED) {
+                val existing = ShutterChange(ShutterMethod.AUDIO_POLICY, ForceUse.FORCE_SYSTEM_ENFORCED)
+                store.save(ShutterJournal(true, existing))
+                return readPinned(existing)
             }
         }
-        return audioSnapshot(audio.getOrThrow(), null)
+        if (!journal.initialized) store.save(ShutterJournal(true))
+        if (audioMode) return audioSnapshot(device.readAudio(), null)
+        val reading = readCsc()
+        if (reading.absent) return ShutterSnapshot(ShutterMethod.GALAXY_CSC, Enforcement.RELEASED,
+            null, null, false, currentKnown = true, cscAbsent = true)
+        return snapshot(ShutterMethod.GALAXY_CSC, reading.value, reading.default ?: reading.value,
+            false, reading.default, reading.known)
     }
 
     fun release(beforeWrite: () -> Unit = {}): ShutterSnapshot {
         val before = inspect()
-        // A CSC already at 0 is never rewritten by release. An explicit release
-        // may still clear independent AudioPolicy enforcement, without switching
-        // an existing pinned CSC transaction to another method.
-        if (before.persistent && !before.hasChange && before.rawValue == 0 &&
-            runCatching { device.readAudio() }.getOrNull() == ForceUse.FORCE_SYSTEM_ENFORCED)
-            return releaseAudio(beforeWrite)
+        if (!before.releaseAllowed) throw ShutterMethodChangeBlocked()
         if (before.enforcement == Enforcement.RELEASED) return before
         check(before.enforcement == Enforcement.ENFORCED) { "Unknown shutter setting" }
         val previous = store.load().change
@@ -160,28 +146,7 @@ internal class ShutterBackend(
         val after = try { readPinned(change) }
         catch (error: Exception) { throw ShutterVerificationException(error) }
         if (after.enforcement == Enforcement.RELEASED) return finishRelease(after)
-        // Only a NEW CSC attempt with a confirmed unchanged value can fall back.
-        // An uncertain write, or a pinned prior release, must retain its method.
-        if (previous == null && change.method == ShutterMethod.GALAXY_CSC &&
-            after.rawValue == change.original && failure !is ShutterWriteUncertainException) {
-            store.save(ShutterJournal(true))
-            return releaseAudio(beforeWrite)
-        }
         throw ShutterVerificationException(failure)
-    }
-
-    private fun releaseAudio(beforeWrite: () -> Unit): ShutterSnapshot {
-        val before = audioSnapshot(device.readAudio(), null)
-        if (before.enforcement == Enforcement.RELEASED) return before
-        check(before.enforcement == Enforcement.ENFORCED) { "Unknown audio policy" }
-        val change = ShutterChange(ShutterMethod.AUDIO_POLICY, checkNotNull(before.restoreValue))
-        store.save(ShutterJournal(true, change))
-        beforeWrite()
-        val failure = runCatching { device.writeAudio(ForceUse.FORCE_NONE) }.exceptionOrNull()
-        val after = try { readPinned(change) }
-        catch (error: Exception) { throw ShutterVerificationException(error) }
-        if (after.enforcement != Enforcement.RELEASED) throw ShutterVerificationException(failure)
-        return finishRelease(after)
     }
 
     private fun finishRelease(after: ShutterSnapshot): ShutterSnapshot {
@@ -222,19 +187,31 @@ internal class ShutterBackend(
 
     private fun readPinned(change: ShutterChange): ShutterSnapshot = when (change.method) {
         ShutterMethod.AUDIO_POLICY -> audioSnapshot(device.readAudio(), change)
+            .copy(releaseAllowed = !samsung || forceAudioPolicy)
         ShutterMethod.GALAXY_CSC -> {
-            val raw = device.readCsc()
-            val default = cscDefault()
-            snapshot(change.method, when (raw) { "0" -> 0; "1" -> 1; else -> null },
-                default ?: change.original, true, default, raw == null || raw in listOf("0", "1"))
+            val reading = readCsc()
+            // Never recreate a missing key, even to restore a recorded value.
+            // A saved absent original can still be verified and cleared.
+            snapshot(change.method, reading.value, reading.default ?: change.original, true, reading.default,
+                reading.known && (!reading.absent || change.original == null)).let {
+                    if (reading.absent && change.original == null)
+                        it.copy(enforcement = Enforcement.RELEASED, cscAbsent = true) else it
+                }
         }
+    }
+
+    private data class CscReading(val value: Int?, val default: Int?, val known: Boolean, val absent: Boolean = false)
+    private fun readCsc(): CscReading {
+        val raw = try { device.readCsc() } catch (_: Exception) { return CscReading(null, null, false) }
+        val info = runCatching { device.readCscInfo() }.getOrNull()
+        if (raw == null) return CscReading(null, null, info?.exists == false, info?.exists == false)
+        if (info?.exists == false) return CscReading(null, null, false)
+        val value = raw.toIntOrNull()?.takeIf { raw == "0" || raw == "1" }
+        return CscReading(value, info?.takeIf { it.exists }?.trustedDefault, value != null)
     }
 
     private fun audioSnapshot(value: Int, change: ShutterChange?) =
         snapshot(ShutterMethod.AUDIO_POLICY, value, change?.original ?: deviceDefault ?: value, change != null)
-
-    private fun cscDefault(): Int? = runCatching { device.readCscInfo() }.getOrNull()
-        ?.takeIf { it.exists }?.trustedDefault
 
     private fun snapshot(method: ShutterMethod, raw: Int?, original: Int?, changed: Boolean,
         systemDefault: Int? = null, currentKnown: Boolean = raw != null): ShutterSnapshot {
@@ -250,6 +227,9 @@ internal class ShutterBackend(
         if (method == ShutterMethod.GALAXY_CSC) 0 else ForceUse.FORCE_NONE
     private fun write(method: ShutterMethod, value: Int?) = when (method) {
         ShutterMethod.AUDIO_POLICY -> device.writeAudio(checkNotNull(value))
-        ShutterMethod.GALAXY_CSC -> device.writeCsc(value)
+        ShutterMethod.GALAXY_CSC -> {
+            check(device.canWriteCsc()) { "CSC write permission is unavailable" }
+            device.writeCsc(value)
+        }
     }
 }

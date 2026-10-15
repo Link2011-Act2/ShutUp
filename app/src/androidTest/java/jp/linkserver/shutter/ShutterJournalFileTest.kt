@@ -42,6 +42,11 @@ class ShutterJournalFileTest {
         try {
             file.writeText("1\nGALAXY_CSC\n1")
             assertEquals(ShutterChange(ShutterMethod.GALAXY_CSC, 1), ShutterJournalFile(context, name).load().change)
+            for (version in 1..2) for (original in listOf(0, 11)) {
+                file.writeText("$version\nAUDIO_POLICY\n$original")
+                assertEquals(ShutterChange(ShutterMethod.AUDIO_POLICY, original),
+                    ShutterJournalFile(context, name).load().change)
+            }
             for (original in listOf(null, 0, 1)) {
                 val state = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, original))
                 ShutterJournalFile(context, name).save(state)

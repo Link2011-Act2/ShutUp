@@ -36,7 +36,7 @@ class GalaxyHomeTest {
             }
         }
         compose.onNodeWithText(text(R.string.action_release)).performClick()
-        compose.onNodeWithText(text(R.string.home_not_enforced)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.galaxy_csc_released)).assertIsDisplayed()
         compose.onNodeWithText("(FOR_SYSTEM=0)").assertDoesNotExist()
         compose.onNodeWithText(text(R.string.home_restart_note)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.home_persistent_note)).performScrollTo().assertIsDisplayed()

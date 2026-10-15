@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="restore_previous">変更前に戻す</string>
   <string name="result_default_restored">既定の設定に戻しました。</string>
@@ -115,7 +115,7 @@
   <string name="auto_maintain_title">解除状態を維持</string>
   <string name="auto_maintain_description">シャッター音の強制が復活した場合に自動で再解除します。1時間ごとに確認します</string>
   <string name="auto_maintain_state_active">有効です</string>
-  <string name="auto_maintain_state_paused">手動で復元されたため一時停止中</string>
+  <string name="auto_maintain_state_paused">解除操作を行うまで一時停止中</string>
   <string name="auto_maintain_save_failed">自動維持の設定を保存できませんでした</string>
   <string name="auto_maintain_offer_title">解除状態を自動的に維持しますか？</string>
   <string name="auto_maintain_offer_description">シャッター音が再び強制されるようになった際に、自動で解除します。Shizukuが利用可能な場合は、再起動後などにも自動で解除できます。</string>
@@ -195,4 +195,23 @@
   <string name="about_channel_unknown">不明</string>
   <string name="about_channel_unknown_description">このチャネルの説明は未登録です。</string>
   <string name="about_channel_dialog_title">開発チャネル: %1$s</string>
+  <string name="developer_force_samsung_title">Samsung端末として認識</string>
+  <string name="developer_force_samsung_description">警告機能のSamsung判定を有効にします。OFFでは実際のメーカーを使用します。</string>
+  <string name="developer_force_non_main_user_title">メインユーザー以外として認識</string>
+  <string name="developer_force_non_main_user_description">警告機能の非メインユーザー判定を有効にします。OFFでは実際のユーザーを使用します。</string>
+  <string name="developer_warning_simulation_note">警告・確認ダイアログ・自動維持の動作確認用です。即時反映され、スイッチの変更で模擬環境の同意をリセットします。実際の設定変更方式と操作先ユーザーは変わりません。続行すると実際の設定を変更します。</string>
+  <string name="developer_warning_save_failed">警告の動作確認設定を保存できませんでした。</string>
+  <string name="galaxy_settings_title">Galaxyの詳細設定</string>
+  <string name="galaxy_force_audio_title">通常Android方式を強制使用</string>
+  <string name="galaxy_force_audio_description">CSC設定の代わりにAudioPolicy方式を使います。方式を切り替えると自動維持を一時停止します。</string>
+  <string name="galaxy_force_audio_confirmation_title">通常Android方式を使用しますか？</string>
+  <string name="galaxy_force_audio_confirmation_description">Galaxyでは、この方式が正常に機能しない場合があります。AudioPolicyの値と実際のシャッター音の強制状態が一致するとは限りません。\n\n有効にすると、この方式で設定変更と自動維持を行います。変更後は実際のシャッター音を確認してください。</string>
+  <string name="galaxy_force_audio_enable">有効にする</string>
+  <string name="galaxy_method_restore_first">方式を切り替える前に、保存した変更前の状態へ復元してください。</string>
+  <string name="galaxy_method_save_failed">方式を変更できませんでした。操作の完了を待ち、もう一度お試しください。</string>
+  <string name="galaxy_csc_absent_value">(CSCキーなし)</string>
+  <string name="galaxy_csc_absent_hint">CSCの強制設定はありません。シャッター音の動作はカメラアプリや端末の設定によって異なります。</string>
+  <string name="galaxy_csc_released">強制なし</string>
+  <string name="galaxy_csc_released_hint">CSC設定ではシャッター音を強制していません。</string>
+  <string name="galaxy_legacy_restore_pending">復元待ち</string>
 </resources>
