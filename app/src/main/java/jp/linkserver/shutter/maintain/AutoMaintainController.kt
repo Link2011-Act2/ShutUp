@@ -149,7 +149,7 @@ internal class AutoMaintainController(
             val context = currentCoroutineContext()
             context.ensureActive()
             val before = connection.read()
-            synchronized(intentLock) {
+            val action = synchronized(intentLock) {
                 context.ensureActive()
                 requireCurrent(request)
                 val action = if (request.action == ManualAction.TOGGLE) {
@@ -159,7 +159,7 @@ internal class AutoMaintainController(
                 if (request.action == ManualAction.TOGGLE && action == ManualAction.RELEASE &&
                     !connection.releaseWouldChangeSetting && before == ForceUse.FORCE_NONE) {
                     mutableCurrent.value = before
-                    return@synchronized before
+                    return@withLock before
                 }
                 if (action == ManualAction.RELEASE)
                     releaseAuthorization.requireManualRelease(request, request.releasePermit)
@@ -167,20 +167,26 @@ internal class AutoMaintainController(
                 // Reassert manual intent if the toggle changed while connecting.
                 val next = state.value.copy(armed = action == ManualAction.RELEASE)
                 if (next != state.value) saveState(next)
-                val target = if (action == ManualAction.RESTORE) connection.baseline(deviceDefault) else ForceUse.FORCE_NONE
-                val actual = if (connector.storedRestoration || before != target) {
-                    val beforeWrite = {
+                action
+            }
+            val target = if (action == ManualAction.RESTORE) connection.baseline(deviceDefault) else ForceUse.FORCE_NONE
+            val actual = if (connector.storedRestoration || before != target) {
+                val beforeWrite = {
+                    synchronized(intentLock) {
                         context.ensureActive()
                         requireCurrent(request)
                         if (action == ManualAction.RELEASE)
                             releaseAuthorization.requireManualRelease(request, request.releasePermit)
                     }
-                    if (action == ManualAction.RESTORE) connection.restore(deviceDefault, beforeWrite)
-                    else connection.release(beforeWrite)
-                } else before
-                mutableCurrent.value = actual
-                actual
-            }
+                }
+                // IPC may take seconds. The operation mutex keeps device writes
+                // ordered while UI intent updates remain independent of that wait.
+                // A write already submitted may finish; a newer restore runs next.
+                if (action == ManualAction.RESTORE) connection.restore(deviceDefault, beforeWrite)
+                else connection.release(beforeWrite)
+            } else before
+            mutableCurrent.value = actual
+            actual
         }
     } finally {
         synchronized(intentLock) { if (pendingManual == request.generation) pendingManual = null }
@@ -226,23 +232,25 @@ internal class AutoMaintainController(
         context.ensureActive()
         if (!eligible(ticket)) return MaintainResult.SUPERSEDED
         val before = connection.read()
-        return synchronized(intentLock) {
+        synchronized(intentLock) {
             context.ensureActive()
-            if (!eligible(ticket)) return@synchronized MaintainResult.SUPERSEDED
+            if (!eligible(ticket)) return MaintainResult.SUPERSEDED
             mutableCurrent.value = before
-            if (!connection.canRelease) return@synchronized MaintainResult.INACTIVE
-            when (before) {
-                ForceUse.FORCE_NONE -> MaintainResult.ALREADY_RELEASED
-                ForceUse.FORCE_SYSTEM_ENFORCED -> {
-                    // Intent check and synchronous IPC write share one lock.
-                    mutableCurrent.value = connection.release {
+            if (!connection.canRelease) return MaintainResult.INACTIVE
+        }
+        return when (before) {
+            ForceUse.FORCE_NONE -> MaintainResult.ALREADY_RELEASED
+            ForceUse.FORCE_SYSTEM_ENFORCED -> {
+                mutableCurrent.value = connection.release {
+                    synchronized(intentLock) {
                         context.ensureActive()
+                        if (!eligible(ticket)) throw SupersededPolicyOperation()
                         releaseAuthorization.requireAutomaticRelease()
                     }
-                    MaintainResult.RESTORED
                 }
-                else -> MaintainResult.UNKNOWN
+                MaintainResult.RESTORED
             }
+            else -> MaintainResult.UNKNOWN
         }
     }
 

@@ -47,8 +47,8 @@ class ShutterJournalFileTest {
                 assertEquals(ShutterChange(ShutterMethod.AUDIO_POLICY, original),
                     ShutterJournalFile(context, name).load().change)
             }
-            for (original in listOf(null, 0, 1)) {
-                val state = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, original))
+            for (original in listOf(null, 0, 1)) for (boot in listOf(null, 0, 123)) {
+                val state = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, original), boot)
                 ShutterJournalFile(context, name).save(state)
                 assertEquals(state, ShutterJournalFile(context, name).load())
             }

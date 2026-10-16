@@ -42,7 +42,7 @@ class DeveloperEnvironmentBehaviorTest {
     @Test fun simulatedSamsungUsesTheAbsentCscRuleAndExplicitAudioModeStillWorks() {
         val environment = WarningDeveloperSettings(true, true, true).environment(AppUserEnvironment("Google", 0))
         val device = Device(csc = null)
-        val csc = ShutterBackend(device, Store(), environment.samsung, 11).release()
+        val csc = ShutterBackend(device, Store(), environment.samsung, 11, bootCount = 1).release()
         assertTrue(csc.cscAbsent)
         assertTrue(device.writes.isEmpty())
         ShutterBackend(device, Store(), environment.samsung, 11, forceAudioPolicy = true).release()
@@ -63,7 +63,7 @@ class DeveloperEnvironmentBehaviorTest {
         val store = Store()
         val intent = IntentStore()
         val controller = AutoMaintainController(intent, AudioPolicyConnector {
-            BackendPolicyConnection(ShutterBackend(device, store, environment.samsung, 11), store) {}
+            BackendPolicyConnection(ShutterBackend(device, store, environment.samsung, 11, bootCount = 1), store) {}
         }, releaseAuthorization = warning)
         assertFalse(controller.state.value.enabled)
         assertEquals(MaintainResult.INACTIVE, controller.maintain())

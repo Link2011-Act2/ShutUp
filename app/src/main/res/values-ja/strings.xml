@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="shutter_write_pending">設定変更の完了を確認できません。復元情報は保持しています。端末を再起動してからShizukuを起動し、アプリで再確認・復元してください。</string>
+  <string name="shutter_boot_unavailable">端末の起動情報を取得できないため、安全に設定を変更できません。再確認してからお試しください。</string>
   <string name="restore_previous">変更前に戻す</string>
   <string name="result_default_restored">従来通りシャッター音が鳴ります</string>
   <string name="csc_default_unknown">システムの既定値は不明です。保存した変更前の設定があれば復元できますが、既定値と一致するとは限りません。</string>
@@ -144,7 +146,7 @@
   <string name="about_version_details_title">バージョンの詳細</string>
   <string name="about_version_details">バージョン: %1$s\n内部バージョン番号: %2$d\nビルド番号: %3$s</string>
   <string name="about_updates_title">最新情報</string>
-  <string name="about_updates_body">• ダークモードの時、色がおかしくなる問題修正</string>
+  <string name="about_updates_body">• Galaxy専用モード追加\n・動作の安定化やバグ修正</string>
   <string name="about_check_updates">アップデートを確認</string>
   <string name="update_screen_title">アップデートがあります</string>
   <string name="update_action_description">アップデートがあります。更新の確認を開く</string>

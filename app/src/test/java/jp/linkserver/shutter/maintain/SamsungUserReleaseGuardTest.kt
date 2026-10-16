@@ -115,7 +115,7 @@ class SamsungUserReleaseGuardTest {
             override fun readCsc() = csc.toString()
             override fun writeCsc(value: Int?) { writes += value; csc = value!! }
             override fun canWriteCsc() = true
-        }, store, samsung = true, deviceDefault = 11)
+        }, store, samsung = true, deviceDefault = 11, bootCount = 1)
         val warning = SamsungUserWarning(AppUserEnvironment("samsung", 95), ConsentStore())
         val controller = AutoMaintainController(Store(AutoMaintainState()), AudioPolicyConnector {
             BackendPolicyConnection(backend, store) {}

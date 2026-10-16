@@ -17,7 +17,7 @@ class CscEmulationTest {
         override fun save(state: AutoMaintainState) { saved = state }
     }
     private fun backend(emulation: CscEmulation, legacy: Boolean = false) =
-        ShutterBackend(emulation.device, emulation, true, 11, legacy)
+        ShutterBackend(emulation.device, emulation, true, 11, legacy, bootCount = 1)
 
     @Test fun nonGalaxyDevicesCanSelectCscWithoutChangingTheirActualIdentity() {
         val actual = AppUserEnvironment("Google", 0)

@@ -43,7 +43,8 @@ class ShutterBackendTest {
         private val samsung = samsung
         private val default = default
         private val legacy = legacy
-        fun backend() = ShutterBackend(device, store, samsung, default, legacy, forceAudioPolicy = audioMode)
+        var bootCount: Int? = 1
+        fun backend() = ShutterBackend(device, store, samsung, default, legacy, forceAudioPolicy = audioMode, bootCount = bootCount)
         val published = mutableListOf<ShutterSnapshot>()
         fun connector() = object : AudioPolicyConnector {
             override val storedRestoration = true
@@ -191,6 +192,7 @@ class ShutterBackendTest {
         assertEquals(ShutterChange(ShutterMethod.GALAXY_CSC, 0), f.store.journal.change)
         assertEquals(listOf("csc:1"), f.device.writes)
         f.device.cscWrite = null
+        f.bootCount = 2 // A timed-out SettingsProvider transaction must not survive recovery.
         f.backend().restore()
         assertEquals("1", f.device.csc)
         assertNull(f.store.journal.change)
@@ -471,11 +473,13 @@ class ShutterBackendTest {
     @Test fun failedRecordClearAfterRestorationKeepsRecoveryInformation() {
         val f = Fixture()
         f.backend().release()
-        f.store.fail = true
+        f.device.cscWrite = { f.device.csc = it?.toString(); f.store.fail = true }
         assertTrue(runCatching { f.backend().restore() }.isFailure)
         assertEquals("1", f.device.csc)
         assertNotNull(f.store.journal.change)
         f.store.fail = false
+        f.device.cscWrite = null
+        f.bootCount = 2
         f.backend().restore()
         assertNull(f.store.journal.change)
     }
@@ -754,6 +758,113 @@ class ShutterBackendTest {
             worker.cancelAndJoin()
         }
     }
+    @Test fun lateReleaseCannotLoseItsRestorationRecordOrReportRestoredBeforeReboot() {
+        val f = Fixture()
+        var delayedWrite: (() -> Unit)? = null
+        f.device.cscWrite = { target ->
+            delayedWrite = { f.device.csc = target?.toString() }
+            throw ShutterWriteUncertainException()
+        }
+        assertTrue(runCatching { f.backend().release() }.exceptionOrNull() is ShutterWritePendingException)
+        assertEquals("1", f.device.csc)
+        // The old value is readable, but the original write can still complete.
+        assertTrue(runCatching { f.backend().restore() }.exceptionOrNull() is ShutterWritePendingException)
+        delayedWrite!!.invoke()
+        assertEquals("0", f.device.csc)
+        assertEquals(1, f.store.journal.change?.original)
+        assertEquals(1, f.store.journal.pendingCscWriteBoot)
+        // Recreating the backend does not discard the pending marker.
+        assertTrue(runCatching { f.backend().inspect() }.exceptionOrNull() is ShutterWritePendingException)
+        f.bootCount = 2
+        f.device.cscWrite = null
+        f.backend().restore()
+        assertEquals("1", f.device.csc)
+        assertNull(f.store.journal.change)
+        assertNull(f.store.journal.pendingCscWriteBoot)
+    }
+
+    @Test fun interruptedCscWriteIsBlockedAcrossRestartsUntilANewBootCanVerifyIt() {
+        val f = Fixture()
+        f.store.journal = ShutterJournal(true, ShutterChange(ShutterMethod.GALAXY_CSC, 1), 1)
+        for (boot in listOf(1, null)) {
+            f.bootCount = boot
+            assertTrue(runCatching { f.backend().restore() }.exceptionOrNull() is ShutterWritePendingException)
+            assertEquals(1, f.store.journal.pendingCscWriteBoot)
+            assertTrue(f.device.writes.isEmpty())
+        }
+        f.bootCount = 2
+        f.backend().restore()
+        assertNull(f.store.journal.change)
+        assertTrue(f.device.writes.isEmpty())
+    }
+
+    @Test fun unavailableBootInformationPreventsSubmittingAnUnrecoverableCscWrite() {
+        val f = Fixture()
+        f.bootCount = null
+        assertTrue(runCatching { f.backend().release() }.exceptionOrNull() is ShutterBootUnavailableException)
+        assertTrue(f.device.writes.isEmpty())
+        assertNull(f.store.journal.pendingCscWriteBoot)
+    }
+
+    @Test fun cancellationAtTheFinalCheckClearsOnlyTheUnsubmittedPendingMarker() {
+        val f = Fixture()
+        assertTrue(runCatching {
+            f.backend().release {
+                assertEquals(1, f.store.journal.pendingCscWriteBoot)
+                throw CancellationException("Stopped before IPC")
+            }
+        }.exceptionOrNull() is CancellationException)
+        assertNull(f.store.journal.pendingCscWriteBoot)
+        assertNotNull(f.store.journal.change)
+        assertTrue(f.device.writes.isEmpty())
+        f.backend().restore()
+        assertNull(f.store.journal.change)
+    }
+
+    @Test fun offDuringTheBackendsSecondReadReturnsPromptlyAndPreventsAnAutomaticWrite() = runBlocking {
+        val f = Fixture()
+        val controller = f.controller(AutoMaintainState(true, true))
+        val started = CountDownLatch(1)
+        val finish = CountDownLatch(1)
+        var reads = 0
+        f.device.beforeCscRead = {
+            if (++reads == 2) { started.countDown(); check(finish.await(5, TimeUnit.SECONDS)) }
+        }
+        val worker = async(Dispatchers.IO) { controller.maintain() }
+        try {
+            assertTrue(started.await(3, TimeUnit.SECONDS))
+            val off = async(Dispatchers.Default) { controller.setEnabled(false) }
+            withTimeout(1000) { off.await() }
+            assertFalse(controller.state.value.enabled)
+        } finally { finish.countDown() }
+        assertEquals(MaintainResult.SUPERSEDED, worker.await())
+        assertTrue(f.device.writes.isEmpty())
+        assertNull(f.store.journal.pendingCscWriteBoot)
+    }
+
+    @Test fun newerRestoreDuringTheBackendsSecondReadReturnsPromptlyAndSupersedesRelease() = runBlocking {
+        val f = Fixture()
+        val controller = f.controller()
+        val started = CountDownLatch(1)
+        val finish = CountDownLatch(1)
+        var reads = 0
+        f.device.beforeCscRead = {
+            if (++reads == 2) { started.countDown(); check(finish.await(5, TimeUnit.SECONDS)) }
+        }
+        val release = controller.requestManual(ManualAction.RELEASE)
+        val work = async(Dispatchers.IO) { runCatching { controller.performManual(release, 11) } }
+        val restore = try {
+            assertTrue(started.await(3, TimeUnit.SECONDS))
+            val request = async(Dispatchers.Default) { controller.requestManual(ManualAction.RESTORE) }
+            withTimeout(1000) { request.await() }
+        } finally { finish.countDown() }
+        assertTrue(work.await().exceptionOrNull() is SupersededPolicyOperation)
+        f.device.beforeCscRead = null
+        controller.performManual(restore, 11)
+        assertTrue(f.device.writes.isEmpty())
+        assertNull(f.store.journal.change)
+    }
+
     @Test fun manualRestoreSupersedesAnAutomaticGalaxyReadBeforeWriting() = runBlocking {
         val f = Fixture()
         f.backend().release()

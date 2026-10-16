@@ -34,7 +34,7 @@ class SamsungUserWarningUiTest {
             override fun readCsc() = csc.toString()
             override fun writeCsc(value: Int?) { writes += value; csc = value!! }
             override fun canWriteCsc() = true
-        }, store, samsung = true, deviceDefault = 11)
+        }, store, samsung = true, deviceDefault = 11, bootCount = 1)
         val controller = AutoMaintainController(AutoMaintainPreferences(context, prefs),
             AudioPolicyConnector { BackendPolicyConnection(backend, store) {} }, releaseAuthorization = warning)
         var state by mutableStateOf(ShutterUiState(ShutterSound.Status.READY, 11, nonMainUserWarning = true)

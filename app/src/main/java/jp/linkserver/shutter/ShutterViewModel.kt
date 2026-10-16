@@ -311,6 +311,8 @@ class ShutterViewModel private constructor(
                 mutableState.update { withSnapshot(it.copy(current = null, error = when (error) {
                     is ShutterMethodChangeBlocked -> context.getString(R.string.galaxy_method_restore_first)
                     is AudioPolicyException -> context.audioPolicyErrorMessage(error)
+                    is ShutterWritePendingException -> context.getString(R.string.shutter_write_pending)
+                    is ShutterBootUnavailableException -> context.getString(R.string.shutter_boot_unavailable)
                     is ShutterVerificationException -> context.getString(R.string.shutter_change_unverified)
                     is SecurityException -> context.getString(R.string.audio_routing_permission_denied)
                     else -> context.getString(R.string.uninstall_reminder_error)

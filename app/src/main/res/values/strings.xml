@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="shutter_write_pending">The setting change could not be confirmed. Restoration information has been kept. Restart your device, start Shizuku, then refresh and restore the setting in the app.</string>
+  <string name="shutter_boot_unavailable">The device boot information is unavailable, so the setting cannot be changed safely. Refresh the status and try again.</string>
   <string name="restore_previous">Restore previous setting</string>
   <string name="result_default_restored">The shutter sound will play as before.</string>
   <string name="csc_default_unknown">The system default is unknown. A saved previous setting can be restored, but it may differ from the system default.</string>
@@ -144,7 +146,7 @@
   <string name="about_version_details_title">Version details</string>
   <string name="about_version_details">Version: %1$s\nInternal version code: %2$d\nBuild number: %3$s</string>
   <string name="about_updates_title">What\'s new</string>
-  <string name="about_updates_body">• Fixed an issue where colors were distorted in dark mode</string>
+  <string name="about_updates_body">• Added a dedicated Galaxy mode\n• Improved stability and fixed bugs</string>
   <string name="about_check_updates">Check for updates</string>
   <string name="update_screen_title">Update available</string>
   <string name="update_action_description">Update available. Open update confirmation</string>

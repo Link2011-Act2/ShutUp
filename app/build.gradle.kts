@@ -21,7 +21,7 @@ val buildNumberFiles = (
 ).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
 val appCodeName = "Lethe" // トリッカル、定期。
-val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.0-IntDev_rev0"
+val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.0-Release"
 // Increase this for each distributed APK, regardless of its release channel.
 val appVersionCode = 4
 val buildContentHash = MessageDigest.getInstance("SHA-256").run {
@@ -47,9 +47,36 @@ val buildNumberVersionPrefix = if (
 val generatedBuildNumber =
     "$appCodeName-$buildNumberVersionPrefix${appVersionName.substringBefore('-')}-$buildTimestamp-${buildContentHash.take(3)}"
 
-// Local release signing comes from the environment. Without a configured
-// keystore, release builds use the local debug key.
-val keystorePath: String? = System.getenv("STORE_FILE")
+// Accept Android Studio's signed-build wizard or the existing environment setup.
+// Debug builds and analysis do not need credentials; release packaging must never
+// silently fall back to a debug key.
+val signingPropertyNames = mapOf(
+    "STORE_FILE" to "android.injected.signing.store.file",
+    "STORE_PASSWORD" to "android.injected.signing.store.password",
+    "KEY_ALIAS" to "android.injected.signing.key.alias",
+    "KEY_PASSWORD" to "android.injected.signing.key.password"
+)
+val useInjectedSigning = providers.gradleProperty(signingPropertyNames.getValue("STORE_FILE"))
+    .orNull?.isNotBlank() == true
+val releaseSigning = signingPropertyNames.mapValues { (environmentName, propertyName) ->
+    (if (useInjectedSigning) providers.gradleProperty(propertyName).orNull else System.getenv(environmentName))
+        ?.takeIf(String::isNotBlank)
+}
+val keystorePath = releaseSigning["STORE_FILE"]
+val validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        val missing = releaseSigning.filterValues { it == null }.keys
+        check(missing.isEmpty()) {
+            "Release signing is required. Configure signing in Android Studio or set: ${missing.joinToString()}. Debug signing is not allowed for release APKs or bundles."
+        }
+        check(file(checkNotNull(keystorePath)).isFile) { "The configured release keystore does not exist." }
+    }
+}
+tasks.configureEach {
+    if (name in setOf("assembleRelease", "bundleRelease", "packageRelease", "packageReleaseBundle", "signReleaseBundle")) {
+        dependsOn(validateReleaseSigning)
+    }
+}
 
 android {
     namespace = "jp.linkserver.shutter"
@@ -75,9 +102,9 @@ android {
         if (keystorePath != null) {
             create("release") {
                 storeFile = file(keystorePath)
-                storePassword = System.getenv("STORE_PASSWORD")
-                keyAlias = System.getenv("KEY_ALIAS")
-                keyPassword = System.getenv("KEY_PASSWORD")
+                storePassword = releaseSigning["STORE_PASSWORD"]
+                keyAlias = releaseSigning["KEY_ALIAS"]
+                keyPassword = releaseSigning["KEY_PASSWORD"]
             }
         }
     }
@@ -87,7 +114,7 @@ android {
             optimization {
                 enable = true
             }
-            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

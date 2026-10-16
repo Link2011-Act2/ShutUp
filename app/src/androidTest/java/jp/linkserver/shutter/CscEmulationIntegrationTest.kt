@@ -18,11 +18,11 @@ class CscEmulationIntegrationTest {
         val realJournal = ShutterJournalFile(context).load()
         try {
             val emulation = CscEmulation.create(context, name)
-            val first = ShutterBackend(emulation.device, emulation, true, 11)
+            val first = ShutterBackend(emulation.device, emulation, true, 11, bootCount = 1)
             assertEquals(1, first.inspect().rawValue)
             first.release()
             val restarted = CscEmulation.create(context, name)
-            val second = ShutterBackend(restarted.device, restarted, true, 11)
+            val second = ShutterBackend(restarted.device, restarted, true, 11, bootCount = 1)
             assertEquals(0, second.inspect().rawValue)
             assertEquals(ShutterMethod.GALAXY_CSC, restarted.load().change!!.method)
             assertEquals(1, restarted.load().change!!.original)
@@ -43,7 +43,7 @@ class CscEmulationIntegrationTest {
         val originalAudio = context.getSharedPreferences("galaxy_control", 0).getBoolean("forceAudioPolicy", false)
         val realJournal = ShutterJournalFile(context).load()
         val emulation = CscEmulation.create(context)
-        val backend = ShutterBackend(emulation.device, emulation, true, 11)
+        val backend = ShutterBackend(emulation.device, emulation, true, 11, bootCount = 1)
         try {
             runtime.setWarningDeveloperSettings(WarningDeveloperSettings(available = true, emulateCsc = true))
             runtime.setGalaxyAudioPolicy(false)

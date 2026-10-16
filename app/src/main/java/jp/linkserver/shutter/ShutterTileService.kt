@@ -1,5 +1,6 @@
 package jp.linkserver.shutter
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
@@ -42,6 +43,9 @@ class ShutterTileService : TileService() {
         }
     }
 
+    // The PendingIntent overload is available only on API 34+. Older OS versions
+    // still require Intent, regardless of this app's targetSdk.
+    @SuppressLint("StartActivityAndCollapseDeprecated")
     private fun openReleaseConfirmation() {
         val intent = Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_CONFIRM_RELEASE)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)

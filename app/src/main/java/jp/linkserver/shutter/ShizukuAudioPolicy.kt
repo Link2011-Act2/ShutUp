@@ -9,6 +9,7 @@ import android.os.DeadObjectException
 import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
+import android.provider.Settings
 import android.util.Log
 import jp.linkserver.shutter.maintain.AudioPolicyConnection
 import jp.linkserver.shutter.maintain.AudioPolicyConnector
@@ -119,7 +120,10 @@ internal object ShizukuAudioPolicy {
                     override fun canWriteCsc() =
                         Shizuku.checkRemotePermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
                 }, store, selectedEnvironment.samsung,
-                    ForceUse.deviceDefault(), legacyMaintainArmed, forceAudioPolicy())
+                    ForceUse.deviceDefault(), legacyMaintainArmed, forceAudioPolicy(),
+                    bootCount = runCatching {
+                        Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1).takeIf { it >= 0 }
+                    }.getOrNull())
                 return BackendPolicyConnection(backend, store, publish)
             }
         }

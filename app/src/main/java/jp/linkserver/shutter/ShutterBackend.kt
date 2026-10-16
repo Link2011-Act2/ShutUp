@@ -6,7 +6,11 @@ import jp.linkserver.shutter.maintain.AudioPolicyConnection
 internal enum class ShutterMethod { AUDIO_POLICY, GALAXY_CSC }
 internal enum class Enforcement { ENFORCED, RELEASED, UNKNOWN }
 internal data class ShutterChange(val method: ShutterMethod, val original: Int?)
-internal data class ShutterJournal(val initialized: Boolean = false, val change: ShutterChange? = null)
+internal data class ShutterJournal(
+    val initialized: Boolean = false,
+    val change: ShutterChange? = null,
+    val pendingCscWriteBoot: Int? = null
+)
 internal interface ShutterChangeStore {
     fun load(): ShutterJournal
     /** Must be durable before any device setting is written. */
@@ -88,24 +92,34 @@ internal data class ShutterSnapshot(
         persistent && systemDefault != null && currentKnown && rawValue != restoreValue
 }
 
-internal class ShutterVerificationException(cause: Throwable? = null) :
+internal open class ShutterVerificationException(cause: Throwable? = null) :
     IllegalStateException("Could not verify the shutter setting; the restoration record was retained", cause)
+
+internal class ShutterWritePendingException(cause: Throwable? = null) : ShutterVerificationException(cause)
+internal class ShutterBootUnavailableException : IllegalStateException("The device boot count is unavailable")
 
 /** A killed/timed-out client can still have a write pending in SettingsProvider. */
 internal class ShutterWriteUncertainException(cause: Throwable? = null) :
     IllegalStateException("The settings write may still complete", cause)
 
-/** Called only under AutoMaintainController's operation and intent locks. */
+/** Device operations are serialized by AutoMaintainController's operation mutex. */
 internal class ShutterBackend(
     private val device: ShutterDevice,
     private val store: ShutterChangeStore,
     private val samsung: Boolean,
     private val deviceDefault: Int?,
     private val legacyMaintainArmed: Boolean = false,
-    private val forceAudioPolicy: Boolean = false
+    private val forceAudioPolicy: Boolean = false,
+    private val bootCount: Int? = null
 ) {
     fun inspect(): ShutterSnapshot {
-        var journal = store.load()
+        val journal = store.load()
+        journal.pendingCscWriteBoot?.let { pendingBoot ->
+            // A read can overtake a timed-out SettingsProvider write. Only a new
+            // boot guarantees that no write from that transaction is still pending.
+            if (bootCount == null || bootCount == pendingBoot) throw ShutterWritePendingException()
+            store.save(journal.copy(pendingCscWriteBoot = null))
+        }
         journal.change?.let { return readPinned(it) }
         val audioMode = !samsung || forceAudioPolicy
         // Only migration evidence may recover an unjournaled old Galaxy audio
@@ -141,8 +155,7 @@ internal class ShutterBackend(
         if (previous == null) store.save(ShutterJournal(true, change))
         // Extra reads and durable saving can outlast a Worker cancellation.
         // Recheck immediately before each write, outside write-failure recovery.
-        beforeWrite()
-        val failure = runCatching { write(change.method, releasedValue(change.method)) }.exceptionOrNull()
+        val failure = attemptWrite(change, releasedValue(change.method), beforeWrite)
         val after = try { readPinned(change) }
         catch (error: Exception) { throw ShutterVerificationException(error) }
         if (after.enforcement == Enforcement.RELEASED) return finishRelease(after)
@@ -173,8 +186,7 @@ internal class ShutterBackend(
         // current value. Without it only our saved change can be undone.
         val target = before.restoreValue
         if (before.rawValue != target) {
-            beforeWrite()
-            val failure = runCatching { write(change.method, target) }.exceptionOrNull()
+            val failure = attemptWrite(change, target, beforeWrite)
             val after = try { readPinned(change) }
             catch (error: Exception) { throw ShutterVerificationException(error) }
             if (!after.currentKnown || after.rawValue != target) throw ShutterVerificationException(failure)
@@ -225,11 +237,27 @@ internal class ShutterBackend(
 
     private fun releasedValue(method: ShutterMethod) =
         if (method == ShutterMethod.GALAXY_CSC) 0 else ForceUse.FORCE_NONE
-    private fun write(method: ShutterMethod, value: Int?) = when (method) {
-        ShutterMethod.AUDIO_POLICY -> device.writeAudio(checkNotNull(value))
-        ShutterMethod.GALAXY_CSC -> {
-            check(device.canWriteCsc()) { "CSC write permission is unavailable" }
-            device.writeCsc(value)
+    private fun attemptWrite(change: ShutterChange, value: Int?, beforeWrite: () -> Unit): Throwable? {
+        if (change.method == ShutterMethod.AUDIO_POLICY) {
+            beforeWrite()
+            return runCatching { device.writeAudio(checkNotNull(value)) }.exceptionOrNull()
         }
+        check(device.canWriteCsc()) { "CSC write permission is unavailable" }
+        val boot = bootCount ?: throw ShutterBootUnavailableException()
+        val settled = ShutterJournal(true, change)
+        // Persist before IPC, including for process death between submission and
+        // acknowledgement. A later client must not infer completion from a read.
+        store.save(settled.copy(pendingCscWriteBoot = boot))
+        try { beforeWrite() }
+        catch (error: Exception) {
+            store.save(settled) // No write was submitted, so a reboot is unnecessary.
+            throw error
+        }
+        val failure = runCatching { device.writeCsc(value) }.exceptionOrNull()
+        if (failure is ShutterWriteUncertainException) throw ShutterWritePendingException(failure)
+        // Other service errors are acknowledged command completions; readback
+        // can verify their result. A missing acknowledgement keeps the marker.
+        store.save(settled)
+        return failure
     }
 }
