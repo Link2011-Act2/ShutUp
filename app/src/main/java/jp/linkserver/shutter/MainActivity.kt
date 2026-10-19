@@ -10,6 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,6 +33,9 @@ class MainActivity : ComponentActivity() {
             ?: (intent.action == ACTION_PREPARE_UNINSTALL)
         if (savedInstanceState?.getBoolean(STATE_CONFIRM_RELEASE) ?: (intent.action == ACTION_CONFIRM_RELEASE))
             shutter.requestReleaseConfirmation()
+        // Android 15 may reuse a decor without preserving decorFitsSystemWindows.
+        // Set this before enableEdgeToEdge initializes that preserved window.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
             ShutterTheme {
@@ -38,6 +43,14 @@ class MainActivity : ComponentActivity() {
                     onConfirmedRelease = { release(it) }) { release() }
             }
         }
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        // Compose is attached after ON_CREATE. Deliver preserved, real insets before
+        // its first measure can clamp a restored ScrollState against a transient viewport.
+        val content = findViewById<android.view.View>(android.R.id.content)
+        ViewCompat.getRootWindowInsets(content)?.let { ViewCompat.dispatchApplyWindowInsets(content, it) }
     }
 
     override fun onNewIntent(intent: Intent) {

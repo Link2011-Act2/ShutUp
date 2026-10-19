@@ -6,11 +6,14 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import jp.linkserver.pyrite.theme.PyriteTheme
 
 private val DarkColorScheme = darkColorScheme()
 private val LightColorScheme = lightColorScheme()
+private val ShutterShapes = Shapes()
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -23,10 +26,15 @@ fun ShutterTheme(darkTheme: Boolean = isSystemInDarkTheme(), dynamicColor: Boole
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-    androidx.compose.material3.MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    // Supply Pyrite's style/dark context while retaining ShutUp's existing app-wide
+    // colors, typography and original Material shapes (including Home/download).
+    PyriteTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
+        androidx.compose.material3.MaterialExpressiveTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = ShutterShapes,
+            content = content
+        )
+    }
 }
 

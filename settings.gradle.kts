@@ -10,6 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url = uri("https://jitpack.io")
+            content { includeGroup("com.github.Link2011-Act2") }
+        }
     }
 }
 rootProject.name = "ShutUp"

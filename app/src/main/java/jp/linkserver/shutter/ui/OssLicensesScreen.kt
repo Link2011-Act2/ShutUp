@@ -3,6 +3,7 @@ package jp.linkserver.shutter.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -20,7 +21,8 @@ private data class Entry(val title: String, val coordinate: String, val license:
 internal fun OssLicensesScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val entries = listOf(
-            Entry("ShutterSoundToggle", context.getString(R.string.license_upstream_description), "NYSL 0.9982", "https://github.com/soralis0912/ShutterSoundToggle", "NYSL.txt"),
+            Entry("Project Pyrite", "com.github.Link2011-Act2:Pyrite:43557c8", "MIT License", "https://github.com/Link2011-Act2/Pyrite", "Pyrite-MIT.txt"),
+            Entry("ShutterSoundToggle", stringResource(R.string.license_upstream_description), "NYSL 0.9982", "https://github.com/soralis0912/ShutterSoundToggle", "NYSL.txt"),
             Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / WorkManager / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
             Entry("Markwon", "io.noties.markwon:core / ext-tables:4.6.2", "Apache License 2.0", "https://github.com/noties/Markwon", "Apache-2.0.txt"),
             Entry("commonmark-java", "com.atlassian.commonmark:commonmark / commonmark-ext-gfm-tables:0.13.0", "BSD 2-Clause License", "https://github.com/commonmark/commonmark-java", "commonmark-BSD-2-Clause.txt"),
@@ -39,7 +41,8 @@ internal fun OssLicensesScreen(onBack: () -> Unit) {
         LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             itemsIndexed(entries, key = { _, entry -> entry.title }) { index, entry ->
-                SettingsItemSurface(false, SettingsGroupPosition.Single) {
+                Surface(Modifier.fillMaxWidth(), RoundedCornerShape(22.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh) {
                     Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(entry.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                         Text(entry.license, style = MaterialTheme.typography.bodyMedium)
@@ -57,9 +60,10 @@ internal fun OssLicensesScreen(onBack: () -> Unit) {
     }
     selected?.let { index ->
         val entry = entries[index]
-        val text = remember(entry.asset, context) {
+        val loadFailed = stringResource(R.string.license_load_failed)
+        val text = remember(entry.asset, context, loadFailed) {
             runCatching { context.assets.open("licenses/${entry.asset}").bufferedReader().use { it.readText() } }
-                .getOrElse { context.getString(R.string.license_load_failed) }
+                .getOrElse { loadFailed }
         }
         TextDialog(entry.title, text, { selected = null })
     }

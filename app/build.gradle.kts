@@ -21,9 +21,9 @@ val buildNumberFiles = (
 ).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
 val appCodeName = "Lethe" // トリッカル、定期。
-val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.0-Release"
+val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.1-IntDev"
 // Increase this for each distributed APK, regardless of its release channel.
-val appVersionCode = 4
+val appVersionCode = 5
 val buildContentHash = MessageDigest.getInstance("SHA-256").run {
     buildNumberFiles.forEach { file ->
         update(file.relativeTo(rootProject.projectDir).invariantSeparatorsPath.toByteArray())
@@ -80,7 +80,7 @@ tasks.configureEach {
 
 android {
     namespace = "jp.linkserver.shutter"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "jp.linkserver.shutter"
@@ -125,13 +125,14 @@ android {
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2025.08.01"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.animation:animation")
-    implementation("androidx.compose.material3:material3:1.5.0-alpha10")
+    // Fixed, published commit; no adjacent checkout or local Maven repository is required.
+    implementation("com.github.Link2011-Act2:Pyrite:43557c8")
+    implementation("androidx.compose.ui:ui:1.12.0")
+    implementation("androidx.compose.foundation:foundation:1.12.0")
+    implementation("androidx.compose.animation:animation:1.12.0")
+    implementation("androidx.compose.material3:material3:1.5.0-beta01")
     implementation("androidx.graphics:graphics-shapes:1.0.1")
-    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-core:1.7.8")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
@@ -139,10 +140,9 @@ dependencies {
     // Same release-note renderer as NITTC Scheduler.
     implementation("io.noties.markwon:core:4.6.2")
     implementation("io.noties.markwon:ext-tables:4.6.2")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.01"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.12.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.12.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.12.0")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.work:work-testing:2.12.0")
     implementation("dev.rikka.shizuku:api:13.1.5")

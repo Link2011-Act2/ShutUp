@@ -8,25 +8,14 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +25,9 @@ import jp.linkserver.shutter.update.AppUpdateState
 import jp.linkserver.shutter.update.AppUpdateViewModel
 import jp.linkserver.shutter.update.UpdateDeveloperSettings
 import jp.linkserver.shutter.maintain.AutoMaintainState
+import jp.linkserver.pyrite.screen.*
+import jp.linkserver.pyrite.settings.SettingsGroup
+import jp.linkserver.pyrite.settings.SettingsNavigationItem
 
 @Composable
 internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolean = false,
@@ -94,7 +86,6 @@ internal fun ShutterNavigation(
     onEmulateCscChange: (Boolean) -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
-    val holder = rememberSaveableStateHolder()
     val context = LocalContext.current
     var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
     var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
@@ -118,44 +109,36 @@ internal fun ShutterNavigation(
     }
     BackHandler(enabled = screen != "home", onBack = back)
     if (showMaintainOffer) AutoMaintainOfferDialog(onAutoMaintainOfferChoice)
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        AnimatedContent(
-            targetState = screen,
-            modifier = Modifier.fillMaxSize().clipToBounds(),
-            transitionSpec = {
-                val direction = if (screenDepth(targetState) > screenDepth(initialState)) 1 else -1
-                ((slideInHorizontally(tween(300, easing = FastOutSlowInEasing)) { direction * it / 5 } +
-                    fadeIn(tween(220, delayMillis = 40))) togetherWith
-                    (slideOutHorizontally(tween(300, easing = FastOutSlowInEasing)) { -direction * it / 5 } +
-                        fadeOut(tween(140)))).using(null)
-            },
-            label = "screen_transition"
-        ) { targetScreen ->
-            holder.SaveableStateProvider(targetScreen) {
-                when (targetScreen) {
-                    "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
-                        onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
-                        autoMaintainState, onAutoMaintainChange,
-                        warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
-                        galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
-                    "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
-                    "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
-                        ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
-                            Text(stringResource(R.string.about_update_latest), Modifier.padding(padding).padding(20.dp))
-                        }
-                    "licenses" -> OssLicensesScreen(back)
-                    else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
-                        onRelease, onRestore, onRefresh,
-                        galaxyMode = galaxySettings.available,
-                        updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(openPrompt) },
-                        updateBanner = {
-                            if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
-                                AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
-                                Spacer(Modifier.height(16.dp))
-                            }
-                        })
+    PyriteScreenTransition(
+        targetState = screen,
+        direction = { initial, target ->
+            if (screenDepth(target) > screenDepth(initial)) PyriteNavigationDirection.Forward
+            else PyriteNavigationDirection.Backward
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { targetScreen ->
+        when (targetScreen) {
+            "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
+                onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
+                autoMaintainState, onAutoMaintainChange,
+                warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
+                galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
+            "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
+            "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
+                ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
+                    Text(stringResource(R.string.about_update_latest), Modifier.padding(padding).padding(20.dp))
                 }
-            }
+            "licenses" -> OssLicensesScreen(back)
+            else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
+                onRelease, onRestore, onRefresh,
+                galaxyMode = galaxySettings.available,
+                updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(openPrompt) },
+                updateBanner = {
+                    if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
+                        AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
+                        Spacer(Modifier.height(16.dp))
+                    }
+                })
         }
     }
 }
@@ -181,27 +164,14 @@ private fun openShizuku(context: Context) {
     openUrl(context, "https://shizuku.rikka.app/")
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ScreenScaffold(title: String, onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}, content: @Composable (PaddingValues) -> Unit) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
-        topBar = {
-            TopAppBar(
-                title = { Text(title, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    if (onBack != null) IconButton(onClick = onBack) {
-                        Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back))
-                    }
-                },
-                actions = actions,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+    PyriteScreenScaffold(title = title,
+        navigationIcon = {
+            if (onBack != null) PyriteBackButton(onBack, stringResource(R.string.action_back))
         },
+        actions = actions,
         content = content
     )
 }
@@ -225,23 +195,18 @@ internal fun SettingsScreen(onBack: () -> Unit, onAbout: () -> Unit,
     ScreenScaffold(stringResource(R.string.settings_title), onBack) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(28.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AboutSectionTitle(stringResource(R.string.settings_general))
-                Column {
-                    val hasLanguageSettings = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                    if (hasLanguageSettings) {
-                        SettingsEntry(stringResource(R.string.settings_language_title), stringResource(R.string.settings_language_description),
-                            { openAppLanguageSettings(context) }, false, SettingsGroupPosition.Top)
-                        SettingsDividerGap()
-                    }
-                    AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange,
-                        if (hasLanguageSettings) SettingsGroupPosition.Bottom else SettingsGroupPosition.Single)
+            SettingsGroup(title = stringResource(R.string.settings_general)) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) item("language") {
+                    SettingsNavigationItem(stringResource(R.string.settings_language_title),
+                        { openAppLanguageSettings(context) }, summary = stringResource(R.string.settings_language_description))
                 }
+                item("auto_maintain") { AutoMaintainSettingsSection(autoMaintainState, onAutoMaintainChange) }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AboutSectionTitle(stringResource(R.string.settings_information))
-                SettingsEntry(stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_description),
-                    onAbout, false, SettingsGroupPosition.Single)
+            SettingsGroup(title = stringResource(R.string.settings_information)) {
+                item("about") {
+                    SettingsNavigationItem(stringResource(R.string.settings_about_title), onAbout,
+                        summary = stringResource(R.string.settings_about_description))
+                }
             }
             if (galaxySettings.available) GalaxyControlSettingsSection(galaxySettings, shutterState.working,
                 shutterState.hasChange, shutterState.canRestore, onRestore, onGalaxyAudioPolicyChange)

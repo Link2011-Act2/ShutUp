@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -72,6 +73,7 @@ internal fun AppUpdatePrompt(update: GitHubRelease, onConfirm: () -> Unit,
 @Composable
 internal fun UpdateOverviewScreen(release: GitHubRelease, onBack: () -> Unit) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val downloads: UpdateDownloadViewModel = viewModel()
     val download by downloads.state.collectAsStateWithLifecycle()
     val active = download.takeIf { it.tag == release.tag } ?: UpdateDownloadState()
@@ -86,7 +88,7 @@ internal fun UpdateOverviewScreen(release: GitHubRelease, onBack: () -> Unit) {
                 setDataAndType(uri, "application/vnd.android.package-archive")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             })
-        } catch (_: Exception) { feedback = context.getString(R.string.update_install_failed) }
+        } catch (_: Exception) { feedback = resources.getString(R.string.update_install_failed) }
     }
 
     LaunchedEffect(active.pendingInstall, active.file) {
@@ -102,11 +104,11 @@ internal fun UpdateOverviewScreen(release: GitHubRelease, onBack: () -> Unit) {
             download.busy -> downloads.cancel()
             release.apkUrl == null -> openUrl(context, release.url)
             !context.packageManager.canRequestPackageInstalls() -> {
-                feedback = context.getString(R.string.update_permission_required)
+                feedback = resources.getString(R.string.update_permission_required)
                 try {
                     context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                         Uri.parse("package:${context.packageName}")))
-                } catch (_: Exception) { feedback = context.getString(R.string.settings_open_failed) }
+                } catch (_: Exception) { feedback = resources.getString(R.string.settings_open_failed) }
             }
             active.file?.exists() == true -> openInstaller()
             else -> downloads.download(release)

@@ -1,0 +1,74 @@
+[
+  {
+    "image": "light-dynamic-home.png",
+    "changed_pixels": 0,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.0
+  },
+  {
+    "image": "light-dynamic-settings.png",
+    "changed_pixels": 330888,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 8.203503352490422
+  },
+  {
+    "image": "light-dynamic-about.png",
+    "changed_pixels": 513133,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 15.881826309067689
+  },
+  {
+    "image": "dark-dynamic-home.png",
+    "changed_pixels": 0,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.0
+  },
+  {
+    "image": "dark-dynamic-settings.png",
+    "changed_pixels": 300,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.02327985312899106
+  },
+  {
+    "image": "dark-dynamic-about.png",
+    "changed_pixels": 34039,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 3.7203388409961686
+  },
+  {
+    "image": "light-static-home.png",
+    "changed_pixels": 0,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.0
+  },
+  {
+    "image": "light-static-settings.png",
+    "changed_pixels": 330856,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 7.6838010855683265
+  },
+  {
+    "image": "light-static-about.png",
+    "changed_pixels": 513135,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 15.060018358876118
+  },
+  {
+    "image": "dark-static-home.png",
+    "changed_pixels": 0,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.0
+  },
+  {
+    "image": "dark-static-settings.png",
+    "changed_pixels": 300,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 0.023325351213282247
+  },
+  {
+    "image": "dark-static-about.png",
+    "changed_pixels": 34056,
+    "total_pixels": 835200,
+    "mean_absolute_channel_delta": 3.7537555874840356
+  }
+]

@@ -1,0 +1,3 @@
+--------- beginning of main
+10-19 08:31:30.221  6229  6229 I PyriteMigrationGeometry: before value=827.0 max=871.0 viewport=Rect.fromLTRB(40.0, 220.0, 680.0, 1196.0) content=720x1280@[0, 0] bars=Insets{left=0, top=56, right=0, bottom=48}
+10-19 08:31:31.506  6229  6229 I PyriteMigrationGeometry: recreated-0 value=767.0 max=871.0 viewport=Rect.fromLTRB(40.0, 164.0, 680.0, 1140.0) content=720x1176@[0, 56] bars=Insets{left=0, top=56, right=0, bottom=48}
