@@ -23,12 +23,15 @@ class MainActivity : ComponentActivity() {
     private val shutter: ShutterViewModel by viewModels()
     private val updates: AppUpdateViewModel by viewModels()
     private var showUninstallReminder by mutableStateOf(false)
+    private var openTransferRequest by mutableStateOf(false)
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         shutter.refresh()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        openTransferRequest = savedInstanceState?.getBoolean(STATE_OPEN_TRANSFER)
+            ?: (intent.action == ACTION_VIEW_UPDATE_TRANSFER)
         showUninstallReminder = savedInstanceState?.getBoolean(STATE_UNINSTALL_REMINDER)
             ?: (intent.action == ACTION_PREPARE_UNINSTALL)
         if (savedInstanceState?.getBoolean(STATE_CONFIRM_RELEASE) ?: (intent.action == ACTION_CONFIRM_RELEASE))
@@ -40,6 +43,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ShutterTheme {
                 ShutterApp(shutter, showUninstallReminder, { showUninstallReminder = false }, updates,
+                    openTransferRequest = openTransferRequest, onTransferRequestConsumed = { openTransferRequest = false },
                     onConfirmedRelease = { release(it) }) { release() }
             }
         }
@@ -62,12 +66,15 @@ class MainActivity : ComponentActivity() {
         } else if (intent.action == ACTION_CONFIRM_RELEASE) {
             showUninstallReminder = false
             shutter.requestReleaseConfirmation()
+        } else if (intent.action == ACTION_VIEW_UPDATE_TRANSFER) {
+            openTransferRequest = true
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean(STATE_UNINSTALL_REMINDER, showUninstallReminder)
         outState.putBoolean(STATE_CONFIRM_RELEASE, shutter.state.value.releaseConfirmationPending)
+        outState.putBoolean(STATE_OPEN_TRANSFER, openTransferRequest)
         super.onSaveInstanceState(outState)
     }
 
@@ -92,6 +99,8 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_PREPARE_UNINSTALL = "jp.linkserver.shutter.action.PREPARE_UNINSTALL"
         const val ACTION_CONFIRM_RELEASE = "jp.linkserver.shutter.action.CONFIRM_RELEASE"
+        const val ACTION_VIEW_UPDATE_TRANSFER = "jp.linkserver.shutter.action.VIEW_UPDATE_TRANSFER"
+        private const val STATE_OPEN_TRANSFER = "open_update_transfer"
         private const val STATE_UNINSTALL_REMINDER = "show_uninstall_reminder"
         private const val STATE_CONFIRM_RELEASE = "confirm_release"
     }

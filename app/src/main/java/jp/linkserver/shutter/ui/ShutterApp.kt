@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
 import jp.linkserver.goldy.GoldyState
@@ -36,12 +37,17 @@ import jp.linkserver.pyrite.settings.SettingsNavigationItem
 internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolean = false,
     onDismissUninstallReminder: () -> Unit = {}, updates: AppUpdateViewModel? = null,
     onConfirmedRelease: (ReleasePermit) -> Unit = { shutter.release(it) },
+    openTransferRequest: Boolean = false, onTransferRequestConsumed: () -> Unit = {},
     onRelease: () -> Unit) {
     val state by shutter.state.collectAsStateWithLifecycle()
     val autoMaintainState by shutter.autoMaintainState.collectAsStateWithLifecycle()
     val offerPending by shutter.autoMaintainOfferPending.collectAsStateWithLifecycle()
     val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: GoldyState()
     val downloads: UpdateDownloadViewModel = viewModel()
+    LifecycleResumeEffect(downloads) {
+        downloads.onForegroundChanged(true)
+        onPauseOrDispose { downloads.onForegroundChanged(false) }
+    }
     val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
     val warningDeveloperSettings by shutter.warningDeveloperSettings.collectAsStateWithLifecycle()
     val galaxySettings by shutter.galaxySettings.collectAsStateWithLifecycle()
@@ -53,7 +59,8 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
         autoMaintainState, shutter::setAutoMaintainEnabled,
         offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer,
         warningDeveloperSettings, shutter::setForceSamsung, shutter::setForceNonMainUser,
-        galaxySettings, shutter::setGalaxyAudioPolicy, shutter::setEmulateCsc, downloads)
+        galaxySettings, shutter::setGalaxyAudioPolicy, shutter::setEmulateCsc, downloads,
+        openTransferRequest, onTransferRequestConsumed)
     if (state.releaseConfirmationPending && !state.working && !showUninstallReminder) {
         SamsungUserWarningDialog(shutter::cancelReleaseConfirmation) { remember ->
             shutter.confirmRelease(remember)?.let(onConfirmedRelease)
@@ -88,7 +95,8 @@ internal fun ShutterNavigation(
     galaxySettings: GalaxyControlSettings = GalaxyControlSettings(),
     onGalaxyAudioPolicyChange: (Boolean) -> Unit = {},
     onEmulateCscChange: (Boolean) -> Unit = {},
-    downloads: UpdateDownloadViewModel? = null
+    downloads: UpdateDownloadViewModel? = null,
+    openTransferRequest: Boolean = false, onTransferRequestConsumed: () -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val context = LocalContext.current
@@ -106,6 +114,12 @@ internal fun ShutterNavigation(
         onHideUpdateBanner()
     }
     val openPrompt = { onHideUpdateBanner(); showUpdatePrompt = true }
+    LaunchedEffect(openTransferRequest, canShowUpdate) {
+        if (openTransferRequest && canShowUpdate) {
+            updateReturnScreen = "home"; screen = "update"; showUpdatePrompt = false
+            onTransferRequestConsumed()
+        }
+    }
     val back = {
         screen = when (screen) { "update" -> updateReturnScreen; "licenses" -> "about"; "about" -> "settings"; else -> "home" }
     }
@@ -123,29 +137,27 @@ internal fun ShutterNavigation(
         },
         modifier = Modifier.fillMaxSize()
     ) { targetScreen ->
-        ShutterDestinationTheme(targetScreen) {
-            when (targetScreen) {
-                "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
-                    onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
-                    autoMaintainState, onAutoMaintainChange,
-                    warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
-                    galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
-                "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate,
-                    downloads?.state?.collectAsStateWithLifecycle()?.value?.requests?.isNotEmpty() == true)
-                "update" -> if (downloads != null) UpdateOverviewScreen(updateState.availableUpdate, back, downloads)
-                    else UpdateOverviewScreen(updateState.availableUpdate, back)
-                "licenses" -> OssLicensesScreen(back)
-                else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
-                    onRelease, onRestore, onRefresh,
-                    galaxyMode = galaxySettings.available,
-                    updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(notification, openPrompt) },
-                    updateBanner = {
-                        if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
-                            AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
-                            Spacer(Modifier.height(16.dp))
-                        }
-                    })
-            }
+        when (targetScreen) {
+            "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
+                onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
+                autoMaintainState, onAutoMaintainChange,
+                warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
+                galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
+            "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate,
+                downloads?.state?.collectAsStateWithLifecycle()?.value?.hasTransfer == true)
+            "update" -> if (downloads != null) UpdateOverviewScreen(updateState.availableUpdate, back, downloads)
+                else UpdateOverviewScreen(updateState.availableUpdate, back)
+            "licenses" -> OssLicensesScreen(back)
+            else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
+                onRelease, onRestore, onRefresh,
+                galaxyMode = galaxySettings.available,
+                updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(notification, openPrompt) },
+                updateBanner = {
+                    if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
+                        AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
+                        Spacer(Modifier.height(16.dp))
+                    }
+                })
         }
     }
 }

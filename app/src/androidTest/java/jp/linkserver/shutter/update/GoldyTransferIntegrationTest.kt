@@ -53,7 +53,7 @@ class GoldyTransferIntegrationTest {
         fixtureDirectory.listFiles()?.forEach { assertTrue(it.delete()) }
         assertTrue(fixtureDirectory.delete())
     }
-    private fun newFiles() = directory.listFiles().orEmpty().filter { it.name !in originalFiles }
+    private fun newFiles() = directory.listFiles().orEmpty().filter { it.name !in originalFiles && it.name != ".transfer.lock" }
     private fun sha(file: File): String {
         val hash = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input -> val buffer = ByteArray(65536); while (true) { val n = input.read(buffer); if (n < 0) break; hash.update(buffer, 0, n) } }
@@ -94,7 +94,7 @@ class GoldyTransferIntegrationTest {
     }
     private fun model(downloader: ApkDownloader): UpdateDownloadViewModel {
         lateinit var model: UpdateDownloadViewModel
-        instrumentation.runOnMainSync { model = UpdateDownloadViewModel(app, downloader, installer) { launches.add(Intent(it)); Unit } }
+        instrumentation.runOnMainSync { model = transferTestModel(app, downloader, installer) { launches.add(Intent(it)); Unit } }
         models.add(model)
         waitFor { !model.state.value.restoring }
         return model
@@ -114,6 +114,9 @@ class GoldyTransferIntegrationTest {
         val model = model(source)
         val update = candidate()
         instrumentation.runOnMainSync { model.action(update, UpdateAction.Download); model.action(update, UpdateAction.Download) }
+        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
+        assertTrue(launches.isEmpty())
+        instrumentation.runOnMainSync { model.action(update, UpdateAction.Install); model.action(update, UpdateAction.Install) }
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         assertEquals(1, launches.size)
         val request = model.state.value.requests.single { it.id !in originalIds }
@@ -138,10 +141,30 @@ class GoldyTransferIntegrationTest {
         val model = model(downloader(own))
         val update = candidate()
         action(model, update)
+        waitFor { model.state.value.transfer == UpdateTransferState.PermissionRequired }
+        assertTrue(launches.isEmpty())
+        instrumentation.runOnMainSync {
+            model.action(update, UpdateAction.OpenInstallPermissionSettings)
+            model.action(update, UpdateAction.OpenInstallPermissionSettings)
+        }
         waitFor { launches.isNotEmpty() }
         assertEquals(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, launches.single().action)
         assertEquals(UpdateTransferState.PermissionRequired, model.state.value.transfer)
         assertTrue(newFiles().isEmpty())
+    }
+
+    @Test fun preparedOlderApkRemainsRetainedWhenNewReleaseIsSelected() {
+        val model = model(downloader(own))
+        val update = candidate()
+        action(model, update)
+        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
+        val request = model.state.value.requests.single { it.id !in originalIds }
+        val newer = jp.linkserver.shutter.ui.testUpdate("v99.0.0-Beta2", withApk = true)
+        instrumentation.runOnMainSync { model.selectCandidate(newer) }
+        assertEquals(newer, model.selection.value)
+        assertTrue(model.state.value.requests.any { it.id == request.id })
+        app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }
+        assertTrue(launches.isEmpty())
     }
 
     @Test fun permissionGrantAfterProcessRestartRequiresExplicitRetry() {
@@ -151,6 +174,8 @@ class GoldyTransferIntegrationTest {
         Thread.sleep(200)
         assertTrue(launches.isEmpty())
         action(model, update)
+        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
+        action(model, update, UpdateAction.Install)
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         assertEquals(1, launches.size)
     }
@@ -165,6 +190,9 @@ class GoldyTransferIntegrationTest {
         assertTrue(launches.isEmpty())
         val retry = model(downloader(own))
         action(retry, update)
+        waitFor { retry.state.value.transfer == UpdateTransferState.Ready }
+        assertTrue(launches.isEmpty())
+        action(retry, update, UpdateAction.Install)
         waitFor { retry.state.value.transfer == UpdateTransferState.HandedOff }
         assertEquals(1, launches.size)
     }
@@ -204,7 +232,10 @@ class GoldyTransferIntegrationTest {
 
     @Test fun modifiedLeaseIsRejectedOnExplicitReopen() = runBlocking {
         val model = model(downloader(own))
-        action(model, candidate())
+        val update = candidate()
+        action(model, update)
+        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
+        action(model, update, UpdateAction.Install)
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         val request = model.state.value.requests.single { it.id !in originalIds }
         val uri = requireNotNull(launches.single().data)

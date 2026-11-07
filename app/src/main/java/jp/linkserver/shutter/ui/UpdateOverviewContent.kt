@@ -30,15 +30,24 @@ internal fun UpdateOverviewContent(candidate: UpdateCandidate?, download: Update
         active -> download.transfer
         else -> UpdateTransferState.Idle
     }
+    val strings = goldyUpdateStrings().let {
+        if (active && download.waiting) it.copy(download = stringResource(R.string.goldy_transfer_restart)) else it
+    }
     EliefOverviewScreen(
         state = UpdateUiState(candidate, apkAvailable = release?.let { ApkSelectionPolicies.ShutUp.select(it) != null } == true,
             transfer = transfer, message = feedback ?: download.message.takeUnless {
                 active && download.transfer is UpdateTransferState.Failed
             }),
         onBack = onBack, onOpenUrl = onOpenUrl ?: { openUrl(context, it) }, onAction = onAction,
-        strings = goldyUpdateStrings(), channelLabel = release?.let { updateChannelLabel(it.tag, it.prerelease) }.orEmpty(),
+        strings = strings, channelLabel = release?.let { updateChannelLabel(it.tag, it.prerelease) }.orEmpty(),
         header = {
             header()
+            if (active && download.waiting) {
+                download.retainedProgress?.let { Text(DownloadProgressFormatter.format(it, resources.configuration.locales[0])) }
+                androidx.compose.material3.TextButton(onClick = { onAction(UpdateAction.CancelDownload) }) {
+                    Text(stringResource(R.string.update_cancel_download))
+                }
+            }
             release?.let { ApkSelectionPolicies.ShutUp.select(it) }?.let { asset ->
                 Text(stringResource(R.string.update_asset_name, asset.name), style = MaterialTheme.typography.bodySmall)
             }

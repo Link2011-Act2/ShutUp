@@ -2,12 +2,13 @@ package jp.linkserver.shutter.ui
 
 import android.graphics.Bitmap
 import android.text.Spanned
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -70,7 +71,7 @@ class AppUpdateUiTest {
         compose.onNodeWithText(text(R.string.update_ignore)).performClick()
         compose.onNodeWithContentDescription(text(R.string.update_action_description)).assertDoesNotExist()
         compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
-        compose.onNodeWithText(text(R.string.settings_about_title)).performClick()
+        compose.onNodeWithText(text(R.string.settings_about_title)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.about_check_updates)).performScrollTo().performClick()
         compose.waitForIdle()
         compose.onNodeWithText("v2.0.0-Beta2").assertIsDisplayed()
@@ -110,6 +111,7 @@ class AppUpdateUiTest {
     }
 
     @Test fun markdownStylesAndIntermediateNotesRenderInsideTheReferenceLayout() {
+        var referenceTextPx = Float.NaN
         val markdown = """
             ## Improvements / 改善点
             **Camera controls** now work with the updated interface.
@@ -129,6 +131,8 @@ class AppUpdateUiTest {
         """.trimIndent()
         compose.setContent {
             ShutterTheme {
+                val expected = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.fontSize.toPx() }
+                SideEffect { referenceTextPx = expected }
                 UpdateOverviewContent(testUpdate("v2.0.0-Beta2", true).let { it.copy(release = it.release.copy(notes = markdown)) },
                     UpdateDownloadState(restoring = false), {}, onAction = {})
             }
@@ -146,14 +150,14 @@ class AppUpdateUiTest {
                 assertTrue("Missing rendered Markdown style: $type ($types)", type in types)
             }
             assertTrue(view.isTextSelectable)
-            assertEquals(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f,
-                view.resources.displayMetrics), view.textSize, 0.1f)
+            assertTrue(referenceTextPx > 0f)
+            assertEquals(referenceTextPx,view.textSize,0.1f)
         }
         screenshot("markdown")
         compose.onNodeWithTag("history-toggle").performScrollTo().performClick()
         compose.onNodeWithTag("history-2").performScrollTo().assertIsDisplayed()
         screenshot("markdown-intermediate")
-        compose.onNodeWithText(text(R.string.update_download_install)).assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.goldy_transfer_download)).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun emptyNotesAndInstallFeedbackKeepTheReleasePageActionAvailable() {
@@ -172,6 +176,25 @@ class AppUpdateUiTest {
         compose.onNodeWithText(text(R.string.about_open_release)).assertIsEnabled().performClick()
         assertEquals(1, opens)
         screenshot("empty-notes")
+    }
+
+    @Test fun pausedTransferShowsSavedProgressAndExplicitContinueOrCancel() {
+        val actions = mutableListOf<jp.linkserver.goldy.compose.UpdateAction>()
+        val progress = ApkProgress(15_000_000,30_000_000,1)
+        val candidate = testUpdate("v2.0.0-Beta2",withApk=true)
+        compose.setContent {
+            ShutterTheme {
+                UpdateOverviewContent(candidate,UpdateDownloadState(tag=candidate.release.tag,
+                    releaseIdentity=transferIdentity(candidate),restoring=false,waiting=true,retainedProgress=progress,
+                    transfer=UpdateTransferState.Failed(text(R.string.goldy_transfer_paused),jp.linkserver.goldy.compose.UpdateAction.Download)),
+                    {},onAction=actions::add)
+            }
+        }
+        val formatted = jp.linkserver.goldy.compose.DownloadProgressFormatter.format(progress,compose.activity.resources.configuration.locales[0])
+        compose.onNodeWithText(formatted).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(text(R.string.update_cancel_download)).performScrollTo().performClick()
+        compose.onNodeWithText(text(R.string.goldy_transfer_restart)).performScrollTo().assertIsEnabled().performClick()
+        assertEquals(listOf(jp.linkserver.goldy.compose.UpdateAction.CancelDownload,jp.linkserver.goldy.compose.UpdateAction.Download),actions)
     }
 
     @Test fun releaseResponseAndSavedMetadataRoundTrip() {

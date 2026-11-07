@@ -7,6 +7,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.graphics.asAndroidBitmap
 import jp.linkserver.shutter.MainActivity
 import jp.linkserver.shutter.R
 import org.junit.Assert.assertEquals
@@ -17,6 +18,9 @@ import org.junit.Test
 class PyriteActivityRestorationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
     private fun text(id: Int) = compose.activity.getString(id)
+    private fun canvasColor(): Int = compose.onRoot().captureToImage().asAndroidBitmap().let { image ->
+        image.getPixel(0, image.height / 2).also { image.recycle() }
+    }
 
     private fun recordGeometry(label: String) {
         val node = compose.onNode(hasScrollAction()).fetchSemanticsNode()
@@ -31,13 +35,14 @@ class PyriteActivityRestorationTest {
 
     @Test fun aboutRetainsBottomScrollAcrossActivityRecreation() {
         compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
-        compose.onNodeWithText(text(R.string.settings_about_title)).performClick()
+        compose.onNodeWithText(text(R.string.settings_about_title)).performScrollTo().performClick()
         compose.onNodeWithText(text(R.string.about_oss_open)).performScrollTo()
         compose.waitForIdle()
         val scroll = compose.onNode(hasScrollAction())
         val before = scroll.fetchSemanticsNode().config[SemanticsProperties.VerticalScrollAxisRange].value()
         val viewport = scroll.fetchSemanticsNode().boundsInRoot
         val button = compose.onNodeWithText(text(R.string.about_oss_open)).fetchSemanticsNode().boundsInRoot
+        val color = canvasColor()
         recordGeometry("before")
         repeat(2) {
             compose.activityRule.scenario.recreate()
@@ -48,6 +53,7 @@ class PyriteActivityRestorationTest {
             assertEquals(before, restored.config[SemanticsProperties.VerticalScrollAxisRange].value(), 0f)
             assertEquals(viewport, restored.boundsInRoot)
             assertEquals(button, compose.onNodeWithText(text(R.string.about_oss_open)).fetchSemanticsNode().boundsInRoot)
+            assertEquals("Pyrite canvas after recreation", color, canvasColor())
         }
     }
 }

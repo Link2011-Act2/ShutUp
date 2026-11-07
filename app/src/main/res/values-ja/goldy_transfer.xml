@@ -1,0 +1,16 @@
+<resources>
+    <string name="goldy_transfer_channel">更新のダウンロード</string>
+    <string name="goldy_transfer_title">ShutUpの更新</string>
+    <string name="goldy_transfer_queued">ダウンロードの開始を待っています…</string>
+    <string name="goldy_transfer_paused">ダウンロードが中断しました。続行すると、サーバーが対応している場合は保存済みデータから再開します。</string>
+    <string name="goldy_transfer_restarted">サーバーから途中再開できないため、APKを最初から取得し直しています。</string>
+    <string name="goldy_transfer_schedule_failed">ダウンロードを開始できませんでした。アプリを開いてもう一度開始してください。</string>
+    <string name="goldy_transfer_foreground_install">この画面に戻り、インストールを選択して続行してください。</string>
+    <string name="goldy_transfer_permission_ready">ShutUpに戻り、インストールを許可して続行してください。</string>
+    <string name="goldy_transfer_allow_install">設定でインストールを許可する</string>
+    <string name="goldy_transfer_permission_guidance">設定でこのアプリからのインストールを許可し、この画面に戻ってください。インストールを選択するまでインストーラーは開きません。</string>
+    <string name="goldy_transfer_download">更新APKをダウンロード</string>
+    <string name="goldy_transfer_install">取得した更新をインストール</string>
+    <string name="goldy_transfer_restart">APKのダウンロードを続行</string>
+    <string name="goldy_transfer_open">更新のダウンロード・インストール</string>
+</resources>

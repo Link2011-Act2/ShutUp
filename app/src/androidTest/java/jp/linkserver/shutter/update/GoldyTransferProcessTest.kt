@@ -33,14 +33,14 @@ class GoldyTransferProcessTest {
     private fun waitFor(condition: () -> Boolean) = runBlocking { withTimeout(90_000) { while (!condition()) delay(25) } }
     private fun model(onLaunch: (Intent) -> Unit): UpdateDownloadViewModel {
         lateinit var model: UpdateDownloadViewModel
-        instrumentation.runOnMainSync { model = UpdateDownloadViewModel(app,
+        instrumentation.runOnMainSync { model = transferTestModel(app,
             ApkDownloader.create(app, ApkDownloadConfig(UPDATE_REPOSITORY, ApkSelectionPolicies.ShutUp, ApkVersionBindings.Published)), installer, onLaunch) }
         waitFor { !model.state.value.restoring }
         return model
     }
 
     @Test fun stage1PrepareDurableLeasesAndSimulateHandoffGap() = runBlocking<Unit> {
-        assertTrue(android.os.Build.MODEL.contains("sdk"))
+        assertTrue(android.os.Build.MODEL.contains("sdk", ignoreCase = true) || android.os.Build.FINGERPRINT.contains("generic"))
         assertFalse("Finish an earlier staged test first", journal.contains("unknown"))
         instrumentation.uiAutomation.executeShellCommand("appops set ${app.packageName} REQUEST_INSTALL_PACKAGES allow")
             .use { android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes() }
@@ -78,7 +78,7 @@ class GoldyTransferProcessTest {
         var launches = 0
         val model = model { launches++ }
         assertEquals(0, launches)
-        assertEquals(UpdateTransferState.Ready, model.state.value.transfer)
+        assertTrue(model.state.value.transfer is UpdateTransferState.Failed)
         assertNotNull(model.state.value.message)
         val request = model.state.value.requests.single { it.id == journal.getString("unknown", null) }
         app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }

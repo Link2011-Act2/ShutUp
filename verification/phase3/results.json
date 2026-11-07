@@ -1,0 +1,785 @@
+{
+  "phase3Complete": true,
+  "status": "complete_with_reported_environment_limits",
+  "endedJst": "2026-11-07T23:18:37+09:00",
+  "zone": "Asia/Tokyo",
+  "environment": {
+    "os": "Windows",
+    "jdk": "Eclipse Adoptium 21",
+    "androidSdk": "C:/Users/wwwri/AppData/Local/Android/Sdk",
+    "emulatorApis": [
+      28,
+      36
+    ],
+    "physicalDeviceOperated": false
+  },
+  "goldy": {
+    "startHead": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+    "finalHead": "27692fc266e82f081406c85c9841226b4aca4733",
+    "branch": "master",
+    "clean": true,
+    "pushed": true,
+    "createdReleaseOrTag": false,
+    "changedFiles": [
+      "app/src/androidTest/java/jp/linkserver/projectgoldy/DemoScreenTest.kt",
+      "docs/phase3-progress.md",
+      "gold/src/androidTest/java/jp/linkserver/goldy/GoldyTestRunner.kt",
+      "gold/src/main/java/jp/linkserver/goldy/ApkDownloader.kt",
+      "gold/src/main/java/jp/linkserver/goldy/ResumableTransfer.kt",
+      "gold/src/main/java/jp/linkserver/goldy/ResumeCheckpoint.kt",
+      "gold/src/main/java/jp/linkserver/goldy/ResumeHttp.kt",
+      "gold/src/main/java/jp/linkserver/goldy/ResumeStorage.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ApkDownloadTest.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ResumableTransferTest.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ResumeCheckpointTest.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ResumeHttpServerTest.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ResumeHttpTest.kt",
+      "gold/src/test/java/jp/linkserver/goldy/ResumeStorageTest.kt",
+      "verification/verify-api-compatibility.py"
+    ],
+    "units": {
+      "gold": {
+        "tests": 157,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "elief": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "demo": {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "lint": {
+      "gold": {
+        "debug": {
+          "errors": 0,
+          "warnings": 4
+        },
+        "release": {
+          "errors": 0,
+          "warnings": 4
+        }
+      },
+      "elief": {
+        "debug": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "release": {
+          "errors": 0,
+          "warnings": 0
+        }
+      },
+      "app": {
+        "debug": {
+          "errors": 0,
+          "warnings": 23
+        },
+        "release": {
+          "errors": 0,
+          "warnings": 23
+        }
+      }
+    },
+    "jitpack": {
+      "version": "27692fc266e82f081406c85c9841226b4aca4733",
+      "commit": "27692fc266e82f081406c85c9841226b4aca4733",
+      "status": "ok",
+      "artifacts": [
+        {
+          "module": "gold",
+          "file": "gold-27692fc266e82f081406c85c9841226b4aca4733.aar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/27692fc266e82f081406c85c9841226b4aca4733/gold-27692fc266e82f081406c85c9841226b4aca4733.aar",
+          "bytes": 321743,
+          "sha256": "2DBE665B6F1B57115FA3FBDD379AEC9B907E446DC1F01E62511EAC72B22481E5"
+        },
+        {
+          "module": "gold",
+          "file": "gold-27692fc266e82f081406c85c9841226b4aca4733.pom",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/27692fc266e82f081406c85c9841226b4aca4733/gold-27692fc266e82f081406c85c9841226b4aca4733.pom",
+          "bytes": 1907,
+          "sha256": "1A698A59EAB1CE64502B5D0206FD2D415F46B9657E5B8E5FE166D59BA6738F7F"
+        },
+        {
+          "module": "gold",
+          "file": "gold-27692fc266e82f081406c85c9841226b4aca4733-sources.jar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/27692fc266e82f081406c85c9841226b4aca4733/gold-27692fc266e82f081406c85c9841226b4aca4733-sources.jar",
+          "bytes": 40872,
+          "sha256": "7BBD02711C00D01696CC4851C1B6F1DBC0627AF52343396C7F33B8D9A1156958"
+        },
+        {
+          "module": "gold",
+          "file": "gold-27692fc266e82f081406c85c9841226b4aca4733.module",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/27692fc266e82f081406c85c9841226b4aca4733/gold-27692fc266e82f081406c85c9841226b4aca4733.module",
+          "bytes": 3657,
+          "sha256": "A12DC70ECEC381562BB97822073032ED3C91A4D6AD7EEC7DF216725A6A65B58E"
+        },
+        {
+          "module": "elief",
+          "file": "elief-27692fc266e82f081406c85c9841226b4aca4733.aar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/27692fc266e82f081406c85c9841226b4aca4733/elief-27692fc266e82f081406c85c9841226b4aca4733.aar",
+          "bytes": 119752,
+          "sha256": "21856AB42B26D02D4640F8008DDDD654D5F312E2959A22F05EB4CE6DC7DC6790"
+        },
+        {
+          "module": "elief",
+          "file": "elief-27692fc266e82f081406c85c9841226b4aca4733.pom",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/27692fc266e82f081406c85c9841226b4aca4733/elief-27692fc266e82f081406c85c9841226b4aca4733.pom",
+          "bytes": 2726,
+          "sha256": "87D48AC923EA17B87A046B304AD3C53479E543E9479938B244B55FA98C6C4A94"
+        },
+        {
+          "module": "elief",
+          "file": "elief-27692fc266e82f081406c85c9841226b4aca4733-sources.jar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/27692fc266e82f081406c85c9841226b4aca4733/elief-27692fc266e82f081406c85c9841226b4aca4733-sources.jar",
+          "bytes": 18117,
+          "sha256": "52FBE2D9AE11C05FBCE3CEC356B4D7405B5E8F553BA3E48EDAAAE7A2F20EDB53"
+        },
+        {
+          "module": "elief",
+          "file": "elief-27692fc266e82f081406c85c9841226b4aca4733.module",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/27692fc266e82f081406c85c9841226b4aca4733/elief-27692fc266e82f081406c85c9841226b4aca4733.module",
+          "bytes": 4970,
+          "sha256": "039E22E34479A49E10A2D180693986D6E473418F455C9119ED0DC93A505C0163"
+        }
+      ]
+    },
+    "independentConsumers": [
+      {
+        "version": "27692fc266e82f081406c85c9841226b4aca4733",
+        "feature": "gold",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": false,
+        "apkBytes": 248474,
+        "apkSha256": "98C520F0A21E41EF60A6AD4623746D56BDEFC4139C85D52B488B346EE71B19CC",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": true,
+        "lintErrors": 0,
+        "lintWarnings": 3,
+        "passed": true
+      },
+      {
+        "version": "27692fc266e82f081406c85c9841226b4aca4733",
+        "feature": "elief",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": false,
+        "apkBytes": 2081575,
+        "apkSha256": "5B4080DA8E7B4E194ABCBC1A0C7F35D5F0CB9CAC1DCF817C3B686BC98E8C63A6",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": true,
+        "lintErrors": 0,
+        "lintWarnings": 1,
+        "passed": true
+      },
+      {
+        "version": "27692fc266e82f081406c85c9841226b4aca4733",
+        "feature": "elief",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": true,
+        "apkBytes": 2081575,
+        "apkSha256": "6633A6F3F1EC8A4D70C75C3821B34D2C71DB5B6513750D846A7308A7CF00223F",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": true,
+        "lintErrors": 0,
+        "lintWarnings": 1,
+        "passed": true
+      }
+    ],
+    "publicAarAbi": {
+      "passed": true,
+      "modules": [
+        {
+          "module": "gold",
+          "baseline": "gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "publicTypes": 107,
+          "originalDescriptors": 718,
+          "missingDescriptors": [],
+          "retained": true,
+          "removedPrivateCompilerBridges": [
+            [
+              "jp.linkserver.goldy.ApkDownloader",
+              "public static final java.lang.Object access$transfer(jp.linkserver.goldy.ApkDownloader, jp.linkserver.goldy.GitHubRelease, jp.linkserver.goldy.GitHubAsset, java.lang.String, int, kotlin.jvm.functions.Function1, kotlin.coroutines.Continuation);",
+              "descriptor: (Ljp/linkserver/goldy/ApkDownloader;Ljp/linkserver/goldy/GitHubRelease;Ljp/linkserver/goldy/GitHubAsset;Ljava/lang/String;ILkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;"
+            ],
+            [
+              "jp.linkserver.goldy.ApkDownloader",
+              "public static final jp.linkserver.goldy.ApkInspector access$getInspector$p(jp.linkserver.goldy.ApkDownloader);",
+              "descriptor: (Ljp/linkserver/goldy/ApkDownloader;)Ljp/linkserver/goldy/ApkInspector;"
+            ],
+            [
+              "jp.linkserver.goldy.ApkDownloader",
+              "public static final jp.linkserver.goldy.AssetTransport access$getTransport$p(jp.linkserver.goldy.ApkDownloader);",
+              "descriptor: (Ljp/linkserver/goldy/ApkDownloader;)Ljp/linkserver/goldy/AssetTransport;"
+            ],
+            [
+              "jp.linkserver.goldy.ApkDownloader",
+              "public static final void access$cleanParts(jp.linkserver.goldy.ApkDownloader);",
+              "descriptor: (Ljp/linkserver/goldy/ApkDownloader;)V"
+            ]
+          ]
+        },
+        {
+          "module": "elief",
+          "baseline": "elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "publicTypes": 27,
+          "originalDescriptors": 244,
+          "missingDescriptors": [],
+          "retained": true,
+          "removedPrivateCompilerBridges": []
+        }
+      ]
+    },
+    "eliefAarUnchangedFrom847": true,
+    "rotation": {
+      "28": {
+        "sdk": "28",
+        "serial": "emulator-5566",
+        "instrumentation": "INSTRUMENTATION_RESULT: result=PASS: real APK apksig/PackageManager agreement; v3/v3.1 effective signer; forward capability; reverse/missing capability/tampering/multiple mismatch rejection; API 28\r\nINSTRUMENTATION_RESULT: sdk=28\r\nINSTRUMENTATION_CODE: 0\r\n",
+        "osInstalls": [
+          {
+            "accepted": true,
+            "file": "a",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": false,
+            "file": "ab-denied",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-denied.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": false,
+            "file": "b-unrelated",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\b-unrelated.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": true,
+            "file": "ab-v3",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": false,
+            "file": "a",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\a.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": true,
+            "file": "abc-v3",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": false,
+            "file": "ab-v3",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-v3.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": false,
+            "file": "tampered-lineage",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\tampered-lineage.apk: Failure [INSTALL_PARSE_FAILED_NO_CERTIFICATES: Failed to collect certificates from /data/app/vmdl480987978.tmp/base.apk using APK Signature Scheme v3: Failed to parse/verify signer #0 block: SHA256withRSA signature did not verify]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": true,
+            "file": "multi-ab",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": true,
+            "file": "multi-ab",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": false,
+            "file": "multi-ac",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\multi-ac.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": false,
+            "file": "ab-v3",
+            "expected": false,
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-v3.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Package jp.linkserver.goldy.rotationfixture signatures do not match previously installed version; ignoring!]\r\nPerforming Streamed Install"
+          },
+          {
+            "accepted": true,
+            "file": "a",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          },
+          {
+            "accepted": true,
+            "file": "ab-v31",
+            "expected": true,
+            "output": "Performing Streamed Install\r\nSuccess"
+          }
+        ]
+      },
+      "36": {
+        "osInstalls": [
+          {
+            "file": "a",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "ab-denied",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-denied.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "b-unrelated",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\b-unrelated.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "ab-v3",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "a",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\a.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "abc-v3",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "ab-v3",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-v3.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "tampered-lineage",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\tampered-lineage.apk: Failure [INSTALL_PARSE_FAILED_NO_CERTIFICATES: Failed to collect certificates from /data/app/vmdl1550524905.tmp/base.apk using APK Signature Scheme v3: Failed to parse/verify signer #0 block: SHA256withRSA signature did not verify]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "multi-ab",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "multi-ab",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "multi-ac",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\multi-ac.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "ab-v3",
+            "output": "adb: failed to install D:\\apps\\goldy\\gold\\src\\test\\resources\\signatures\\ab-v3.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package jp.linkserver.goldy.rotationfixture signatures do not match newer version; ignoring!]\r\nPerforming Streamed Install",
+            "expected": false,
+            "accepted": false
+          },
+          {
+            "file": "a",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          },
+          {
+            "file": "ab-v31",
+            "output": "Performing Streamed Install\r\nSuccess",
+            "expected": true,
+            "accepted": true
+          }
+        ],
+        "serial": "emulator-5564",
+        "sdk": "36",
+        "instrumentation": "INSTRUMENTATION_RESULT: result=PASS: real APK apksig/PackageManager agreement; v3/v3.1 effective signer; forward capability; reverse/missing capability/tampering/multiple mismatch rejection; API 36\r\nINSTRUMENTATION_RESULT: sdk=36\r\nINSTRUMENTATION_CODE: 0\r\n"
+      }
+    }
+  },
+  "shutup": {
+    "head": "d2aee9f9062517b5e0ac219392771dc3cee3d8b9",
+    "branch": "main",
+    "committedOrPushed": false,
+    "dependencySha": "27692fc266e82f081406c85c9841226b4aca4733",
+    "localDependencyInFinalSettings": false,
+    "units": {
+      "tests": 190,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "debug": {
+        "errors": 0,
+        "warnings": 62
+      },
+      "release": {
+        "errors": 0,
+        "warnings": 63
+      }
+    },
+    "debugBuildPassed": true,
+    "releaseR8Passed": true,
+    "releasePackaging": {
+      "passed": false,
+      "reason": "Missing existing release signing configuration; validateReleaseSigning blocked; no debug-signing substitution"
+    },
+    "rangeProcess": {
+      "28": {
+        "apk": {
+          "restoredBytes": 5242880,
+          "total": 51130197,
+          "pid": 10226,
+          "requestId": "c4935831-86f6-4c4a-8e8c-cf124951e663",
+          "packageName": "jp.linkserver.shutter",
+          "versionName": "1.1.1-IntDev",
+          "installerLaunches": 0,
+          "explicitInstallerLaunches": 1
+        },
+        "http": [
+          {
+            "request": 1,
+            "range": null,
+            "ifRange": null,
+            "status": 200,
+            "start": 0,
+            "sent": 9207808,
+            "size": 51130197
+          },
+          {
+            "request": 2,
+            "range": "bytes=5242880-",
+            "ifRange": "\"dd7c13be56bc5bf1d708ebe2860e3bf7a5fbace325d5091b5c9d5821473aa09e\"",
+            "status": 206,
+            "start": 5242880,
+            "sent": 45887317,
+            "size": 51130197
+          }
+        ],
+        "apkSha256": "dd7c13be56bc5bf1d708ebe2860e3bf7a5fbace325d5091b5c9d5821473aa09e",
+        "differentProcessAsserted": true,
+        "stages": [
+          {
+            "path": "D:\\apps\\shutup\\build\\phase3\\api28-public-27692fc\\stage1DownloadAndKeepCheckpointForForceStop.txt",
+            "tests": 1,
+            "passed": true
+          },
+          {
+            "path": "D:\\apps\\shutup\\build\\phase3\\api28-public-27692fc\\stage2ResumeInNewProcessAndPrepareVerifiedInstallRequest.txt",
+            "tests": 1,
+            "passed": true
+          }
+        ]
+      },
+      "36": {
+        "apk": {
+          "restoredBytes": 7340032,
+          "total": 51130197,
+          "pid": 4212,
+          "requestId": "bb8608ef-01f9-486a-b0c7-3673498fb9e1",
+          "packageName": "jp.linkserver.shutter",
+          "versionName": "1.1.1-IntDev",
+          "installerLaunches": 0,
+          "explicitInstallerLaunches": 1
+        },
+        "http": [
+          {
+            "request": 1,
+            "range": null,
+            "ifRange": null,
+            "status": 200,
+            "start": 0,
+            "sent": 13729792,
+            "size": 51130197
+          },
+          {
+            "request": 2,
+            "range": "bytes=7340032-",
+            "ifRange": "\"dd7c13be56bc5bf1d708ebe2860e3bf7a5fbace325d5091b5c9d5821473aa09e\"",
+            "status": 206,
+            "start": 7340032,
+            "sent": 43790165,
+            "size": 51130197
+          }
+        ],
+        "apkSha256": "dd7c13be56bc5bf1d708ebe2860e3bf7a5fbace325d5091b5c9d5821473aa09e",
+        "differentProcessAsserted": true,
+        "stages": [
+          {
+            "path": "D:\\apps\\shutup\\build\\phase3\\api36-public-27692fc\\stage1DownloadAndKeepCheckpointForForceStop.txt",
+            "tests": 1,
+            "passed": true
+          },
+          {
+            "path": "D:\\apps\\shutup\\build\\phase3\\api36-public-27692fc\\stage2ResumeInNewProcessAndPrepareVerifiedInstallRequest.txt",
+            "tests": 1,
+            "passed": true
+          }
+        ]
+      }
+    },
+    "publicUi": {
+      "28": [
+        {
+          "path": "D:\\apps\\shutup\\build\\phase3\\ui-api28\\narrow-public.txt",
+          "tests": 21,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\phase3\\ui-api28\\activities-dark-public.txt",
+          "tests": 2,
+          "passed": true
+        }
+      ],
+      "36": [
+        {
+          "path": "D:\\apps\\shutup\\build\\phase3\\ui-api36\\narrow-public.txt",
+          "tests": 21,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\phase3\\ui-api36\\activities-dark-public.txt",
+          "tests": 2,
+          "passed": true
+        }
+      ]
+    },
+    "existingBackgroundSuites": {
+      "28": [
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-background.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-integration.txt",
+          "tests": 8,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-permission-denied.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage1DeniedDoubleSettingsPersistsIntent.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage1PrepareDurableLeasesAndSimulateHandoffGap.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage1StartRealAndroidTransferBeforeProcessDeath.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage2DeniedRestartAndCancelledSettingsRemainSingleAction.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage2RestoreGapWithoutAutomaticInstallerThenExplicitlyReopen.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage2RestorePausedMetadataAndExplicitlyRestartFullValidation.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage3GrantedRestartOffersDownloadWithoutReopeningSettings.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage3RestoreHandedOffAndReleaseOnlyExplicitly.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage4PreparedLeaseSurvivesPermissionRevocation.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api28-stage5GrantedPreparedLeaseOffersOneExplicitInstall.txt",
+          "tests": 1,
+          "passed": true
+        }
+      ],
+      "36": [
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-background.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-integration.txt",
+          "tests": 8,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-permission-denied.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage1DeniedDoubleSettingsPersistsIntent.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage1PrepareDurableLeasesAndSimulateHandoffGap.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage1StartRealAndroidTransferBeforeProcessDeath.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage2DeniedRestartAndCancelledSettingsRemainSingleAction.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage2RestoreGapWithoutAutomaticInstallerThenExplicitlyReopen.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage2RestorePausedMetadataAndExplicitlyRestartFullValidation.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage3GrantedRestartOffersDownloadWithoutReopeningSettings.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage3RestoreHandedOffAndReleaseOnlyExplicitly.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage4PreparedLeaseSurvivesPermissionRevocation.txt",
+          "tests": 1,
+          "passed": true
+        },
+        {
+          "path": "D:\\apps\\shutup\\build\\transfer-ux-20261107\\phase3-api36-stage5GrantedPreparedLeaseOffersOneExplicitInstall.txt",
+          "tests": 1,
+          "passed": true
+        }
+      ]
+    },
+    "worktreeStatus": [
+      " M app/build.gradle.kts",
+      " M app/src/androidTest/java/jp/linkserver/shutter/ui/AppUpdateUiTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/ui/PyriteActivityRestorationTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/ui/PyritePaletteTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferIntegrationTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferProcessTest.kt",
+      " M app/src/main/AndroidManifest.xml",
+      " M app/src/main/java/jp/linkserver/shutter/MainActivity.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/AboutScreen.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/AppUpdateUi.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/GoldyUpdateStrings.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/ShutterApp.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/Theme.kt",
+      " D app/src/main/java/jp/linkserver/shutter/ui/Type.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/UpdateOverviewContent.kt",
+      " M app/src/main/java/jp/linkserver/shutter/update/UpdateDownloadViewModel.kt",
+      " D app/src/main/res/drawable/ic_browser_updated.xml",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/ui/EliefThemeParityTest.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/InlineTransferExecution.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/RangeApkFixture.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/RangeProcessTest.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/UpdateBackgroundExecutionTest.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/UpdatePermissionRecoveryTest.kt",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/UpdateTransferProcessRecoveryTest.kt",
+      "?? app/src/main/java/jp/linkserver/shutter/update/UpdateTransferExecution.kt",
+      "?? app/src/main/java/jp/linkserver/shutter/update/UpdateTransferRuntime.kt",
+      "?? app/src/main/java/jp/linkserver/shutter/update/UpdateTransferSnapshot.kt",
+      "?? app/src/main/res/values-ja/goldy_transfer.xml",
+      "?? app/src/main/res/values/goldy_transfer.xml",
+      "?? verification/phase3/implementation.md",
+      "?? verification/phase3/range-server.py",
+      "?? verification/phase3/report.md",
+      "?? verification/phase3/results.json",
+      "?? verification/phase3/run-range-process.ps1",
+      "?? verification/theme-unification/build-with-local-goldy.ps1",
+      "?? verification/theme-unification/implementation.md",
+      "?? verification/theme-unification/report.md",
+      "?? verification/theme-unification/results.json",
+      "?? verification/theme-unification/run-transfer-ux.ps1",
+      "?? verification/theme-unification/run-ui-matrix.ps1"
+    ]
+  },
+  "nativeHttps": {
+    "28": {
+      "path": "D:\\apps\\goldy\\build\\phase3-final-api28-native-network.txt",
+      "passed": true
+    },
+    "36": {
+      "path": "D:\\apps\\shutup\\build\\phase3\\final-api36-native-network.txt",
+      "passed": true
+    }
+  },
+  "cleanup": {
+    "ownedApi36AvdRemoved": true,
+    "api28Stopped": true,
+    "api28OriginalConfigSha256": "F00A494AC9732EA999B25915837F874E36CF8ADA2B6315FCC9152ED602661249"
+  },
+  "limits": [
+    "Formal signed Release APK unavailable: signing configuration absent",
+    "No physical/vendor device run or API26/27 Phase3 run",
+    "No physical disk-exhaustion or concurrent Android-process race run; storage/lock/cancellation covered by controlled tests",
+    "Expired CDN responses are controlled HTTP fixtures; actual GitHub HTTPS normal transfer/cancel/404 tested",
+    "Connect timeout injected; read timeout real HTTP",
+    "OS force-stop can prevent automatic execution; explicit process-restored resume tested"
+  ]
+}

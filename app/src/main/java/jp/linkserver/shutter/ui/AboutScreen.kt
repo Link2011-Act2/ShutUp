@@ -131,7 +131,7 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
                     stringResource(R.string.about_check_updates), ::checkUpdates,
                     checking = checking, hasResult = updateResult != "unchecked")
                 if (hasPendingInstallRequests) OutlinedButton(onClick = onUpdateAvailable,
-                    modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.goldy_update_retained_title)) }
+                    modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.goldy_transfer_open)) }
             }
             AboutActionGroup(listOf(
                 AboutAction("support", stringResource(R.string.about_support_title),

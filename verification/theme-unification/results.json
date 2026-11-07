@@ -1,0 +1,406 @@
+{
+  "endedJst": "2026-11-07T18:05:03+09:00",
+  "goldy": {
+    "startHead": "28d66246c410ebb7ab95f983a3a11de044ccb1b8",
+    "finalHead": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+    "branch": "master",
+    "clean": true,
+    "coreSourceFilesUnchanged": 24,
+    "refreshDrawableUnchanged": true,
+    "jitpack": {
+      "version": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+      "commit": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+      "status": "ok",
+      "artifacts": [
+        {
+          "module": "gold",
+          "file": "gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/847d098cd1ddff7cc740d8189c25a1f854e23b28/gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "bytes": 281381,
+          "sha256": "7C9CBCAC43BC93776AC814218F87C97142B4F24884E8C04E77653BF8126CA754"
+        },
+        {
+          "module": "gold",
+          "file": "gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.pom",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/847d098cd1ddff7cc740d8189c25a1f854e23b28/gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.pom",
+          "bytes": 1869,
+          "sha256": "77FBCB3C38F0D16A6466D4362829AA3ADC99F3036002AEAA4642774990D95804"
+        },
+        {
+          "module": "gold",
+          "file": "gold-847d098cd1ddff7cc740d8189c25a1f854e23b28-sources.jar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/847d098cd1ddff7cc740d8189c25a1f854e23b28/gold-847d098cd1ddff7cc740d8189c25a1f854e23b28-sources.jar",
+          "bytes": 34081,
+          "sha256": "A639F95F655CC5658388D4F2E7683224B837F072F57E7D0B05163E3C3A8A29EC"
+        },
+        {
+          "module": "gold",
+          "file": "gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.module",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/gold/847d098cd1ddff7cc740d8189c25a1f854e23b28/gold-847d098cd1ddff7cc740d8189c25a1f854e23b28.module",
+          "bytes": 3657,
+          "sha256": "96101F28902301728B37272A5136443B628E218740FCC41281E15405AD8266D6"
+        },
+        {
+          "module": "elief",
+          "file": "elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/847d098cd1ddff7cc740d8189c25a1f854e23b28/elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.aar",
+          "bytes": 119752,
+          "sha256": "21856AB42B26D02D4640F8008DDDD654D5F312E2959A22F05EB4CE6DC7DC6790"
+        },
+        {
+          "module": "elief",
+          "file": "elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.pom",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/847d098cd1ddff7cc740d8189c25a1f854e23b28/elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.pom",
+          "bytes": 2688,
+          "sha256": "86BBAEBBA89EED0C7721F7626FE40EFE0A29E26400DFE99DDD56BA0FA7399F02"
+        },
+        {
+          "module": "elief",
+          "file": "elief-847d098cd1ddff7cc740d8189c25a1f854e23b28-sources.jar",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/847d098cd1ddff7cc740d8189c25a1f854e23b28/elief-847d098cd1ddff7cc740d8189c25a1f854e23b28-sources.jar",
+          "bytes": 18117,
+          "sha256": "52FBE2D9AE11C05FBCE3CEC356B4D7405B5E8F553BA3E48EDAAAE7A2F20EDB53"
+        },
+        {
+          "module": "elief",
+          "file": "elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.module",
+          "url": "https://jitpack.io/com/github/Link2011-Act2/Goldy/elief/847d098cd1ddff7cc740d8189c25a1f854e23b28/elief-847d098cd1ddff7cc740d8189c25a1f854e23b28.module",
+          "bytes": 4970,
+          "sha256": "5746A2C53A3BEF342542F6FFEF8C2E8F00571F9C12214C0C0E3E4996E8A6CFDE"
+        }
+      ]
+    },
+    "independentConsumers": [
+      {
+        "version": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+        "feature": "gold",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": false,
+        "apkBytes": 248474,
+        "apkSha256": "98C520F0A21E41EF60A6AD4623746D56BDEFC4139C85D52B488B346EE71B19CC",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": true,
+        "lintErrors": 0,
+        "lintWarnings": 3,
+        "passed": true
+      },
+      {
+        "version": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+        "feature": "elief",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": false,
+        "apkBytes": 2081575,
+        "apkSha256": "5B4080DA8E7B4E194ABCBC1A0C7F35D5F0CB9CAC1DCF817C3B686BC98E8C63A6",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": true,
+        "lintErrors": 0,
+        "lintWarnings": 1,
+        "passed": true
+      },
+      {
+        "version": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+        "feature": "elief",
+        "host": "shutup",
+        "expressive": false,
+        "pomOnly": true,
+        "apkBytes": 2081575,
+        "apkSha256": "6633A6F3F1EC8A4D70C75C3821B34D2C71DB5B6513750D846A7308A7CF00223F",
+        "r8Mapping": true,
+        "hostActivityCompiled": true,
+        "debugVerified": true,
+        "refreshDependencies": false,
+        "lintErrors": 0,
+        "lintWarnings": 1,
+        "passed": true
+      }
+    ],
+    "abi": {
+      "passed": true,
+      "modules": [
+        {
+          "module": "gold",
+          "baseline": "gold-af5f415db976f62f991369224cb236d272f0103a.aar",
+          "publicTypes": 107,
+          "originalDescriptors": 761,
+          "missingDescriptors": [],
+          "retained": true
+        },
+        {
+          "module": "elief",
+          "baseline": "elief-af5f415db976f62f991369224cb236d272f0103a.aar",
+          "publicTypes": 25,
+          "originalDescriptors": 237,
+          "missingDescriptors": [],
+          "retained": true
+        }
+      ]
+    },
+    "icon": {
+      "passed": true,
+      "references": [
+        "build\\update-icon-20261107\\baseline\\shutup.xml",
+        "D:\\apps\\schedulernittc\\app\\src\\main\\res\\drawable\\browser_updated.xml"
+      ],
+      "sameGeometry": {
+        "kind": "vector",
+        "geometry": {
+          "{http://schemas.android.com/apk/res/android}width": "24dp",
+          "{http://schemas.android.com/apk/res/android}height": "24dp",
+          "{http://schemas.android.com/apk/res/android}viewportWidth": "960",
+          "{http://schemas.android.com/apk/res/android}viewportHeight": "960"
+        },
+        "children": [
+          {
+            "kind": "group",
+            "geometry": {
+              "{http://schemas.android.com/apk/res/android}translateY": "960"
+            },
+            "children": [
+              {
+                "kind": "path",
+                "geometry": {
+                  "{http://schemas.android.com/apk/res/android}pathData": "M240-120v-80l40-40H160q-330-56.5-23.5T80-320v-440q0-3323.5-56.5T160-840h320v80H160v440h640v-120h80v120q033-23.556.5T800-240H680l4040v80H240Zm360-240L400-560l56-56104103v-327h80v327l104-1035656-200200Z"
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "opaqueMaskWithInheritedComposeTint": true,
+      "aarSha256": "21856ab42b26d02d4640f8008dddd654d5f312e2959a22f05eb4ce6dc7dc6790"
+    },
+    "jvm": {
+      "gold": {
+        "tests": 129,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "elief": {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "demoUi": {
+      "final": 20,
+      "iconStageNotifications": 9,
+      "api": 36,
+      "widthDp": 320,
+      "heightDp": 640,
+      "fontScale": 1.0
+    },
+    "changes": [
+      "app/src/androidTest/java/jp/linkserver/projectgoldy/DefaultUpdateIconTest.kt",
+      "app/src/androidTest/java/jp/linkserver/projectgoldy/UpdateScreenTest.kt",
+      "app/src/main/java/jp/linkserver/projectgoldy/FixtureUpdateViewModel.kt",
+      "docs/download-progress.md",
+      "docs/third-party-licenses.md",
+      "docs/update-icons.md",
+      "elief/src/main/java/jp/linkserver/goldy/compose/DownloadProgressFormatter.kt",
+      "elief/src/main/java/jp/linkserver/goldy/compose/UpdateScreenLayout.kt",
+      "elief/src/main/java/jp/linkserver/goldy/compose/UpdateStrings.kt",
+      "elief/src/main/res/drawable/elief_update.xml",
+      "elief/src/main/resources/META-INF/elief/MaterialSymbols-APACHE-2.0.txt",
+      "elief/src/main/resources/META-INF/elief/NOTICE",
+      "elief/src/test/java/jp/linkserver/goldy/compose/DownloadProgressFormatterTest.kt",
+      "verification/verify-update-icon.py"
+    ]
+  },
+  "shutup": {
+    "head": "d2aee9f9062517b5e0ac219392771dc3cee3d8b9",
+    "branch": "main",
+    "commitPush": false,
+    "publicDependency": "847d098cd1ddff7cc740d8189c25a1f854e23b28",
+    "publicSettingsRestored": true,
+    "protectedCheckAndPreferencesSourcesUnchanged": true,
+    "jvm": {
+      "tests": 190,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "debugBuild": true,
+    "releaseR8": true,
+    "signedReleaseApk": "not built; no production key accessed",
+    "lint": {
+      "debug": {
+        "errors": 0,
+        "warnings": 62
+      },
+      "release": {
+        "errors": 0,
+        "warnings": 63
+      }
+    },
+    "ui": {
+      "normal": {
+        "passed": true,
+        "tests": 20,
+        "log": "build\\theme-unification-20261107\\normal-resume-final.txt"
+      },
+      "narrow": {
+        "passed": true,
+        "tests": 20,
+        "log": "build\\theme-unification-20261107\\narrow-resume-final.txt"
+      },
+      "activities-dark": {
+        "passed": true,
+        "tests": 2,
+        "log": "build\\theme-unification-20261107\\activities-dark-resume-final.txt"
+      }
+    },
+    "integration": [
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\selection-final-permission-denied.txt"
+      },
+      {
+        "passed": true,
+        "tests": 8,
+        "log": "build\\transfer-ux-20261107\\selection-final-integration.txt"
+      }
+    ],
+    "permissionAndProcessStages": [
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\final-public-api36-stage1DeniedDoubleSettingsPersistsIntent.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\final-public-api36-stage2DeniedRestartAndCancelledSettingsRemainSingleAction.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\final-public-api36-stage3GrantedRestartOffersDownloadWithoutReopeningSettings.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\final-public-api36-stage4PreparedLeaseSurvivesPermissionRevocation.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\final-public-api36-stage5GrantedPreparedLeaseOffersOneExplicitInstall.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\public-api36-stage1PrepareDurableLeasesAndSimulateHandoffGap.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\public-api36-stage1StartRealAndroidTransferBeforeProcessDeath.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\public-api36-stage2RestoreGapWithoutAutomaticInstallerThenExplicitlyReopen.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\public-api36-stage2RestorePausedMetadataAndExplicitlyRestartFullValidation.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\public-api36-stage3RestoreHandedOffAndReleaseOnlyExplicitly.txt"
+      }
+    ],
+    "uidtApi36": {
+      "passed": true,
+      "tests": 1,
+      "log": "build\\transfer-ux-20261107\\foreground-fixed-api36-background.txt"
+    },
+    "foregroundWorkerApi28": {
+      "passed": true,
+      "tests": 1,
+      "log": "build\\transfer-ux-20261107\\task-fixed-api28-background.txt"
+    },
+    "processStagesApi28": [
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\task-fixed-api28-stage1StartRealAndroidTransferBeforeProcessDeath.txt"
+      },
+      {
+        "passed": true,
+        "tests": 1,
+        "log": "build\\transfer-ux-20261107\\task-fixed-api28-stage2RestorePausedMetadataAndExplicitlyRestartFullValidation.txt"
+      }
+    ],
+    "apks": [
+      {
+        "Algorithm": "SHA256",
+        "Hash": "2D374E2CA60CF6C81D71415E3FBE9380B2F7A04D86ACFC883D7C817F43EB5A1F",
+        "Path": "D:\\apps\\shutup\\app\\build\\outputs\\apk\\debug\\app-debug.apk"
+      },
+      {
+        "Algorithm": "SHA256",
+        "Hash": "E67C657314E1F9767BACD2F113D1A165BED4822F6521783269B9E097DB8E8E7D",
+        "Path": "D:\\apps\\shutup\\app\\build\\outputs\\apk\\androidTest\\debug\\app-debug-androidTest.apk"
+      }
+    ],
+    "changes": [
+      "app/build.gradle.kts",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/AppUpdateUiTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/EliefThemeParityTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/PyriteActivityRestorationTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/PyritePaletteTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferIntegrationTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferProcessTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/InlineTransferExecution.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/UpdateBackgroundExecutionTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/UpdatePermissionRecoveryTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/update/UpdateTransferProcessRecoveryTest.kt",
+      "app/src/main/AndroidManifest.xml",
+      "app/src/main/java/jp/linkserver/shutter/MainActivity.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/AboutScreen.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/AppUpdateUi.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/GoldyUpdateStrings.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/ShutterApp.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/Theme.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/Type.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/UpdateOverviewContent.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/UpdateDownloadViewModel.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/UpdateTransferExecution.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/UpdateTransferRuntime.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/UpdateTransferSnapshot.kt",
+      "app/src/main/res/drawable/ic_browser_updated.xml",
+      "app/src/main/res/values-ja/goldy_transfer.xml",
+      "app/src/main/res/values/goldy_transfer.xml",
+      "verification/theme-unification/build-with-local-goldy.ps1",
+      "verification/theme-unification/implementation.md",
+      "verification/theme-unification/report.md",
+      "verification/theme-unification/results.json",
+      "verification/theme-unification/run-transfer-ux.ps1",
+      "verification/theme-unification/run-ui-matrix.ps1"
+    ]
+  },
+  "remaining": [
+    "HTTP Range / persistent partial-byte resume is not implemented",
+    "OEM power restrictions and Android versions not explicitly listed are unverified",
+    "Real Settings toggle UI E2E and production-signed update/install success are unverified"
+  ],
+  "preservation": {
+    "readmeEdited": false,
+    "shutupCommitted": false,
+    "tagReleaseCreated": false,
+    "physicalDeviceOperated": false
+  }
+}

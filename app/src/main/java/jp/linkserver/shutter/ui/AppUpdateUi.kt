@@ -5,8 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,13 +21,13 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun AppUpdateAction(update: UpdateCandidate, onClick: () -> Unit) {
     UpdateNotificationIcon(GoldyState(notificationUpdate = update), { onClick() },
-        strings = goldyNotificationStrings(), icon = { Icon(painterResource(R.drawable.ic_browser_updated), null) })
+        strings = goldyNotificationStrings())
 }
 
 @Composable
 internal fun AppUpdateBanner(update: UpdateCandidate, onOpen: () -> Unit, onDismiss: () -> Unit) {
     UpdateNotificationBanner(GoldyState(notificationUpdate = update, showBanner = true), { onOpen() }, onDismiss,
-        strings = goldyNotificationStrings(), icon = { Icon(painterResource(R.drawable.ic_browser_updated), null) })
+        strings = goldyNotificationStrings())
 }
 
 @Composable
@@ -35,7 +35,7 @@ internal fun AppUpdatePrompt(state: GoldyState, onCheck: suspend () -> CheckOutc
     onIgnore: () -> Unit, onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     UpdateCheckDialog(state, { scope.launch { onCheck() } }, { onConfirm() }, { onIgnore() }, onDismiss,
-        strings = goldyNotificationStrings(), icon = { Icon(painterResource(R.drawable.ic_browser_updated), null) })
+        strings = goldyNotificationStrings())
 }
 
 @Composable
@@ -52,13 +52,15 @@ internal fun UpdateOverviewScreen(candidate: UpdateCandidate?, onBack: () -> Uni
 
 /** No onResume/Activity-result cleanup: only an explicit closed-reader confirmation releases a URI. */
 @Composable
-private fun RetainedInstallRequests(state: UpdateDownloadState,
+internal fun RetainedInstallRequests(state: UpdateDownloadState,
     onReopen: (InstallRequest) -> Unit, onRelease: (InstallRequest) -> Unit) {
     var confirmId by rememberSaveable { mutableStateOf<String?>(null) }
     var release by rememberSaveable { mutableStateOf(false) }
     if (state.restoring) Text(stringResource(R.string.goldy_update_restore_loading))
     if (state.requests.isNotEmpty()) {
-        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainer,
+        val card = LocalUpdateCardStyle.current
+        Surface(shape = card.shape ?: MaterialTheme.shapes.large,
+            color = card.containerColor.takeUnless { it == Color.Unspecified } ?: MaterialTheme.colorScheme.surfaceContainerHigh,
             modifier = Modifier.testTag("retained-install-requests")) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.goldy_update_retained_title), style = MaterialTheme.typography.titleMedium)
