@@ -1,5 +1,7 @@
 package jp.linkserver.shutter.ui
 
+import jp.linkserver.shutter.TrickuildMetadata
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.BorderStroke
@@ -24,13 +26,15 @@ import androidx.compose.ui.unit.dp
 import jp.linkserver.pyrite.about.*
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
+import jp.linkserver.goldy.CheckOutcome
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 /** Host-owned update state/dialogs around Pyrite's shared About components. */
 @Composable
 internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
-    onCheckUpdates: suspend () -> Result<GitHubRelease?>, onUpdateAvailable: () -> Unit) {
+    onCheckUpdates: suspend () -> CheckOutcome, onUpdateAvailable: () -> Unit,
+    hasPendingInstallRequests: Boolean = false) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val versionName = BuildConfig.VERSION_NAME
@@ -48,7 +52,7 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
         else -> R.string.about_channel_unknown_description
     }
     val channelLabel = stringResource(channelTitle)
-    val build = BuildConfig.BUILD_NUMBER
+    val build = TrickuildMetadata.BUILD_NUMBER
     var showChannel by rememberSaveable { mutableStateOf(false) }
     var showVersion by rememberSaveable { mutableStateOf(false) }
     var checking by remember { mutableStateOf(false) }
@@ -61,11 +65,19 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
         scope.launch {
             try {
                 val result = onCheckUpdates()
-                result.onSuccess { latest ->
-                    latestTag = latest?.tag.orEmpty()
-                    updateResult = if (latest == null) "latest" else "available"
-                    if (latest != null) onUpdateAvailable()
-                }.onFailure { updateResult = "failed" }
+                val candidate = when (result) {
+                    is CheckOutcome.Available -> result.update
+                    is CheckOutcome.Incomplete -> result.update
+                    else -> null
+                }
+                latestTag = candidate?.release?.tag.orEmpty()
+                updateResult = when {
+                    candidate != null -> "available"
+                    result is CheckOutcome.Failure || result is CheckOutcome.Throttled -> "failed"
+                    result == CheckOutcome.NoPublishedReleases -> "none"
+                    else -> "latest"
+                }
+                if (candidate != null) onUpdateAvailable()
             } catch (error: CancellationException) {
                 throw error
             } finally {
@@ -118,6 +130,8 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
                 AboutUpdateCard(stringResource(R.string.about_updates_body), updateStatus,
                     stringResource(R.string.about_check_updates), ::checkUpdates,
                     checking = checking, hasResult = updateResult != "unchecked")
+                if (hasPendingInstallRequests) OutlinedButton(onClick = onUpdateAvailable,
+                    modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.goldy_update_retained_title)) }
             }
             AboutActionGroup(listOf(
                 AboutAction("support", stringResource(R.string.about_support_title),

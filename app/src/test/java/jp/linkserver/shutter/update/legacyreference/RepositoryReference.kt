@@ -1,3 +1,4 @@
+// Frozen legacy/reference adapter; tests only.
 package jp.linkserver.shutter.update
 
 import jp.linkserver.shutter.GitHubRelease
@@ -13,7 +14,9 @@ import kotlinx.coroutines.withContext
 internal data class AppUpdateState(
     val availableUpdate: GitHubRelease? = null,
     val notificationUpdate: GitHubRelease? = null,
-    val showBanner: Boolean = false
+    val showBanner: Boolean = false,
+    val checking: Boolean = false,
+    val checkFailed: Boolean = false
 )
 
 internal interface AppUpdateStore {
@@ -37,11 +40,17 @@ internal class AppUpdateRepository(
         mutex.withLock {
             publish(store.loadUpdate())
             if (!force && !store.shouldCheck()) return@withLock Result.success(state.value.availableUpdate)
-            val result = checkRelease()
-            (result.exceptionOrNull() as? CancellationException)?.let { throw it }
-            result.map { update ->
-                store.saveSuccessfulCheck(update)
-                store.loadUpdate().also(::publish)
+            setCheckStatus(checking = true, failed = false)
+            try {
+                val result = checkRelease()
+                (result.exceptionOrNull() as? CancellationException)?.let { throw it }
+                setCheckStatus(checking = true, failed = result.isFailure)
+                result.map { update ->
+                    store.saveSuccessfulCheck(update)
+                    store.loadUpdate().also(::publish)
+                }
+            } finally {
+                setCheckStatus(checking = false, failed = state.value.checkFailed)
             }
         }
     }
@@ -61,6 +70,11 @@ internal class AppUpdateRepository(
     @Synchronized private fun publish(update: GitHubRelease?) {
         val notification = update?.takeUnless { store.isDismissed(it.tag) }
         mutableState.value = AppUpdateState(update, notification,
-            notification != null && !notification.tag.equals(hiddenBannerTag, true))
+            notification != null && !notification.tag.equals(hiddenBannerTag, true),
+            state.value.checking, state.value.checkFailed)
+    }
+
+    @Synchronized private fun setCheckStatus(checking: Boolean, failed: Boolean) {
+        mutableState.value = state.value.copy(checking = checking, checkFailed = failed)
     }
 }

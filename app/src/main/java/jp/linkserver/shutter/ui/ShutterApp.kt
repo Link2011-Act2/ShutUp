@@ -21,7 +21,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
-import jp.linkserver.shutter.update.AppUpdateState
+import jp.linkserver.goldy.GoldyState
+import jp.linkserver.goldy.CheckOutcome
+import jp.linkserver.shutter.update.UpdateDownloadViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import jp.linkserver.shutter.update.AppUpdateViewModel
 import jp.linkserver.shutter.update.UpdateDeveloperSettings
 import jp.linkserver.shutter.maintain.AutoMaintainState
@@ -37,19 +40,20 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
     val state by shutter.state.collectAsStateWithLifecycle()
     val autoMaintainState by shutter.autoMaintainState.collectAsStateWithLifecycle()
     val offerPending by shutter.autoMaintainOfferPending.collectAsStateWithLifecycle()
-    val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: AppUpdateState()
+    val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: GoldyState()
+    val downloads: UpdateDownloadViewModel = viewModel()
     val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
     val warningDeveloperSettings by shutter.warningDeveloperSettings.collectAsStateWithLifecycle()
     val galaxySettings by shutter.galaxySettings.collectAsStateWithLifecycle()
     ShutterNavigation(state, shutter::authorize, onRelease,
         shutter::restore, shutter::refresh,
-        updateState, { updates?.checkManually() ?: Result.success(null) },
+        updateState, { updates?.checkManually() ?: CheckOutcome.UpToDate },
         { updates?.hideBanner() }, { updates?.ignoreVersion(it) }, !showUninstallReminder,
         developerSettings, { updates?.setIgnoreVersionComparison(it) }, { updates?.setIgnoreInterval(it) },
         autoMaintainState, shutter::setAutoMaintainEnabled,
         offerPending && !showUninstallReminder, shutter::respondToAutoMaintainOffer,
         warningDeveloperSettings, shutter::setForceSamsung, shutter::setForceNonMainUser,
-        galaxySettings, shutter::setGalaxyAudioPolicy, shutter::setEmulateCsc)
+        galaxySettings, shutter::setGalaxyAudioPolicy, shutter::setEmulateCsc, downloads)
     if (state.releaseConfirmationPending && !state.working && !showUninstallReminder) {
         SamsungUserWarningDialog(shutter::cancelReleaseConfirmation) { remember ->
             shutter.confirmRelease(remember)?.let(onConfirmedRelease)
@@ -67,8 +71,8 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
 internal fun ShutterNavigation(
     state: ShutterUiState, onAuthorize: () -> Unit, onRelease: () -> Unit,
     onRestore: () -> Unit, onRefresh: () -> Unit,
-    updateState: AppUpdateState = AppUpdateState(),
-    onCheckUpdates: suspend () -> Result<GitHubRelease?> = { Result.success(null) },
+    updateState: GoldyState = GoldyState(),
+    onCheckUpdates: suspend () -> CheckOutcome = { CheckOutcome.UpToDate },
     onHideUpdateBanner: () -> Unit = {}, onIgnoreUpdate: (String) -> Unit = {},
     updateAllowed: Boolean = true,
     developerSettings: UpdateDeveloperSettings = UpdateDeveloperSettings(),
@@ -83,7 +87,8 @@ internal fun ShutterNavigation(
     onForceNonMainUserChange: (Boolean) -> Unit = {},
     galaxySettings: GalaxyControlSettings = GalaxyControlSettings(),
     onGalaxyAudioPolicyChange: (Boolean) -> Unit = {},
-    onEmulateCscChange: (Boolean) -> Unit = {}
+    onEmulateCscChange: (Boolean) -> Unit = {},
+    downloads: UpdateDownloadViewModel? = null
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
     val context = LocalContext.current
@@ -94,6 +99,7 @@ internal fun ShutterNavigation(
         !state.working && !state.releaseConfirmationPending && (!state.nonMainUserWarning || state.nonMainUserConfirmed)
     val canShowUpdate = updateAllowed && !state.working && !showMaintainOffer && !state.releaseConfirmationPending
     val openUpdate = {
+        downloads?.selectCandidate(updateState.availableUpdate)
         updateReturnScreen = screen
         screen = "update"
         showUpdatePrompt = false
@@ -104,8 +110,8 @@ internal fun ShutterNavigation(
         screen = when (screen) { "update" -> updateReturnScreen; "licenses" -> "about"; "about" -> "settings"; else -> "home" }
     }
     if (showUpdatePrompt && notification != null && canShowUpdate && screen == "home") {
-        AppUpdatePrompt(notification, openUpdate,
-            { showUpdatePrompt = false; onIgnoreUpdate(notification.tag) }, { showUpdatePrompt = false })
+        AppUpdatePrompt(updateState, onCheckUpdates, openUpdate,
+            { showUpdatePrompt = false; onIgnoreUpdate(notification.release.tag) }, { showUpdatePrompt = false })
     }
     BackHandler(enabled = screen != "home", onBack = back)
     if (showMaintainOffer) AutoMaintainOfferDialog(onAutoMaintainOfferChoice)
@@ -117,28 +123,29 @@ internal fun ShutterNavigation(
         },
         modifier = Modifier.fillMaxSize()
     ) { targetScreen ->
-        when (targetScreen) {
-            "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
-                onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
-                autoMaintainState, onAutoMaintainChange,
-                warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
-                galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
-            "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate)
-            "update" -> updateState.availableUpdate?.let { UpdateOverviewScreen(it, back) }
-                ?: ScreenScaffold(stringResource(R.string.about_check_updates), back) { padding ->
-                    Text(stringResource(R.string.about_update_latest), Modifier.padding(padding).padding(20.dp))
-                }
-            "licenses" -> OssLicensesScreen(back)
-            else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
-                onRelease, onRestore, onRefresh,
-                galaxyMode = galaxySettings.available,
-                updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(openPrompt) },
-                updateBanner = {
-                    if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
-                        AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
-                        Spacer(Modifier.height(16.dp))
-                    }
-                })
+        ShutterDestinationTheme(targetScreen) {
+            when (targetScreen) {
+                "settings" -> SettingsScreen(back, { screen = "about" }, developerSettings,
+                    onIgnoreVersionComparisonChange, onIgnoreIntervalChange,
+                    autoMaintainState, onAutoMaintainChange,
+                    warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
+                    galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
+                "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate,
+                    downloads?.state?.collectAsStateWithLifecycle()?.value?.requests?.isNotEmpty() == true)
+                "update" -> if (downloads != null) UpdateOverviewScreen(updateState.availableUpdate, back, downloads)
+                    else UpdateOverviewScreen(updateState.availableUpdate, back)
+                "licenses" -> OssLicensesScreen(back)
+                else -> HomeScreen(state, { screen = "settings" }, { openShizuku(context) }, onAuthorize,
+                    onRelease, onRestore, onRefresh,
+                    galaxyMode = galaxySettings.available,
+                    updateAction = { if (notification != null && canShowUpdate) AppUpdateAction(notification, openPrompt) },
+                    updateBanner = {
+                        if (notification != null && updateState.showBanner && canShowUpdate && !showUpdatePrompt) {
+                            AppUpdateBanner(notification, openPrompt, onHideUpdateBanner)
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    })
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+// Frozen legacy reference. Never packaged in the production app.
 package jp.linkserver.shutter
 
 import org.json.JSONArray
@@ -80,18 +81,3 @@ internal fun parseGitHubReleases(response: String, allowUnversionedTags: Boolean
     }
 }
 
-internal fun checkReleaseUpdate(installed: String, ignoreVersionComparison: Boolean = false): GitHubRelease? {
-    val bypassComparison = ignoreVersionComparison && isIntDevUpdateBuild(installed)
-    val connection = (URI(AppLinks.RELEASES_API).toURL().openConnection() as HttpURLConnection).apply {
-        connectTimeout = 10_000
-        readTimeout = 10_000
-        setRequestProperty("Accept", "application/vnd.github+json")
-        setRequestProperty("User-Agent", "ShutUp/$installed")
-    }
-    try {
-        check(connection.responseCode in 200..299) { "GitHub HTTP ${connection.responseCode}" }
-        return selectReleaseUpdate(parseGitHubReleases(
-            connection.inputStream.bufferedReader().use { it.readText() }, bypassComparison),
-            installed, bypassComparison)
-    } finally { connection.disconnect() }
-}

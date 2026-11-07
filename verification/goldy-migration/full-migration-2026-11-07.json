@@ -1,0 +1,396 @@
+{
+  "recordedJst": "2026-11-07T12:44:04.397091+09:00",
+  "conclusion": "B",
+  "implementationSingleGoldyPath": true,
+  "formalReleaseAndProductionInstallValidationComplete": false,
+  "startHead": "1a18497cfbe62eac20ecf3ba8264cb8daf163fac",
+  "finalHead": "1a18497cfbe62eac20ecf3ba8264cb8daf163fac",
+  "branch": "main",
+  "commitOrPushPerformed": false,
+  "goldyPublicSha": "af5f415db976f62f991369224cb236d272f0103a",
+  "publicOnlyDependency": true,
+  "unit": {
+    "tests": 190,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "legacyUnitReferenceScope": "Old selector/repository tests remain frozen test-only; actual engine/state/transfer migration verified separately on Android",
+  "selectorDifferentialCases": 1840,
+  "debugBuild": true,
+  "releaseR8": true,
+  "releasePackage": {
+    "passed": false,
+    "reason": "Required production signing configuration unavailable; no fallback or private-key acquisition"
+  },
+  "lint": {
+    "debug": {
+      "errors": 0,
+      "warnings": 61,
+      "issueIds": [
+        "GradleDependency",
+        "NewerVersionAvailable",
+        "ObsoleteSdkInt",
+        "OldTargetApi",
+        "PrivateApi",
+        "StaticFieldLeak",
+        "UnusedAttribute",
+        "UnusedResources",
+        "UseKtx"
+      ]
+    },
+    "release": {
+      "errors": 0,
+      "warnings": 61,
+      "issueIds": [
+        "GradleDependency",
+        "NewerVersionAvailable",
+        "ObsoleteSdkInt",
+        "OldTargetApi",
+        "PrivateApi",
+        "StaticFieldLeak",
+        "UnusedAttribute",
+        "UnusedResources",
+        "UseKtx"
+      ]
+    }
+  },
+  "android": {
+    "api": 36,
+    "checks": [
+      {
+        "name": "permission-denied",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/permission-denied.txt"
+      },
+      {
+        "name": "transfer-allowed",
+        "tests": 7,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/transfer-allowed.txt"
+      },
+      {
+        "name": "ui-final",
+        "tests": 14,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/ui-final.txt"
+      },
+      {
+        "name": "cache-stage1SeedLegacyPreferences",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/cache-stage1SeedLegacyPreferences.txt"
+      },
+      {
+        "name": "cache-stage2RestoreLegacyPreferences",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/cache-stage2RestoreLegacyPreferences.txt"
+      },
+      {
+        "name": "cache-stage3RestoreGoldCacheWithoutNetwork",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/cache-stage3RestoreGoldCacheWithoutNetwork.txt"
+      },
+      {
+        "name": "transfer-stage1PrepareDurableLeasesAndSimulateHandoffGap",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/transfer-stage1PrepareDurableLeasesAndSimulateHandoffGap.txt"
+      },
+      {
+        "name": "transfer-stage2RestoreGapWithoutAutomaticInstallerThenExplicitlyReopen",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/transfer-stage2RestoreGapWithoutAutomaticInstallerThenExplicitlyReopen.txt"
+      },
+      {
+        "name": "transfer-stage3RestoreHandedOffAndReleaseOnlyExplicitly",
+        "tests": 1,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/transfer-stage3RestoreHandedOffAndReleaseOnlyExplicitly.txt"
+      },
+      {
+        "name": "small-ui",
+        "tests": 2,
+        "passed": true,
+        "rawLog": "build/full-goldy-20261107/small-ui.txt"
+      }
+    ],
+    "uniqueRelatedTests": 28,
+    "additionalSmallViewportExecutions": 2,
+    "viewport": "360dp, font_scale=1.3",
+    "transport": "test-only byte source; production Gold inspector/downloader/installer/provider",
+    "activityCallback": "recorded, not actual ShutUp installation completion",
+    "finalBannerVisualTest": true,
+    "visualInspection": [
+      "360dp/font1.3 banner",
+      "View update primary dialog",
+      "release notes and history",
+      "cancel control during download"
+    ]
+  },
+  "preservation": {
+    "baseline": ".gradle/rotation-baseline-20261107",
+    "allBaselineBackupHashesMatch": true,
+    "untouched": [
+      "app/src/main/java/jp/linkserver/shutter/ui/Theme.kt",
+      "settings.gradle.kts",
+      "verification/pyrite-migration/report.md",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/PyritePaletteTest.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/GoldyUpdateStrings.kt",
+      "app/src/main/res/values-ja/goldy_updates.xml",
+      "app/src/main/res/values/goldy_updates.xml",
+      "verification/goldy-migration/report.md",
+      "verification/goldy-migration/results.json",
+      "verification/pyrite-light-palette/after-ui.txt",
+      "verification/pyrite-light-palette/before-ui.txt",
+      "verification/pyrite-light-palette/catalog-color-checks.json",
+      "verification/pyrite-light-palette/dark-dynamic-after.json",
+      "verification/pyrite-light-palette/dark-dynamic-before.json",
+      "verification/pyrite-light-palette/dark-static-after.json",
+      "verification/pyrite-light-palette/dark-static-before.json",
+      "verification/pyrite-light-palette/image-metrics.json",
+      "verification/pyrite-light-palette/light-dynamic-about.png",
+      "verification/pyrite-light-palette/light-dynamic-after.json",
+      "verification/pyrite-light-palette/light-dynamic-before.json",
+      "verification/pyrite-light-palette/light-dynamic-settings.png",
+      "verification/pyrite-light-palette/light-static-about.png",
+      "verification/pyrite-light-palette/light-static-after.json",
+      "verification/pyrite-light-palette/light-static-before.json",
+      "verification/pyrite-light-palette/light-static-settings.png",
+      "verification/pyrite-light-palette/report.md"
+    ],
+    "extendedOrReplaced": [
+      "app/build.gradle.kts",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/AppUpdateUiTest.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/AboutScreen.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/AppUpdateUi.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/ShutterApp.kt",
+      "app/src/main/java/jp/linkserver/shutter/ui/UpdateOverviewContent.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyActivityRestorationTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyMigrationUiTest.kt",
+      "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyProcessRestorationTest.kt",
+      "app/src/test/java/jp/linkserver/shutter/update/GoldyMigrationTest.kt"
+    ],
+    "removedFromProductionButBackedUp": [
+      "app/src/main/java/jp/linkserver/shutter/GitHubReleaseChecker.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/AppUpdateRepository.kt",
+      "app/src/main/java/jp/linkserver/shutter/update/GoldyUpdates.kt"
+    ]
+  },
+  "changedFilesThisRun": [
+    {
+      "status": " M",
+      "path": ".gitignore"
+    },
+    {
+      "status": " M",
+      "path": "app/build.gradle.kts"
+    },
+    {
+      "status": " M",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/AppUpdateUiTest.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/DeveloperUpdateSettingsTest.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/AndroidManifest.xml"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/java/jp/linkserver/shutter/GitHubReleaseChecker.kt"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/java/jp/linkserver/shutter/ReleaseVersion.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/AboutScreen.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/AppUpdateUi.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/OssLicensesScreen.kt"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/ReleaseNotesMarkdown.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/ShutterApp.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/ui/UpdateOverviewContent.kt"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/java/jp/linkserver/shutter/update/AppUpdatePreferences.kt"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/java/jp/linkserver/shutter/update/AppUpdateRepository.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/update/AppUpdateViewModel.kt"
+    },
+    {
+      "status": " M",
+      "path": "app/src/main/java/jp/linkserver/shutter/update/UpdateDownloadViewModel.kt"
+    },
+    {
+      "status": " D",
+      "path": "app/src/main/res/xml/update_file_paths.xml"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/assets/goldy/foreign-package.apk"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/assets/goldy/foreign-signer.apk"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/legacyreference/GitHubReleaseReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/legacyreference/ReleaseVersionReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyActivityRestorationTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyMigrationUiTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyProcessRestorationTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/ui/GoldyTestData.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferIntegrationTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferProcessTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/update/UpdatePreferencesMigrationTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/androidTest/java/jp/linkserver/shutter/update/legacyreference/CacheReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/main/assets/licenses/Goldy-MIT.txt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/main/java/jp/linkserver/shutter/update/UpdatePreferences.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/main/res/values-ja/goldy_install_requests.xml"
+    },
+    {
+      "status": "??",
+      "path": "app/src/main/res/values/goldy_install_requests.xml"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/legacyreference/GitHubReleaseReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/legacyreference/ReleaseVersionReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/update/GoldyMigrationTest.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/update/legacyreference/GoldySelectionReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/update/legacyreference/RepositoryReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "app/src/test/java/jp/linkserver/shutter/update/legacyreference/TimingReference.kt"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/2026-11-07-banner.png"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/2026-11-07-dialog.png"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/2026-11-07-download.png"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/full-migration-2026-11-07.json"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/full-migration-2026-11-07.md"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/generate-host-fixture.py"
+    },
+    {
+      "status": "??",
+      "path": "verification/goldy-migration/run-full-android.ps1"
+    }
+  ],
+  "knownLimitations": [
+    "Production-signed Release APK not packaged",
+    "Official ShutUp key rotation and actual install completion unverified",
+    "Physical/OEM installers and ShutUp runtime outside API36 unverified",
+    "Gold runtime API27 unverified (cryptographic JVM fixtures pass)"
+  ],
+  "diagnosticAttempts": [
+    "Initial UI fixtures had restoring state and missing test-APK versionName; corrected without disabling tests",
+    "Initial transfer fixture directory was outside the canonical SDK cache root; SDK rejected it, test corrected",
+    "Android killed process after REQUEST_INSTALL_PACKAGES revocation; permission cases now run with AppOp set outside instrumentation",
+    "API36 Play Store background installs caused cache pressure and safe APK rejection; background network stopped for deterministic fixture tests",
+    "Two staged test methods initially returned Boolean, corrected to explicit Unit for JUnit"
+  ],
+  "report": "full-migration-2026-11-07.md",
+  "screenshots": [
+    "2026-11-07-banner.png",
+    "2026-11-07-dialog.png",
+    "2026-11-07-download.png"
+  ],
+  "goldyDocumentationStatus": "Library implementation committed/pushed at adopted SHA; post-publication README and verification updates remain local for review",
+  "finishedJst": "2026-11-07T12:44:33.1108778+09:00",
+  "finalTestApkHashMatches": true
+}

@@ -1,0 +1,14 @@
+<resources>
+    <string name="goldy_update_available">Update available</string>
+    <string name="goldy_update_retry">Try again</string>
+    <string name="goldy_update_cached">Saved update information</string>
+    <string name="goldy_update_allow_install">Allow installation</string>
+    <string name="goldy_update_no_apk">No APK is available. Open the release page for details.</string>
+    <string name="goldy_update_downloading">Downloading APK…</string>
+    <string name="goldy_update_verifying">Verifying APK…</string>
+    <string name="goldy_update_preparing">Preparing installer…</string>
+    <string name="goldy_update_ready">APK ready. Open the Android installer to continue.</string>
+    <string name="goldy_update_handed_off">Installer opened. Installation has not been confirmed.</string>
+    <string name="goldy_update_cancelled">Download cancelled.</string>
+    <string name="goldy_update_incomplete">Some earlier releases may be missing.</string>
+</resources>

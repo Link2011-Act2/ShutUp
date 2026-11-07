@@ -14,6 +14,16 @@ import androidx.test.platform.app.InstrumentationRegistry
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
 import jp.linkserver.shutter.update.*
+import jp.linkserver.goldy.GoldyState
+import jp.linkserver.goldy.CheckOutcome
+import jp.linkserver.goldy.ApkProgress
+import jp.linkserver.goldy.ApkVerifier
+import jp.linkserver.goldy.ApkVersionBindings
+import jp.linkserver.goldy.AndroidApkInspector
+import jp.linkserver.goldy.ApkException
+import jp.linkserver.goldy.ApkFailure
+import jp.linkserver.goldy.compose.UpdateTransferState
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -22,13 +32,15 @@ import java.io.File
 class AppUpdateUiTest {
     @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private fun text(id: Int) = compose.activity.getString(id)
-    private val release = GitHubRelease("v2.0.0-Beta2", "Camera settings and interface improvements.\n設定画面とシャッター音の操作を改善しました。",
-        "${AppLinks.REPOSITORY}/releases/tag/v2.0.0-Beta2", true,
-        intermediateNotes = listOf(ReleaseNote("v1.5.0", "Earlier improvements")))
+    private val release = testUpdate("v2.0.0-Beta2")
 
     private fun screenshot(name: String) {
+        compose.mainClock.advanceTimeBy(1_000)
         compose.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.waitForIdleSync()
+        // Semantics can be idle before SurfaceFlinger presents the first Activity frame.
+        Thread.sleep(1_000)
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         val directory = File(instrumentation.targetContext.getExternalFilesDir(null), "update-design").apply { mkdirs() }
         File(directory, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
@@ -36,13 +48,13 @@ class AppUpdateUiTest {
     }
 
     @Test fun bannerPromptIgnoreAndManualDetailsShareTheSameUpdate() {
-        var updates by mutableStateOf(AppUpdateState(release, release, true))
+        var updates by mutableStateOf(GoldyState(release, release, true))
         var blocked by mutableStateOf(false)
         compose.setContent {
             ShutterTheme {
                 ShutterNavigation(ShutterUiState(), {}, {}, {}, {}, updates,
-                    { Result.success(release) }, { updates = updates.copy(showBanner = false) },
-                    { updates = AppUpdateState(release) }, !blocked)
+                    { CheckOutcome.Available(release) }, { updates = updates.copy(showBanner = false) },
+                    { updates = GoldyState(release) }, !blocked)
             }
         }
         compose.onNodeWithText(text(R.string.update_screen_title)).assertIsDisplayed()
@@ -64,12 +76,12 @@ class AppUpdateUiTest {
         compose.onNodeWithText("v2.0.0-Beta2").assertIsDisplayed()
         compose.onNodeWithText(text(R.string.update_notes_title)).assertIsDisplayed()
         screenshot("details")
-        compose.onNodeWithText(text(R.string.update_intermediate_notes_title)).performScrollTo().performClick()
-        compose.onNodeWithTag("release-note-v1.5.0").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("history-toggle").performScrollTo().performClick()
+        compose.onNodeWithTag("history-2").performScrollTo().assertIsDisplayed()
         compose.runOnIdle { assertTrue(noteViews().any { it.text.toString() == "Earlier improvements" }) }
         screenshot("intermediate")
-        compose.onNodeWithText(text(R.string.update_intermediate_notes_title)).performScrollTo().performClick()
-        compose.onNodeWithTag("release-note-v1.5.0").assertDoesNotExist()
+        compose.onNodeWithTag("history-toggle").performScrollTo().performClick()
+        compose.onNodeWithTag("history-2").assertDoesNotExist()
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
         compose.onNodeWithText(text(R.string.about_screen_title)).assertIsDisplayed()
     }
@@ -78,8 +90,9 @@ class AppUpdateUiTest {
         var cancellations = 0
         compose.setContent {
             ShutterTheme {
-                UpdateOverviewContent(release.copy(apkUrl = "${AppLinks.REPOSITORY}/releases/download/v2/ShutUp.apk"),
-                    UpdateDownloadState(release.tag, true, 10_000_000, 30_000_000), {}, onAction = { cancellations++ })
+                UpdateOverviewContent(testUpdate("v2.0.0-Beta2", true),
+                    UpdateDownloadState(release.release.tag, UpdateTransferState.Downloading(ApkProgress(10_000_000, 30_000_000, 1)),
+                        restoring = false, releaseIdentity = transferIdentity(testUpdate("v2.0.0-Beta2", true))), {}, onAction = { cancellations++ })
             }
         }
         screenshot("downloading")
@@ -108,7 +121,7 @@ class AppUpdateUiTest {
 
             `FOR_SYSTEM=0`
 
-            [GitHub release](${release.url})
+            [GitHub release](${release.release.url})
 
             | Feature | Status |
             | --- | --- |
@@ -116,9 +129,8 @@ class AppUpdateUiTest {
         """.trimIndent()
         compose.setContent {
             ShutterTheme {
-                UpdateOverviewContent(release.copy(notes = markdown, apkName = "ShutUp-v2.0.0-Beta2.apk",
-                    apkUrl = "${AppLinks.REPOSITORY}/releases/download/v2/ShutUp.apk"),
-                    UpdateDownloadState(), {}, onAction = {})
+                UpdateOverviewContent(testUpdate("v2.0.0-Beta2", true).let { it.copy(release = it.release.copy(notes = markdown)) },
+                    UpdateDownloadState(restoring = false), {}, onAction = {})
             }
         }
         compose.onNodeWithTag("latest-release-notes").assertIsDisplayed()
@@ -138,8 +150,8 @@ class AppUpdateUiTest {
                 view.resources.displayMetrics), view.textSize, 0.1f)
         }
         screenshot("markdown")
-        compose.onNodeWithText(text(R.string.update_intermediate_notes_title)).performScrollTo().performClick()
-        compose.onNodeWithTag("release-note-v1.5.0").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("history-toggle").performScrollTo().performClick()
+        compose.onNodeWithTag("history-2").performScrollTo().assertIsDisplayed()
         screenshot("markdown-intermediate")
         compose.onNodeWithText(text(R.string.update_download_install)).assertIsDisplayed()
     }
@@ -148,8 +160,8 @@ class AppUpdateUiTest {
         var opens = 0
         compose.setContent {
             ShutterTheme {
-                UpdateOverviewContent(release.copy(notes = "", intermediateNotes = emptyList()),
-                    UpdateDownloadState(), {}, text(R.string.update_permission_required), onAction = { opens++ })
+                UpdateOverviewContent(release.copy(release = release.release.copy(notes = ""), intermediateReleases = emptyList()),
+                    UpdateDownloadState(restoring = false), {}, text(R.string.update_permission_required), onOpenUrl = { opens++ }, onAction = {})
             }
         }
         compose.runOnIdle {
@@ -173,30 +185,35 @@ class AppUpdateUiTest {
         assertEquals("v2.0.0", parsed.tag)
         assertEquals("", parsed.notes)
         assertEquals("ShutUp.apk", parsed.apkName)
-        val cached = parsed.copy(intermediateNotes = release.intermediateNotes)
+        val cached = parsed.copy(intermediateNotes = listOf(ReleaseNote("v1.5.0", "Earlier improvements")))
         assertEquals(cached, decodeUpdate(encodeUpdate(cached)))
     }
 
-    @Test fun persistedUpdatesExpireAfterInstallationAndInvalidApksAreRejected() {
+    @Test fun persistedUpdatesExpireAfterInstallationAndInvalidApksAreRejected() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val prefs = context.getSharedPreferences("update_persistence_test", 0)
-        prefs.edit().clear().commit()
-        try {
-            val store = AppUpdatePreferences(context, prefs, "1.0.0-IntDev")
-            store.saveSuccessfulCheck(release)
-            store.dismiss(release.tag)
-            val restored = AppUpdatePreferences(context, prefs, "1.0.0-IntDev")
-            assertEquals(release, restored.loadUpdate())
-            assertFalse(restored.shouldCheck())
-            assertTrue(restored.isDismissed(release.tag))
-            val installed = AppUpdatePreferences(context, prefs, "2.0.0-Beta2")
-            assertNull(installed.loadUpdate())
-            assertTrue(installed.shouldCheck())
-            verifyUpdateApk(context, File(context.applicationInfo.sourceDir))
-            try {
-                verifyUpdateApk(context, File(InstrumentationRegistry.getInstrumentation().context.applicationInfo.sourceDir))
-                fail("An APK for another package must be rejected")
-            } catch (_: IllegalStateException) { }
-        } finally { prefs.edit().clear().commit() }
+        val inspector = AndroidApkInspector(context)
+        val installed = inspector.installed()
+        val own = inspector.inspect(File(context.applicationInfo.sourceDir))
+        val ownRelease = testUpdate("v${installed.versionName}").release
+        assertEquals(installed.packageName, ApkVerifier.verify(installed, own, ownRelease, ApkVersionBindings.Published).packageName)
+        val foreignFile = File(context.cacheDir, "goldy-foreign-package.apk")
+        InstrumentationRegistry.getInstrumentation().context.assets.open("goldy/foreign-package.apk").use { input ->
+            foreignFile.outputStream().use { input.copyTo(it) }
+        }
+        val foreign = try { inspector.inspect(foreignFile) } finally { foreignFile.delete() }
+        assertNotNull("Foreign fixture must have valid metadata and signatures", foreign)
+        try { ApkVerifier.verify(installed, foreign, ownRelease, ApkVersionBindings.Published); fail("Foreign package") }
+        catch (error: ApkException) { assertEquals(ApkFailure.PackageMismatch, error.reason) }
+        val store = jp.linkserver.goldy.InMemoryUpdateStateStore(jp.linkserver.goldy.StoredUpdateState(
+            cache = jp.linkserver.goldy.UpdateCache(jp.linkserver.shutter.update.UPDATE_REPOSITORY,
+                jp.linkserver.shutter.update.UPDATE_POLICY.id, jp.linkserver.goldy.InstalledVersion("old", 0), "old", false,
+                jp.linkserver.goldy.ReleaseCatalog(listOf(release.release)), System.currentTimeMillis())))
+        var calls = 0
+        val engine = jp.linkserver.goldy.Goldy.createWithSource(context, jp.linkserver.goldy.GoldyConfig(UPDATE_REPOSITORY, UPDATE_POLICY),
+            { calls++; jp.linkserver.goldy.ReleaseCatalog(emptyList()) }, store)
+        engine.restoreCachedState()
+        assertNull(engine.state.value.availableUpdate)
+        engine.check()
+        assertEquals(1, calls)
     }
 }

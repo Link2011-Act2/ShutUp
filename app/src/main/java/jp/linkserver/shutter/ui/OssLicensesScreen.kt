@@ -22,6 +22,8 @@ internal fun OssLicensesScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val entries = listOf(
             Entry("Project Pyrite", "com.github.Link2011-Act2:Pyrite:43557c8", "MIT License", "https://github.com/Link2011-Act2/Pyrite", "Pyrite-MIT.txt"),
+            Entry("Project Goldy", "com.github.Link2011-Act2.Goldy:elief / gold:af5f415db976f62f991369224cb236d272f0103a", "MIT License", "https://github.com/Link2011-Act2/Goldy", "Goldy-MIT.txt"),
+            Entry("Android apksig", "com.android.tools.build:apksig:9.4.1", "Apache License 2.0", "https://android.googlesource.com/platform/tools/apksig/", "Apache-2.0.txt"),
             Entry("ShutterSoundToggle", stringResource(R.string.license_upstream_description), "NYSL 0.9982", "https://github.com/soralis0912/ShutterSoundToggle", "NYSL.txt"),
             Entry("AndroidX", "Jetpack Compose / Activity / Lifecycle / WorkManager / androidx.*", "Apache License 2.0", "https://source.android.com/license", "Apache-2.0.txt"),
             Entry("Markwon", "io.noties.markwon:core / ext-tables:4.6.2", "Apache License 2.0", "https://github.com/noties/Markwon", "Apache-2.0.txt"),

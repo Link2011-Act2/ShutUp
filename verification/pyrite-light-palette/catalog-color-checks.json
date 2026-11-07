@@ -1,0 +1,42 @@
+[
+  {
+    "dynamic": "static",
+    "screen": "settings",
+    "actualCanvas": "#E2EBF0",
+    "actualCard": "#F2F8FB",
+    "catalogCanvas": "#E2EBF0",
+    "catalogCard": "#F2F8FB",
+    "primary": "#0E5E76",
+    "matches": true
+  },
+  {
+    "dynamic": "static",
+    "screen": "about",
+    "actualCanvas": "#E2EBF0",
+    "actualCard": "#F2F8FB",
+    "catalogCanvas": "#E2EBF0",
+    "catalogCard": "#F2F8FB",
+    "primary": "#0E5E76",
+    "matches": true
+  },
+  {
+    "dynamic": "dynamic",
+    "screen": "settings",
+    "actualCanvas": "#F4F3FA",
+    "actualCard": "#FFFFFF",
+    "catalogCanvas": "#F4F3FA",
+    "catalogCard": "#FFFFFF",
+    "primary": "#495D92",
+    "matches": true
+  },
+  {
+    "dynamic": "dynamic",
+    "screen": "about",
+    "actualCanvas": "#F4F3FA",
+    "actualCard": "#FFFFFF",
+    "catalogCanvas": "#F4F3FA",
+    "catalogCard": "#FFFFFF",
+    "primary": "#495D92",
+    "matches": true
+  }
+]

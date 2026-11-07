@@ -1,0 +1,192 @@
+[
+  {
+    "case": "light-static-home",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FEF7FF",
+    "afterCanvas": "#FEF7FF"
+  },
+  {
+    "case": "light-static-settings",
+    "pixels": 835200,
+    "changed": 835200,
+    "bbox": [
+      0,
+      60,
+      720,
+      1220
+    ],
+    "beforeCanvas": "#FEF7FF",
+    "afterCanvas": "#E2EBF0"
+  },
+  {
+    "case": "light-static-about",
+    "pixels": 835200,
+    "changed": 807760,
+    "bbox": [
+      0,
+      60,
+      720,
+      1220
+    ],
+    "beforeCanvas": "#FEF7FF",
+    "afterCanvas": "#E2EBF0"
+  },
+  {
+    "case": "light-static-update",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FEF7FF",
+    "afterCanvas": "#FEF7FF"
+  },
+  {
+    "case": "light-static-home-return",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FEF7FF",
+    "afterCanvas": "#FEF7FF"
+  },
+  {
+    "case": "light-dynamic-home",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FAF8FF",
+    "afterCanvas": "#FAF8FF"
+  },
+  {
+    "case": "light-dynamic-settings",
+    "pixels": 835200,
+    "changed": 483704,
+    "bbox": [
+      0,
+      60,
+      720,
+      1220
+    ],
+    "beforeCanvas": "#FAF8FF",
+    "afterCanvas": "#F4F3FA"
+  },
+  {
+    "case": "light-dynamic-about",
+    "pixels": 835200,
+    "changed": 297311,
+    "bbox": [
+      0,
+      60,
+      720,
+      1220
+    ],
+    "beforeCanvas": "#FAF8FF",
+    "afterCanvas": "#F4F3FA"
+  },
+  {
+    "case": "light-dynamic-update",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FAF8FF",
+    "afterCanvas": "#FAF8FF"
+  },
+  {
+    "case": "light-dynamic-home-return",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#FAF8FF",
+    "afterCanvas": "#FAF8FF"
+  },
+  {
+    "case": "dark-static-home",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#141218",
+    "afterCanvas": "#141218"
+  },
+  {
+    "case": "dark-static-settings",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#141218",
+    "afterCanvas": "#141218"
+  },
+  {
+    "case": "dark-static-about",
+    "pixels": 835200,
+    "changed": 437,
+    "bbox": [
+      471,
+      713,
+      531,
+      733
+    ],
+    "beforeCanvas": "#141218",
+    "afterCanvas": "#141218"
+  },
+  {
+    "case": "dark-static-update",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#141218",
+    "afterCanvas": "#141218"
+  },
+  {
+    "case": "dark-static-home-return",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#141218",
+    "afterCanvas": "#141218"
+  },
+  {
+    "case": "dark-dynamic-home",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#121318",
+    "afterCanvas": "#121318"
+  },
+  {
+    "case": "dark-dynamic-settings",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#121318",
+    "afterCanvas": "#121318"
+  },
+  {
+    "case": "dark-dynamic-about",
+    "pixels": 835200,
+    "changed": 437,
+    "bbox": [
+      471,
+      713,
+      531,
+      733
+    ],
+    "beforeCanvas": "#121318",
+    "afterCanvas": "#121318"
+  },
+  {
+    "case": "dark-dynamic-update",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#121318",
+    "afterCanvas": "#121318"
+  },
+  {
+    "case": "dark-dynamic-home-return",
+    "pixels": 835200,
+    "changed": 0,
+    "bbox": null,
+    "beforeCanvas": "#121318",
+    "afterCanvas": "#121318"
+  }
+]

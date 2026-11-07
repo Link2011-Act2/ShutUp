@@ -1,0 +1,20 @@
+{
+  "original": {
+    "surface": "#121318",
+    "background": "#121318",
+    "card": "#292A2F",
+    "primary": "#B2C5FF"
+  },
+  "pyrite": {
+    "surface": "#121318",
+    "background": "#121318",
+    "card": "#292A2F",
+    "primary": "#B2C5FF"
+  },
+  "settingsAbout": {
+    "surface": "#121318",
+    "background": "#121318",
+    "card": "#292A2F",
+    "primary": "#B2C5FF"
+  }
+}

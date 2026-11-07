@@ -1,51 +1,14 @@
-import java.security.MessageDigest
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 plugins {
+    id("dev.trickuild")
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-// Same content hash, source timestamp, and channel prefix as glyphvisualizer.
-val buildNumberFiles = (
-    fileTree("src") {
-        exclude("**/build/**")
-    }.files + listOf(
-        project.file("build.gradle.kts"),
-        rootProject.file("build.gradle.kts"),
-        rootProject.file("settings.gradle.kts"),
-        rootProject.file("gradle/libs.versions.toml")
-    ).filter { it.isFile }
-).sortedBy { it.relativeTo(rootProject.projectDir).invariantSeparatorsPath }
 
-val appCodeName = "Lethe" // トリッカル、定期。
-val appVersionName = System.getenv("VERSION_NAME") ?: "1.1.1-IntDev"
+val appVersionName = providers.environmentVariable("VERSION_NAME").orElse("1.1.1-IntDev").get()
 // Increase this for each distributed APK, regardless of its release channel.
 val appVersionCode = 5
-val buildContentHash = MessageDigest.getInstance("SHA-256").run {
-    buildNumberFiles.forEach { file ->
-        update(file.relativeTo(rootProject.projectDir).invariantSeparatorsPath.toByteArray())
-        update(0)
-        update(file.readBytes())
-        update(0)
-    }
-    digest().joinToString("") { "%02x".format(it) }
-}
-val buildTimestamp = DateTimeFormatter.ofPattern("yyMMdd-HHmm")
-    .withZone(ZoneId.systemDefault())
-    .format(Instant.ofEpochMilli(buildNumberFiles.maxOf { it.lastModified() }))
-val buildNumberVersionPrefix = if (
-    appVersionName.substringAfter('-', missingDelimiterValue = "")
-        .startsWith("IntDev", ignoreCase = true)
-) {
-    "d"
-} else {
-    "v"
-}
-val generatedBuildNumber =
-    "$appCodeName-$buildNumberVersionPrefix${appVersionName.substringBefore('-')}-$buildTimestamp-${buildContentHash.take(3)}"
 
 // Accept Android Studio's signed-build wizard or the existing environment setup.
 // Debug builds and analysis do not need credentials; release packaging must never
@@ -78,6 +41,16 @@ tasks.configureEach {
     }
 }
 
+trickuild {
+    codename.set("Lethe")
+    buildNumber {
+        enabled.set(true)
+        hashLength.set(5)
+        timestampSource.set("build")
+        timeZone.set("Asia/Tokyo")
+    }
+}
+
 android {
     namespace = "jp.linkserver.shutter"
     compileSdk = 37
@@ -89,7 +62,6 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = appVersionCode
         versionName = appVersionName
-        buildConfigField("String", "BUILD_NUMBER", "\"$generatedBuildNumber\"")
     }
 
     buildFeatures {
@@ -125,6 +97,7 @@ android {
 }
 
 dependencies {
+    implementation("com.github.Link2011-Act2.Goldy:elief:af5f415db976f62f991369224cb236d272f0103a")
     // Fixed, published commit; no adjacent checkout or local Maven repository is required.
     implementation("com.github.Link2011-Act2:Pyrite:43557c8")
     implementation("androidx.compose.ui:ui:1.12.0")
@@ -137,9 +110,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.work:work-runtime-ktx:2.12.0")
-    // Same release-note renderer as NITTC Scheduler.
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("io.noties.markwon:ext-tables:4.6.2")
     debugImplementation("androidx.compose.ui:ui-tooling:1.12.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.12.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.12.0")

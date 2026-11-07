@@ -1,5 +1,7 @@
 # Pyrite導入記録 — 2026-10-19
 
+追補：導入後のSettings/Aboutライト配色は、[Pyrite本来の配色へ合わせた検証記録](../pyrite-light-palette/report.md)を参照してください。以下は初回導入時点の比較です。
+
 ShutUp `34241e9`からの未コミット変更。固定依存は `com.github.Link2011-Act2:Pyrite:43557c8`（完全SHA `43557c8e2c9e669dd6675d08d733db0610e53442`）。コミット・Push・タグ・Releaseは行っていません。
 
 ## 置き換えと保持する責務

@@ -11,6 +11,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import jp.linkserver.shutter.*
 import jp.linkserver.shutter.R
 import jp.linkserver.shutter.update.*
+import jp.linkserver.goldy.*
+import jp.linkserver.shutter.GitHubRelease
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -21,29 +24,37 @@ class DeveloperUpdateSettingsTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private fun text(id: Int) = compose.activity.getString(id)
 
-    @Test fun optionsPersistIndependentlyAndCachedSameVersionFollowsTheToggle() {
+    @Test fun optionsPersistIndependentlyAndCachedSameVersionFollowsTheToggle() = runBlocking {
         val prefs = context.getSharedPreferences("developer_updates_persistence_test", 0)
         prefs.edit().clear().commit()
         try {
-            val release = GitHubRelease("v1.0.0-IntDev", "Notes",
-                "${AppLinks.REPOSITORY}/releases/tag/v1.0.0-IntDev", true, publishedAt = 123)
-            val store = AppUpdatePreferences(context, prefs, "1.0.0-IntDev")
-            assertEquals(UpdateDeveloperSettings(available = true), store.developerSettings)
-            store.saveSuccessfulCheck(release)
-            assertNull(store.loadUpdate())
-            assertFalse(store.shouldCheck())
-            store.setIgnoreVersionComparison(true)
-            val restarted = AppUpdatePreferences(context, prefs, "1.0.0-IntDev")
+            val installed = installedAppVersionName(context)
+            assertTrue(installed.contains("IntDev"))
+            val host = AppUpdatePreferences(context, prefs, prefs, installed)
+            val release = testUpdate("v$installed").release
+            val state = InMemoryUpdateStateStore()
+            var calls = 0
+            fun engine() = Goldy.createWithSource(context, GoldyConfig(UPDATE_REPOSITORY, UPDATE_POLICY,
+                initialOptions = host.options), { calls++; ReleaseCatalog(listOf(release)) }, state)
+            assertEquals(UpdateDeveloperSettings(available = true), host.developerSettings)
+            assertEquals(CheckOutcome.UpToDate, engine().check())
+            host.setIgnoreVersionComparison(true)
+            val restarted = AppUpdatePreferences(context, prefs, prefs, installed)
             assertEquals(UpdateDeveloperSettings(true, true, false), restarted.developerSettings)
-            assertEquals(release, restarted.loadUpdate())
-            assertFalse(restarted.shouldCheck())
-            restarted.setIgnoreInterval(true)
-            assertTrue(restarted.shouldCheck())
-            restarted.setIgnoreVersionComparison(false)
-            assertNull(restarted.loadUpdate())
-            assertTrue(restarted.shouldCheck())
-            restarted.setIgnoreInterval(false)
-            assertFalse(restarted.shouldCheck())
+            val preview = engine()
+            assertTrue(preview.check() is CheckOutcome.Available)
+            val cachedCalls = calls
+            assertTrue(engine().check() is CheckOutcome.Available)
+            assertEquals(cachedCalls, calls)
+            host.setIgnoreInterval(true)
+            engine().check()
+            assertEquals(cachedCalls + 1, calls)
+            host.setIgnoreVersionComparison(false)
+            assertEquals(CheckOutcome.UpToDate, engine().check())
+            host.setIgnoreInterval(false)
+            val before = calls
+            assertEquals(CheckOutcome.UpToDate, engine().check())
+            assertEquals(before, calls)
         } finally { prefs.edit().clear().commit() }
     }
 
@@ -54,11 +65,8 @@ class DeveloperUpdateSettingsTest {
             prefs.edit().putBoolean("dev_ignore_version_comparison", true)
                 .putBoolean("dev_ignore_update_interval", true).commit()
             for (version in listOf("1.0.0", "1.0.0-Release", "1.0.0-Stable", "1.0.0-Beta")) {
-                val store = AppUpdatePreferences(context, prefs, version)
-                store.saveSuccessfulCheck(GitHubRelease("v$version", "Notes", "${AppLinks.REPOSITORY}/releases/tag/v$version"))
+                val store = AppUpdatePreferences(context, prefs, prefs, version)
                 assertEquals(UpdateDeveloperSettings(), store.developerSettings)
-                assertNull(store.loadUpdate())
-                assertFalse(store.shouldCheck())
                 store.setIgnoreInterval(false)
                 store.setIgnoreVersionComparison(false)
                 assertTrue(prefs.getBoolean("dev_ignore_update_interval", false))
@@ -88,7 +96,7 @@ class DeveloperUpdateSettingsTest {
         val prefs = context.getSharedPreferences("developer_updates_ui_test", 0)
         prefs.edit().clear().commit()
         try {
-            val store = AppUpdatePreferences(context, prefs, "1.0.0-IntDev")
+            val store = AppUpdatePreferences(context, prefs, prefs, "1.0.0-IntDev")
             var settings by mutableStateOf(store.developerSettings)
             compose.setContent {
                 ShutterTheme {
@@ -103,7 +111,7 @@ class DeveloperUpdateSettingsTest {
             compose.onNodeWithText(text(R.string.developer_ignore_interval_title)).performScrollTo()
                 .assertIsOff().performClick().assertIsOn()
             assertEquals(UpdateDeveloperSettings(true, true, true),
-                AppUpdatePreferences(context, prefs, "1.0.0-IntDev").developerSettings)
+                AppUpdatePreferences(context, prefs, prefs, "1.0.0-IntDev").developerSettings)
             compose.waitForIdle()
             val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
             val directory = File(context.getExternalFilesDir(null), "developer-updates").apply { mkdirs() }
@@ -112,7 +120,7 @@ class DeveloperUpdateSettingsTest {
             compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
             compose.onNodeWithContentDescription(text(R.string.settings_title)).performClick()
             compose.onNodeWithText(text(R.string.developer_ignore_version_title)).performScrollTo().assertIsOn()
-            compose.runOnIdle { settings = AppUpdatePreferences(context, prefs, "1.0.0-Beta").developerSettings }
+            compose.runOnIdle { settings = AppUpdatePreferences(context, prefs, prefs, "1.0.0-Beta").developerSettings }
             compose.onNodeWithText(text(R.string.settings_developer)).assertDoesNotExist()
             compose.onNodeWithText(text(R.string.developer_ignore_version_title)).assertDoesNotExist()
             compose.onNodeWithText(text(R.string.developer_ignore_interval_title)).assertDoesNotExist()

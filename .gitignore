@@ -34,6 +34,8 @@ secrets.properties
 /app/debug/
 /app/release/
 *.apk
+# Public, disposable negative fixtures used by the Goldy Android security tests.
+!app/src/androidTest/assets/goldy/*.apk
 *.aab
 *.apks
 *.ap_
