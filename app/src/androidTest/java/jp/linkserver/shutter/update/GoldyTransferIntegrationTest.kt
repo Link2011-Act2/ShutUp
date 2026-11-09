@@ -109,7 +109,7 @@ class GoldyTransferIntegrationTest {
         instrumentation.runOnMainSync { model.action(candidate, action) }
     }
 
-    @Test fun handoffOccursOnceAndLeaseSurvivesViewModelRestorationUntilExplicitRelease() = runBlocking {
+    @Test fun handoffOccursOnceAndRestorationOffersNormalExplicitInstall() = runBlocking {
         val source = downloader(own)
         val model = model(source)
         val update = candidate()
@@ -125,13 +125,15 @@ class GoldyTransferIntegrationTest {
         assertEquals("${app.packageName}.goldy.fileprovider", uri.authority)
         app.contentResolver.openInputStream(uri)!!.use { assertTrue(it.read() >= 0) }
         val restored = model(source)
-        assertEquals(UpdateTransferState.HandedOff, restored.state.value.transfer)
+        assertEquals(UpdateTransferState.Ready, restored.state.value.transfer)
         assertEquals(1, launches.size)
         assertTrue(restored.state.value.requests.any { it.id == request.id })
         assertTrue(newFiles().isEmpty()) // caller receipt removed; leased URI still readable
-        instrumentation.runOnMainSync { restored.release(request) }
-        waitFor { restored.state.value.requests.none { it.id == request.id } }
-        assertEquals(1, launches.size)
+        action(restored, update, UpdateAction.Install)
+        waitFor { restored.state.value.transfer == UpdateTransferState.HandedOff }
+        assertEquals(2, launches.size)
+        installer.release(request) // Only test cleanup; callbacks did not open an installer.
+        assertTrue(installer.pendingRequests().none { it.id == request.id })
         try { app.contentResolver.openInputStream(uri); fail("Released URI") } catch (_: java.io.FileNotFoundException) { }
     }
 
@@ -230,7 +232,7 @@ class GoldyTransferIntegrationTest {
         assertTrue(launches.isEmpty())
     }
 
-    @Test fun modifiedLeaseIsRejectedOnExplicitReopen() = runBlocking {
+    @Test fun modifiedPreparedRecordIsRejectedOnNormalInstall() = runBlocking {
         val model = model(downloader(own))
         val update = candidate()
         action(model, update)
@@ -239,14 +241,16 @@ class GoldyTransferIntegrationTest {
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         val request = model.state.value.requests.single { it.id !in originalIds }
         val uri = requireNotNull(launches.single().data)
-        // Locate only the lease owned by this test, never any pre-existing request.
-        val lease = File(app.filesDir, "goldy-apks/install/${request.id}.apk")
-        assertTrue("Test must locate its exact lease", lease.isFile)
-        assertTrue(lease.setWritable(true, true))
-        java.io.RandomAccessFile(lease, "rw").use { it.seek(20); val byte = it.read(); it.seek(20); it.write(byte xor 1) }
-        instrumentation.runOnMainSync { model.reopen(request) }
+        instrumentation.runOnMainSync { model.onForegroundChanged(false); model.onForegroundChanged(true) }
+        waitFor { !model.state.value.restoring && model.state.value.transfer == UpdateTransferState.Ready }
+        // The fixture is already installed, so Goldy can safely back its URI with the OS APK.
+        // Mutate only this test's record; never modify the OS-installed APK.
+        val record = File(app.filesDir, "goldy-apks/records/${request.id}.json")
+        record.writeText(org.json.JSONObject(record.readText()).put("sha256", "0".repeat(64)).toString())
+        action(model, update, UpdateAction.Install)
         waitFor { model.state.value.transfer is UpdateTransferState.Failed }
         assertEquals(1, launches.size)
+        assertEquals(UpdateAction.Download, (model.state.value.transfer as UpdateTransferState.Failed).retry)
         try { app.contentResolver.openInputStream(uri); fail("Mutated URI") } catch (_: java.io.FileNotFoundException) { }
     }
 }

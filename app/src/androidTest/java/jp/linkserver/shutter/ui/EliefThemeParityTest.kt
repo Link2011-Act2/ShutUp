@@ -58,6 +58,7 @@ class EliefThemeParityTest {
         lateinit var colors: ColorScheme
         var card = 0
         var cancellations = 0
+        var installs = 0
         val request = presentationRequest()
         compose.setContent {
             ShutterTheme(darkTheme = dark, dynamicColor = dynamic) {
@@ -77,17 +78,21 @@ class EliefThemeParityTest {
                             item("reference") { SettingsNavigationItem("Pyrite reference", {}) }
                         }
                         AppUpdateBanner(update, {}, {})
-                        RetainedInstallRequests(UpdateDownloadState(requests = listOf(request), restoring = false), {}, {})
                     }
-                } else UpdateOverviewContent(update,
+                } else if (pane == 1) UpdateOverviewContent(update,
                     UpdateDownloadState(update.release.tag, UpdateTransferState.Downloading(ApkProgress(10, 30, 1)),
                         restoring = false, releaseIdentity = transferIdentity(update)), {}, onAction = {
                         assertEquals(UpdateAction.CancelDownload, it); cancellations++
                     })
+                else UpdateOverviewContent(null,
+                    UpdateDownloadState(transfer = UpdateTransferState.Ready, requests = listOf(request),
+                        restoring = false, preparedRequest = request), {}, onAction = {
+                        assertEquals(UpdateAction.Install, it); installs++
+                    })
             }
         }
         compose.waitForIdle()
-        for ((tag, name) in listOf("pyrite-reference" to "pyrite", "goldy-notification-banner" to "banner", "retained-install-requests" to "retained")) {
+        for ((tag, name) in listOf("pyrite-reference" to "pyrite", "goldy-notification-banner" to "banner")) {
             val node = compose.onNodeWithTag(tag).performScrollTo()
             assertFill(node, card, "$prefix-$name")
         }
@@ -110,6 +115,15 @@ class EliefThemeParityTest {
         }
         compose.onNodeWithText(text(R.string.update_cancel_download)).performScrollTo().assertIsEnabled().performClick()
         assertEquals(1, cancellations)
+        compose.runOnIdle { pane = 2 }
+        compose.onNodeWithTag("retained-install-requests").assertDoesNotExist()
+        compose.onNodeWithTag("retained-confirmation").assertDoesNotExist()
+        val preparedInline = compose.onAllNodesWithTag("goldy-inline-actions").fetchSemanticsNodes().isNotEmpty()
+        val actions = compose.onNodeWithTag(if (preparedInline) "goldy-inline-actions" else "goldy-docked-actions")
+        if (preparedInline) actions.performScrollTo()
+        assertFill(actions, if (preparedInline) card else colors.surface.toArgb(), "$prefix-prepared-actions")
+        compose.onNodeWithText(text(R.string.goldy_transfer_install)).performScrollTo().performClick()
+        assertEquals(1, installs)
     }
 
     @Test fun lightDynamic() = verify(false, true)

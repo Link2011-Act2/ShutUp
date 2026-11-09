@@ -29,7 +29,8 @@ internal data class UpdateDownloadState(
     val restoring: Boolean = true,
     val releaseIdentity: String? = null,
     val waiting: Boolean = false,
-    val retainedProgress: ApkProgress? = null
+    val retainedProgress: ApkProgress? = null,
+    val preparedRequest: InstallRequest? = null
 ) {
     val busy get() = transfer is UpdateTransferState.Downloading || transfer == UpdateTransferState.Verifying ||
         transfer == UpdateTransferState.PreparingInstall
@@ -47,8 +48,6 @@ internal class UpdateDownloadViewModel @JvmOverloads constructor(
     fun selectCandidate(candidate: UpdateCandidate?) = runtime.selectCandidate(candidate)
     fun action(candidate: UpdateCandidate?, action: UpdateAction) = runtime.action(candidate, action)
     fun cancel() = runtime.requestCancel()
-    fun reopen(request: InstallRequest) = runtime.reopen(request)
-    fun release(request: InstallRequest) = runtime.release(request)
     fun onForegroundChanged(visible: Boolean) = runtime.setForeground(this, visible)
     override fun onCleared() { runtime.setForeground(this, false); super.onCleared() }
 }

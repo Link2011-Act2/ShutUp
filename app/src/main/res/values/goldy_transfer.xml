@@ -1,16 +1,16 @@
 <resources>
-    <string name="goldy_transfer_channel">Update downloads</string>
+    <string name="goldy_transfer_channel">App updates</string>
     <string name="goldy_transfer_title">ShutUp update</string>
-    <string name="goldy_transfer_queued">Waiting to start the download…</string>
-    <string name="goldy_transfer_paused">The download was interrupted. Continue to resume saved data when the server supports it.</string>
-    <string name="goldy_transfer_restarted">The server could not resume this download. Downloading again from the beginning.</string>
-    <string name="goldy_transfer_schedule_failed">The download could not start. Open the app to start it again.</string>
-    <string name="goldy_transfer_foreground_install">Return to this screen and select Install to continue.</string>
-    <string name="goldy_transfer_permission_ready">Return to ShutUp to allow installation and continue.</string>
+    <string name="goldy_transfer_queued">Starting download…</string>
+    <string name="goldy_transfer_paused">Download interrupted.</string>
+    <string name="goldy_transfer_restarted">Downloading again from the beginning…</string>
+    <string name="goldy_transfer_schedule_failed">Could not start the download.</string>
+    <string name="goldy_transfer_foreground_install">Return to the app to install the update.</string>
+    <string name="goldy_transfer_permission_ready">Installation permission is required.</string>
     <string name="goldy_transfer_allow_install">Allow installation in settings</string>
-    <string name="goldy_transfer_permission_guidance">Allow this app to install updates in settings, then return here. The installer will open only after you select Install.</string>
-    <string name="goldy_transfer_download">Download update APK</string>
-    <string name="goldy_transfer_install">Install downloaded update</string>
-    <string name="goldy_transfer_restart">Continue APK download</string>
-    <string name="goldy_transfer_open">Update download and installation</string>
+    <string name="goldy_transfer_permission_guidance">Allow installation in settings, then return.</string>
+    <string name="goldy_transfer_download">Download update</string>
+    <string name="goldy_transfer_install">Install</string>
+    <string name="goldy_transfer_restart">Resume download</string>
+    <string name="goldy_transfer_open">Open update</string>
 </resources>

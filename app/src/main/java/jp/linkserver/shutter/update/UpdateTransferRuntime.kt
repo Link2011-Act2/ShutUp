@@ -36,6 +36,8 @@ internal class UpdateTransferRuntime(
     val selection = mutableSelection.asStateFlow()
     private val ledger = application.getSharedPreferences("goldy_transfer_state", 0)
     private val foregroundOwners = mutableSetOf<Any>()
+    private var hasEnteredForeground = false
+    private var launchGeneration = 0L
     private var operation: Job? = null
     private var cancelling = false
     @Volatile private var activeTicket: String? = null
@@ -55,8 +57,12 @@ internal class UpdateTransferRuntime(
                 mutableSelection.value = snapshot
                 activeTicket = ledger.getString("transfer_ticket", null)
                 settingsInFlight = ledger.getBoolean("permission_settings_open", false)
-                val id = ledger.getString("selected_request", null)
-                selectedRequest = state.value.requests.firstOrNull { it.id == id }
+                val savedId = ledger.getString("selected_request", null)
+                selectedRequest = state.value.requests.firstOrNull { it.id == savedId }
+                // Recover a prepared APK without borrowing another transfer's metadata.
+                if (selectedRequest == null && snapshot == null && activeTicket == null)
+                    selectedRequest = state.value.requests.maxByOrNull { it.metadata.versionCode }
+                val id = selectedRequest?.id
                 if (activeTicket != null && snapshot != null && selectedRequest != null &&
                     ledger.getString("request_identity_$id", null) != transferIdentity(snapshot)) selectedRequest = null
                 if (selectedRequest != null) {
@@ -93,12 +99,24 @@ internal class UpdateTransferRuntime(
 
     fun setForeground(owner: Any, visible: Boolean) {
         if (!visible) { foregroundOwners.remove(owner); return }
-        if (foregroundOwners.add(owner)) scope.launch {
+        if (!foregroundOwners.add(owner)) return
+        val returning = hasEnteredForeground
+        hasEnteredForeground = true
+        val generation = launchGeneration
+        scope.launch {
             try {
                 initialized.await()
                 settingsInFlight = false
                 persist { putBoolean("permission_settings_open", false) }
-                if (operation?.isActive != true && !state.value.busy) reconcilePermission()
+                if (operation?.isActive != true && !state.value.busy) {
+                    // Cold-start initialization already reconciled the installed APK.
+                    // Do not hide/reject the first visible Install behind duplicate work.
+                    if (returning) refreshRequests()
+                    if (generation == launchGeneration && operation?.isActive != true) {
+                        selectedRequest?.let(::presentRequest)
+                        reconcilePermission()
+                    }
+                }
             } catch (cancel: CancellationException) { throw cancel }
             catch (_: Exception) { fail(text(R.string.goldy_update_restore_failed), null) }
         }
@@ -114,18 +132,19 @@ internal class UpdateTransferRuntime(
     }
     fun action(candidate: UpdateCandidate?, action: UpdateAction) {
         if (action == UpdateAction.CancelDownload) { requestCancel(); return }
+        if (action == UpdateAction.Install && state.value.transfer == UpdateTransferState.HandedOff) return
         command {
             mutableState.update { it.copy(message = null) }
             when (action) {
                 UpdateAction.OpenInstallPermissionSettings -> permissionSettings()
                 UpdateAction.Download -> schedule(candidate)
                 UpdateAction.Install -> {
-                    val ready = selectedRequest.takeIf { selectedRequestTag == candidate?.release?.tag &&
+                    val ready = selectedRequest.takeIf { candidate == null || selectedRequestTag == candidate.release.tag &&
                         selectedRequestIdentity == transferIdentity(candidate) }
-                    if (ready != null) launch(ready, confirmedReopen = false)
+                    if (ready != null) launch(ready)
                     else if (candidate != null && receiptMatches(candidate)) {
                         prepareReceipt(candidate)
-                        selectedRequest?.takeIf { state.value.transfer == UpdateTransferState.Ready }?.let { launch(it, false) }
+                        selectedRequest?.takeIf { state.value.transfer == UpdateTransferState.Ready }?.let { launch(it) }
                     } else schedule(candidate)
                 }
                 UpdateAction.CancelDownload -> Unit
@@ -148,6 +167,7 @@ internal class UpdateTransferRuntime(
         if (identity != selectedRequestIdentity) {
             selectedRequest = null; selectedRequestTag = null; selectedRequestIdentity = null
             persist { remove("selected_request") }
+            mutableState.update { it.copy(preparedRequest = null) }
         } else if (selectedRequest != null) { presentRequest(checkNotNull(selectedRequest)); return }
         mutableSelection.value = candidate
         mutableState.update { it.copy(tag = candidate.release.tag, releaseIdentity = identity, waiting = false) }
@@ -216,7 +236,7 @@ internal class UpdateTransferRuntime(
                 try { refreshRequests() } catch (_: Exception) { mutableState.update { it.copy(message = text(R.string.goldy_update_restore_failed)) } }
             }
             if (operation === job) operation = null
-            if (publishReady) mutableState.update { it.copy(transfer = UpdateTransferState.Ready, waiting = false, message = null) }
+            if (publishReady && selectedRequest != null) mutableState.update { it.copy(transfer = UpdateTransferState.Ready, waiting = false, message = null) }
         }
     }
 
@@ -275,12 +295,9 @@ internal class UpdateTransferRuntime(
         }
     }
 
-    private fun claimed(id: String) = ledger.getStringSet("claimed", emptySet()).orEmpty().contains(id)
-    private fun handedOff(id: String) = ledger.getStringSet("handed_off", emptySet()).orEmpty().contains(id)
     private fun presentRequest(request: InstallRequest) {
+        mutableState.update { it.copy(preparedRequest = request) }
         when {
-            handedOff(request.id) -> mutableState.update { it.copy(transfer = UpdateTransferState.HandedOff, message = null) }
-            claimed(request.id) -> fail(text(R.string.goldy_update_handoff_unknown), null)
             installer.permissionStatus() == InstallPermission.UserPermissionRequired -> mutableState.update { it.copy(transfer = UpdateTransferState.PermissionRequired) }
             installer.permissionStatus() == InstallPermission.Allowed -> mutableState.update { it.copy(transfer = UpdateTransferState.Ready, message = null) }
             else -> fail(text(R.string.update_install_failed), null)
@@ -307,15 +324,14 @@ internal class UpdateTransferRuntime(
         try { startActivity(installer.unknownSourcesSettingsIntent()) }
         catch (_: Exception) { settingsInFlight = false; fail(text(R.string.settings_open_failed), UpdateAction.OpenInstallPermissionSettings) }
     }
-    private suspend fun launch(request: InstallRequest, confirmedReopen: Boolean) {
-        if ((claimed(request.id) || handedOff(request.id)) && !confirmedReopen) { presentRequest(request); return }
+    private suspend fun launch(request: InstallRequest) {
         if (foregroundOwners.isEmpty()) { mutableState.update { it.copy(transfer = UpdateTransferState.Ready) }; return }
         if (installer.permissionStatus() != InstallPermission.Allowed) {
             persist { putBoolean("permission_waiting", true) }
             mutableState.update { it.copy(transfer = UpdateTransferState.PermissionRequired) }; return
         }
+        launchGeneration++
         mutableState.update { it.copy(transfer = UpdateTransferState.PreparingInstall, message = null) }
-        persist { putStringSet("claimed", ledger.getStringSet("claimed", emptySet()).orEmpty().toSet() + request.id) }
         var callbackAttempted = false
         when (val result = installer.launch(request) { intent ->
             check(foregroundOwners.isNotEmpty()) { "Foreground interaction required" }
@@ -323,44 +339,58 @@ internal class UpdateTransferRuntime(
             startActivity(intent)
         }) {
             InstallLaunchResult.HandedOff -> {
-                persist { putStringSet("handed_off", ledger.getStringSet("handed_off", emptySet()).orEmpty().toSet() + request.id) }
                 mutableState.update { it.copy(transfer = UpdateTransferState.HandedOff) }
             }
             is InstallLaunchResult.PermissionRequired -> {
-                persist { putStringSet("claimed", ledger.getStringSet("claimed", emptySet()).orEmpty().toSet() - request.id).putBoolean("permission_waiting", true) }
+                persist { putBoolean("permission_waiting", true) }
                 mutableState.update { it.copy(transfer = UpdateTransferState.PermissionRequired) }
             }
             is InstallLaunchResult.Failed -> {
                 if (!callbackAttempted && foregroundOwners.isEmpty()) {
-                    persist { putStringSet("claimed", ledger.getStringSet("claimed", emptySet()).orEmpty().toSet() - request.id) }
                     mutableState.update { it.copy(transfer = UpdateTransferState.Ready, message = text(R.string.goldy_transfer_foreground_install)) }
-                } else fail(installError(result.error), null)
+                } else if (result.error.reason in setOf(InstallFailure.FileMissing, InstallFailure.FileChanged,
+                        InstallFailure.InvalidFile, InstallFailure.ApkRejected)) {
+                    selectedRequest = null; selectedRequestTag = null; selectedRequestIdentity = null
+                    persist { remove("selected_request") }
+                    mutableState.update { it.copy(preparedRequest = null) }
+                    fail(installError(result.error), UpdateAction.Download)
+                } else fail(installError(result.error), UpdateAction.Install)
             }
         }
     }
-    fun reopen(request: InstallRequest) = command {
-        selectedRequest = request
-        selectedRequestTag = ledger.getString("request_tag_${request.id}", null)
-        selectedRequestIdentity = ledger.getString("request_identity_${request.id}", null)
-        mutableState.update { it.copy(tag = selectedRequestTag.orEmpty(), releaseIdentity = selectedRequestIdentity) }
-        persist { putString("selected_request", request.id) }
-        launch(request, confirmedReopen = true)
-    }
-    fun release(request: InstallRequest) = command {
-        installer.release(request)
-        persist {
-            putStringSet("claimed", ledger.getStringSet("claimed", emptySet()).orEmpty().toSet() - request.id)
-            putStringSet("handed_off", ledger.getStringSet("handed_off", emptySet()).orEmpty().toSet() - request.id)
-            remove("request_tag_${request.id}").remove("request_identity_${request.id}")
-            if (ledger.getString("selected_request", null) == request.id) remove("selected_request")
+    private suspend fun refreshRequests() {
+        val result = installer.reconcileInstalledUpdates()
+        val completed = result.installedRequestIds + result.supersededRequestIds
+        val selectedId = ledger.getString("selected_request", null)
+        val identity = selectedId?.let { ledger.getString("request_identity_" + it, null) }
+        val completedSelection = selectedId != null && selectedId in completed
+        val saved = ledger.getString("transfer_snapshot", null)?.let {
+            runCatching { UpdateTransferSnapshot.decode(it) }.getOrNull()
         }
-        if (selectedRequest?.id == request.id) {
+        val completedTransfer = completedSelection && identity != null && transferIdentity(saved) == identity
+        if (completedTransfer) {
+            activeTicket = null
+            if (operation !== currentCoroutineContext().job) execution.cancel()
+            if (transferIdentity(mutableSelection.value) == identity) mutableSelection.value = null
+            mutableState.update { it.copy(tag = "", releaseIdentity = null, transfer = UpdateTransferState.Idle,
+                waiting = false, retainedProgress = null, message = null) }
+        }
+        if (completedSelection) {
             selectedRequest = null; selectedRequestTag = null; selectedRequestIdentity = null
-            mutableState.update { it.copy(transfer = UpdateTransferState.Idle) }
         }
-        refreshRequests()
+        if (completedSelection || ledger.contains("claimed") || ledger.contains("handed_off") ||
+            completed.any { ledger.contains("request_tag_" + it) || ledger.contains("request_identity_" + it) }) {
+            persist {
+                // Old one-shot claims become an ordinary explicit Install after restoration.
+                remove("claimed").remove("handed_off")
+                completed.forEach { remove("request_tag_" + it).remove("request_identity_" + it) }
+                if (completedSelection) remove("selected_request").putBoolean("permission_waiting", false)
+                if (completedTransfer) remove("transfer_snapshot").remove("transfer_ticket").putString("transfer_phase", "finished")
+            }
+        }
+        selectedRequest = selectedRequest?.let { selected -> result.pendingRequests.firstOrNull { it.id == selected.id } }
+        mutableState.update { it.copy(requests = result.pendingRequests, preparedRequest = selectedRequest) }
     }
-    private suspend fun refreshRequests() { mutableState.update { it.copy(requests = installer.pendingRequests()) } }
     private suspend fun persist(block: android.content.SharedPreferences.Editor.() -> Unit) = withContext(Dispatchers.IO) {
         check(ledger.edit().apply(block).commit()) { "Could not persist transfer state" }
     }

@@ -1,15 +1,4 @@
 <resources>
-    <string name="goldy_update_handoff_unknown">前回の引き渡し状態を確認できません。必要な場合のみインストーラーをもう一度開いてください。</string>
-    <string name="goldy_update_restore_failed">保存した更新ファイルを復元できません。共有済みのAPKは保持しています。</string>
-    <string name="goldy_update_release_failed">共有APKを削除できません。ファイルは保持しています。</string>
-    <string name="goldy_update_cleanup_failed">ダウンロードの一時ファイルを削除できません。</string>
-    <string name="goldy_update_restore_loading">保存した更新ファイルを復元しています…</string>
-    <string name="goldy_update_retained_title">保存した更新APK</string>
-    <string name="goldy_update_retained_body">Androidのインストーラーが使用できるようファイルを保持しています。インストール完了は未確認です。削除する前に、使用中のインストーラーや画面をすべて閉じてください。</string>
-    <string name="goldy_update_reopen">インストーラーをもう一度開く</string>
-    <string name="goldy_update_release">共有APKを削除…</string>
-    <string name="goldy_update_release_title">インストーラーを閉じましたか？</string>
-    <string name="goldy_update_release_body">Androidのインストーラーと、このAPKを使用する画面をすべて閉じたことを確認してください。使用中に削除するとインストールを中断する場合があります。</string>
-    <string name="goldy_update_release_confirm">閉じたのでAPKを削除</string>
-    <string name="goldy_update_reopen_body">保存した更新APKをAndroidのインストーラーでもう一度開きます。前回の引き渡しだけではインストール完了を確認できません。</string>
+    <string name="goldy_update_restore_failed">更新情報を復元できませんでした</string>
+    <string name="goldy_update_cleanup_failed">一時ファイルを削除できませんでした</string>
 </resources>

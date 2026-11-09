@@ -97,7 +97,7 @@ android {
 }
 
 dependencies {
-    implementation("com.github.Link2011-Act2.Goldy:elief:27692fc266e82f081406c85c9841226b4aca4733")
+    implementation("com.github.Link2011-Act2.Goldy:elief:809dda97ab45cd28812f150697cba126c6d4d406")
     // Fixed, published commit; no adjacent checkout or local Maven repository is required.
     implementation("com.github.Link2011-Act2:Pyrite:43557c8")
     implementation("androidx.compose.ui:ui:1.12.0")

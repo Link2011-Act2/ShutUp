@@ -33,6 +33,16 @@ internal fun UpdateOverviewContent(candidate: UpdateCandidate?, download: Update
     val strings = goldyUpdateStrings().let {
         if (active && download.waiting) it.copy(download = stringResource(R.string.goldy_transfer_restart)) else it
     }
+    val prepared = download.preparedRequest.takeIf { candidate == null }
+    if (prepared != null) {
+        EliefOverviewScreen(preparedApk = prepared.metadata,
+            transfer = if (download.restoring) UpdateTransferState.PreparingInstall else download.transfer,
+            onBack = onBack, onAction = onAction, strings = strings,
+            message = feedback ?: download.message.takeUnless { download.transfer is UpdateTransferState.Failed },
+            header = { header() }, presentation = UpdatePresentation(
+                backIcon = { Icon(painterResource(R.drawable.ic_arrow_back), null) }))
+        return
+    }
     EliefOverviewScreen(
         state = UpdateUiState(candidate, apkAvailable = release?.let { ApkSelectionPolicies.ShutUp.select(it) != null } == true,
             transfer = transfer, message = feedback ?: download.message.takeUnless {

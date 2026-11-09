@@ -87,8 +87,9 @@ class UpdateBackgroundExecutionTest {
             instrumentation.runOnMainSync { runtime.action(candidate, UpdateAction.Install); runtime.action(candidate, UpdateAction.Install) }
             waitFor { runtime.state.value.transfer == UpdateTransferState.HandedOff }
             assertEquals(1, launches)
-            instrumentation.runOnMainSync { runtime.release(request) }
-            waitFor { runtime.state.value.requests.none { it.id == request.id } }
+            // Test-only cleanup after the recorded callback; no external reader exists.
+            installer.release(request)
+            assertTrue(installer.pendingRequests().none { it.id == request.id })
         } finally {
             if (runtimeReady) runtime.cancel()
             AndroidUpdateTransferExecution(app).cancel()

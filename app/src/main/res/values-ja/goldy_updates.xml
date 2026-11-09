@@ -1,14 +1,13 @@
 <resources>
     <string name="goldy_update_available">アップデートがあります</string>
-    <string name="goldy_update_retry">再試行</string>
-    <string name="goldy_update_cached">保存済みの更新情報</string>
-    <string name="goldy_update_allow_install">インストールを許可</string>
-    <string name="goldy_update_no_apk">APKがありません。リリースページをご確認ください。</string>
-    <string name="goldy_update_downloading">APKをダウンロード中…</string>
-    <string name="goldy_update_verifying">APKを検証中…</string>
-    <string name="goldy_update_preparing">インストーラーを準備中…</string>
-    <string name="goldy_update_ready">APKの準備ができました。Androidのインストーラーで続行してください。</string>
-    <string name="goldy_update_handed_off">インストーラーを開きました。インストールの完了は確認されていません。</string>
-    <string name="goldy_update_cancelled">ダウンロードをキャンセルしました。</string>
-    <string name="goldy_update_incomplete">一部の過去のリリースが含まれていない可能性があります。</string>
+    <string name="goldy_update_retry">もう一度確認</string>
+    <string name="goldy_update_cached">前回の確認結果</string>
+    <string name="goldy_update_no_apk">ダウンロードできるAPKがありません</string>
+    <string name="goldy_update_downloading">ダウンロード中…</string>
+    <string name="goldy_update_verifying">更新ファイルを確認中…</string>
+    <string name="goldy_update_preparing">インストールの準備中…</string>
+    <string name="goldy_update_ready">インストールできます</string>
+    <string name="goldy_update_handed_off">インストーラーを開きました</string>
+    <string name="goldy_update_cancelled">ダウンロードをキャンセルしました</string>
+    <string name="goldy_update_incomplete">一部の更新履歴を表示できません</string>
 </resources>

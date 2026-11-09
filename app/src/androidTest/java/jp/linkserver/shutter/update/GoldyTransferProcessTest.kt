@@ -62,6 +62,7 @@ class GoldyTransferProcessTest {
                 .newInstance(source, metadata, sha, GitHubAsset(1002, "shutup_test.apk", "https://github.com/Link2011-Act2/ShutUp/releases/download/${release.tag}/shutup_test.apk", source.length(), "sha256:$sha"))
             val handed = (installer.prepare(receipt) as InstallPreparation.Ready).request
             val unknown = (installer.prepare(receipt) as InstallPreparation.Ready).request
+            assertEquals(handed.id, unknown.id) // Repeated prepare reuses the authenticated APK.
             var launches = 0
             withContext(Dispatchers.Main) { assertEquals(InstallLaunchResult.HandedOff, installer.launch(handed) { launches++ }) }
             assertEquals(1, launches)
@@ -78,33 +79,34 @@ class GoldyTransferProcessTest {
         var launches = 0
         val model = model { launches++ }
         assertEquals(0, launches)
-        assertTrue(model.state.value.transfer is UpdateTransferState.Failed)
-        assertNotNull(model.state.value.message)
+        assertEquals(UpdateTransferState.Ready, model.state.value.transfer)
+        assertNull(model.state.value.message)
         val request = model.state.value.requests.single { it.id == journal.getString("unknown", null) }
         app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }
         compose.setContent { ShutterTheme { UpdateOverviewScreen(null, {}, model) } }
-        compose.onNodeWithTag("retained-reopen-${request.id}").performScrollTo().performClick()
-        compose.onNodeWithTag("retained-confirmation").assertIsDisplayed()
+        compose.onNodeWithTag("retained-install-requests").assertDoesNotExist()
+        compose.onNodeWithTag("retained-confirmation").assertDoesNotExist()
         assertEquals(0, launches)
-        compose.onNodeWithTag("retained-confirm").performClick()
+        compose.onNodeWithText(app.getString(R.string.goldy_transfer_install)).performScrollTo().performClick()
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         assertEquals(1, launches)
         assertNull(model.state.value.message)
         check(journal.edit().putInt("reopen_pid", Process.myPid()).commit())
     }
 
-    @Test fun stage3RestoreHandedOffAndReleaseOnlyExplicitly() = runBlocking<Unit> {
+    @Test fun stage3RestoreCancelledInstallWithoutAutomaticLaunch() = runBlocking<Unit> {
         assertNotEquals(journal.getInt("reopen_pid", 0), Process.myPid())
         var launches = 0
         val model = model { launches++ }
         assertEquals(0, launches)
-        assertEquals(UpdateTransferState.HandedOff, model.state.value.transfer)
-        for (key in listOf("handed", "unknown")) {
-            val request = model.state.value.requests.single { it.id == journal.getString(key, null) }
+        assertEquals(UpdateTransferState.Ready, model.state.value.transfer)
+        for (id in listOf("handed", "unknown").map { journal.getString(it, null) }.distinct()) {
+            val request = model.state.value.requests.single { it.id == id }
             app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }
-            instrumentation.runOnMainSync { model.release(request) }
-            waitFor { model.state.value.requests.none { it.id == request.id } }
+            installer.release(request) // Fixture cleanup after callbacks with no external installer.
+            assertTrue(installer.pendingRequests().none { it.id == request.id })
         }
+        assertTrue(File(app.applicationInfo.sourceDir).isFile)
         assertEquals(0, launches)
         val backup = JSONObject(journal.getString("original", "{}")!!)
         restorePreferences(ledger, backup.keys().asSequence().associateWith { key ->

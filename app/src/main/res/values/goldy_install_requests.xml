@@ -1,15 +1,4 @@
 <resources>
-    <string name="goldy_update_handoff_unknown">The previous handoff could not be confirmed. Open the installer again only if needed.</string>
-    <string name="goldy_update_restore_failed">Could not restore saved update files. Existing shared APKs have been retained.</string>
-    <string name="goldy_update_release_failed">Could not remove the shared APK. The file has been retained.</string>
-    <string name="goldy_update_cleanup_failed">Could not remove a temporary download file.</string>
-    <string name="goldy_update_restore_loading">Restoring saved update files…</string>
-    <string name="goldy_update_retained_title">Saved update APKs</string>
-    <string name="goldy_update_retained_body">These files remain available to the Android installer. Installation has not been confirmed. Remove a file only after all installers and readers are closed.</string>
-    <string name="goldy_update_reopen">Open installer again</string>
-    <string name="goldy_update_release">Remove shared APK…</string>
-    <string name="goldy_update_release_title">Have you closed the installer?</string>
-    <string name="goldy_update_release_body">Confirm that the Android installer and every other screen using this APK are closed. Removing it sooner can interrupt installation.</string>
-    <string name="goldy_update_release_confirm">Closed — remove APK</string>
-    <string name="goldy_update_reopen_body">Open this saved update in Android’s installer again. A previous handoff does not confirm installation.</string>
+    <string name="goldy_update_restore_failed">Could not load update information.</string>
+    <string name="goldy_update_cleanup_failed">Could not delete temporary files.</string>
 </resources>

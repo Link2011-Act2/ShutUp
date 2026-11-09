@@ -68,8 +68,9 @@ class UpdateTransferProcessRecoveryTest {
         assertEquals(0, launches)
         val request = model.state.value.requests.single { it.id == ledger.getString("selected_request", null) }
         app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }
-        instrumentation.runOnMainSync { model.release(request) }
-        waitFor { model.state.value.requests.none { it.id == request.id } }
+        // Test-only cleanup after recorded callbacks; normal UI has no file-release action.
+        ApkInstaller.create(app).release(request)
+        assertTrue(ApkInstaller.create(app).pendingRequests().none { it.id == request.id })
         val backup = JSONObject(journal.getString("original", "{}")!!)
         restorePreferences(ledger, backup.keys().asSequence().associateWith { key -> when (val value = backup.get(key)) {
             is JSONArray -> (0 until value.length()).map { value.getString(it) }.toSet()

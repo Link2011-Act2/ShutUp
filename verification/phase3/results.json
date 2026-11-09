@@ -781,5 +781,56 @@
     "Expired CDN responses are controlled HTTP fixtures; actual GitHub HTTPS normal transfer/cancel/404 tested",
     "Connect timeout injected; read timeout real HTTP",
     "OS force-stop can prevent automatic execution; explicit process-restored resume tested"
-  ]
+  ],
+  "managedApkUx": {
+    "status": "implementation_and_host_checks_complete",
+    "publicSha": "809dda97ab45cd28812f150697cba126c6d4d406",
+    "fullUnitTests": 190,
+    "unitFailures": 0,
+    "debugBuild": "PASS",
+    "releaseR8": "PASS",
+    "lint": {
+      "debug": {
+        "Error": 0,
+        "Fatal": 0,
+        "Warning": 60
+      },
+      "release": {
+        "Error": 0,
+        "Fatal": 0,
+        "Warning": 61
+      }
+    },
+    "androidApi36": {
+      "lifecycleAndTheme": 7,
+      "uidtBackgroundScreenOffCancelRetry": 1,
+      "permissionSeparateProcessStages": 5,
+      "restoredInstallerSeparateProcessStages": 3
+    },
+    "releaseApk": "Blocked by existing validateReleaseSigning guard: formal signing configuration absent. Guard unchanged, no keys accessed. R8 and Lint verified separately.",
+    "notes": "Notification test setup required POST_NOTIFICATIONS; one isolated retry passed. Process-driver first-stage method typo ran zero tests, corrected and all three actual stages passed.",
+    "recordedJst": "2026-11-08T22:59:34.292234+09:00",
+    "changeFiles": [
+      " M app/build.gradle.kts",
+      " M app/src/androidTest/java/jp/linkserver/shutter/ui/EliefThemeParityTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferIntegrationTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/GoldyTransferProcessTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/UpdateBackgroundExecutionTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/UpdatePermissionRecoveryTest.kt",
+      " M app/src/androidTest/java/jp/linkserver/shutter/update/UpdateTransferProcessRecoveryTest.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/AppUpdateUi.kt",
+      " M app/src/main/java/jp/linkserver/shutter/ui/UpdateOverviewContent.kt",
+      " M app/src/main/java/jp/linkserver/shutter/update/UpdateDownloadViewModel.kt",
+      " M app/src/main/java/jp/linkserver/shutter/update/UpdateTransferRuntime.kt",
+      " M app/src/main/res/values-ja/goldy_install_requests.xml",
+      " M app/src/main/res/values-ja/goldy_transfer.xml",
+      " M app/src/main/res/values-ja/goldy_updates.xml",
+      " M app/src/main/res/values/goldy_install_requests.xml",
+      " M app/src/main/res/values/goldy_transfer.xml",
+      " M app/src/main/res/values/goldy_updates.xml",
+      "?? app/src/androidTest/java/jp/linkserver/shutter/update/ManagedInstallLifecycleTest.kt"
+    ],
+    "appCommitPush": false,
+    "readmeEdited": false
+  }
 }
