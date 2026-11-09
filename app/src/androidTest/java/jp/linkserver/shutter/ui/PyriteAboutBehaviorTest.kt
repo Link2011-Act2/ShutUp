@@ -1,10 +1,11 @@
 package jp.linkserver.shutter.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.*
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
-import jp.linkserver.shutter.GitHubRelease
+import jp.linkserver.goldy.*
 import jp.linkserver.shutter.R
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
@@ -16,16 +17,17 @@ class PyriteAboutBehaviorTest {
     private fun text(id: Int) = compose.activity.getString(id)
 
     @Test fun updateFailureRetryAndCancellationKeepTheHostContract() {
-        var pending = CompletableDeferred<Result<GitHubRelease?>>()
+        var pending = CompletableDeferred<CheckOutcome>()
         var requests = 0
         var navigations = 0
+        var available: UpdateCandidate? by mutableStateOf(null)
         compose.setContent { ShutterTheme {
-            AboutScreen({}, {}, { requests++; pending.await() }, { navigations++ })
+            AboutScreen({}, {}, { requests++; pending.await().also { if(it is CheckOutcome.Available) available=it.update } }, { navigations++ }, availableUpdate=available)
         } }
         val check = compose.onNodeWithText(text(R.string.about_check_updates))
         check.performScrollTo().performClick().assertIsNotEnabled()
         check.performClick()
-        compose.runOnIdle { assertEquals(1, requests); pending.complete(Result.failure(IllegalStateException("fixture"))) }
+        compose.runOnIdle { assertEquals(1, requests); pending.complete(CheckOutcome.Failure(GoldyError.Network)) }
         compose.onNodeWithText(text(R.string.about_update_failed)).assertExists()
         check.assertIsEnabled()
         compose.runOnIdle { pending = CompletableDeferred() }
@@ -35,10 +37,11 @@ class PyriteAboutBehaviorTest {
         compose.onNodeWithText(text(R.string.about_update_failed)).assertExists()
         compose.runOnIdle { pending = CompletableDeferred() }
         check.performClick()
-        compose.runOnIdle { pending.complete(Result.success(GitHubRelease("v9.0.0", "fixture",
-            "https://github.com/Link2011-Act2/ShutUp/releases/tag/v9.0.0"))) }
-        check.assertIsEnabled()
-        compose.runOnIdle { assertEquals(3, requests); assertEquals(1, navigations) }
+        compose.runOnIdle { pending.complete(CheckOutcome.Available(UpdateCandidate(GitHubRelease(9,"v9.0.0",notes="fixture",
+            url="https://github.com/Link2011-Act2/ShutUp/releases/tag/v9.0.0")))) }
+        compose.runOnIdle { assertEquals(3, requests); assertEquals(0, navigations) }
+        compose.onNodeWithText(text(R.string.goldy_update_view)).performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(1, navigations) }
         compose.onNodeWithText(compose.activity.getString(R.string.about_update_available, "v9.0.0")).assertExists()
     }
 

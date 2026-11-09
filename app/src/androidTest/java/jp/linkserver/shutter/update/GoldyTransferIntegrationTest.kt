@@ -106,7 +106,11 @@ class GoldyTransferIntegrationTest {
         }
     }
     private fun action(model: UpdateDownloadViewModel, candidate: UpdateCandidate, action: UpdateAction = UpdateAction.Download) {
-        instrumentation.runOnMainSync { model.action(candidate, action) }
+        instrumentation.runOnMainSync {
+            model.onForegroundChanged(true)
+            model.action(candidate, action)
+            if (action == UpdateAction.Download) model.onForegroundChanged(false)
+        }
     }
 
     @Test fun handoffOccursOnceAndRestorationOffersNormalExplicitInstall() = runBlocking {
@@ -114,9 +118,6 @@ class GoldyTransferIntegrationTest {
         val model = model(source)
         val update = candidate()
         instrumentation.runOnMainSync { model.action(update, UpdateAction.Download); model.action(update, UpdateAction.Download) }
-        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
-        assertTrue(launches.isEmpty())
-        instrumentation.runOnMainSync { model.action(update, UpdateAction.Install); model.action(update, UpdateAction.Install) }
         waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
         assertEquals(1, launches.size)
         val request = model.state.value.requests.single { it.id !in originalIds }

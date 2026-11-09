@@ -10,4 +10,6 @@
     <string name="goldy_update_handed_off">インストーラーを開きました</string>
     <string name="goldy_update_cancelled">ダウンロードをキャンセルしました</string>
     <string name="goldy_update_incomplete">一部の更新履歴を表示できません</string>
+    <string name="goldy_update_view">更新内容を確認</string>
+    <string name="goldy_update_loading">更新情報を読み込み中…</string>
 </resources>

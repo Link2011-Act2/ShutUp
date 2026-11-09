@@ -4,7 +4,7 @@ import android.content.pm.PackageManager
 import android.media.MediaActionSound
 import android.os.Build
 import androidx.test.platform.app.InstrumentationRegistry
-import jp.linkserver.shutter.update.verifyUpdateApk
+import jp.linkserver.goldy.*
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -37,11 +37,16 @@ class AndroidCompatibilityTest {
         assertTrue(
             context.packageManager.hasSigningCertificate(context.packageName,
                 info.signingInfo!!.apkContentsSigners.first().toByteArray(), PackageManager.CERT_INPUT_RAW_X509))
-        verifyUpdateApk(context, File(context.applicationInfo.sourceDir))
+        val inspector = AndroidApkInspector(context)
+        val installed = inspector.installed()
+        val release = jp.linkserver.goldy.GitHubRelease(1, installed.versionName,
+            url = "https://github.com/Link2011-Act2/ShutUp/releases/tag/${installed.versionName}")
+        ApkVerifier.verify(installed, inspector.inspect(File(context.applicationInfo.sourceDir)), release)
         val error = runCatching {
-            verifyUpdateApk(context, File(instrumentation.context.applicationInfo.sourceDir))
+            ApkVerifier.verify(installed, inspector.inspect(File(instrumentation.context.applicationInfo.sourceDir)), release)
         }.exceptionOrNull()
-        assertTrue(error is IllegalStateException)
-        assertEquals(context.getString(R.string.update_invalid_apk), error?.message)
+        assertTrue(error is ApkException)
+        // The instrumentation APK has no versionName, so inspection rejects it before package matching.
+        assertEquals(ApkFailure.InvalidApk, (error as ApkException).reason)
     }
 }

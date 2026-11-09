@@ -10,4 +10,6 @@
     <string name="goldy_update_handed_off">Installer opened.</string>
     <string name="goldy_update_cancelled">Download cancelled.</string>
     <string name="goldy_update_incomplete">Some release history is unavailable.</string>
+    <string name="goldy_update_view">View update</string>
+    <string name="goldy_update_loading">Loading update information…</string>
 </resources>

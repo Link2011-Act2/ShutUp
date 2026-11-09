@@ -30,39 +30,35 @@ internal fun UpdateOverviewContent(candidate: UpdateCandidate?, download: Update
         active -> download.transfer
         else -> UpdateTransferState.Idle
     }
-    val strings = goldyUpdateStrings().let {
-        if (active && download.waiting) it.copy(download = stringResource(R.string.goldy_transfer_restart)) else it
-    }
+    val strings = goldyUpdateStrings()
+    val paused = if (active && download.waiting && !download.restoring)
+        PausedDownload(download.retainedProgress, stringResource(R.string.goldy_transfer_paused),
+            stringResource(R.string.goldy_transfer_restart)) else null
     val prepared = download.preparedRequest.takeIf { candidate == null }
     if (prepared != null) {
         EliefOverviewScreen(preparedApk = prepared.metadata,
             transfer = if (download.restoring) UpdateTransferState.PreparingInstall else download.transfer,
             onBack = onBack, onAction = onAction, strings = strings,
             message = feedback ?: download.message.takeUnless { download.transfer is UpdateTransferState.Failed },
-            header = { header() }, presentation = UpdatePresentation(
+            header = { header() }, presentation = UpdatePresentation(pausedDownload = null,
                 backIcon = { Icon(painterResource(R.drawable.ic_arrow_back), null) }))
         return
     }
     EliefOverviewScreen(
         state = UpdateUiState(candidate, apkAvailable = release?.let { ApkSelectionPolicies.ShutUp.select(it) != null } == true,
-            transfer = transfer, message = feedback ?: download.message.takeUnless {
+            transfer = transfer, message = if (paused != null) null else if (download.restoring && candidate == null)
+                stringResource(R.string.goldy_update_loading) else feedback ?: download.message.takeUnless {
                 active && download.transfer is UpdateTransferState.Failed
             }),
         onBack = onBack, onOpenUrl = onOpenUrl ?: { openUrl(context, it) }, onAction = onAction,
         strings = strings, channelLabel = release?.let { updateChannelLabel(it.tag, it.prerelease) }.orEmpty(),
         header = {
             header()
-            if (active && download.waiting) {
-                download.retainedProgress?.let { Text(DownloadProgressFormatter.format(it, resources.configuration.locales[0])) }
-                androidx.compose.material3.TextButton(onClick = { onAction(UpdateAction.CancelDownload) }) {
-                    Text(stringResource(R.string.update_cancel_download))
-                }
-            }
             release?.let { ApkSelectionPolicies.ShutUp.select(it) }?.let { asset ->
                 Text(stringResource(R.string.update_asset_name, asset.name), style = MaterialTheme.typography.bodySmall)
             }
         },
-        presentation = UpdatePresentation(versionLabel = { displayVersion(it.tag) },
+        presentation = UpdatePresentation(pausedDownload = paused, versionLabel = { displayVersion(it.tag) },
             historyChannelLabel = { resources.getString(channelLabelResource(it.tag, it.prerelease)) },
             backIcon = { Icon(painterResource(R.drawable.ic_arrow_back), null) })
     )

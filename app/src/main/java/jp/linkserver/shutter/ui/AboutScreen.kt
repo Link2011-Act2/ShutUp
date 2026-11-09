@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
     onCheckUpdates: suspend () -> CheckOutcome, onUpdateAvailable: () -> Unit,
-    hasPendingInstallRequests: Boolean = false) {
+    hasPendingInstallRequests: Boolean = false,
+    availableUpdate: jp.linkserver.goldy.UpdateCandidate? = null) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val versionName = BuildConfig.VERSION_NAME
@@ -77,7 +78,6 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
                     result == CheckOutcome.NoPublishedReleases -> "none"
                     else -> "latest"
                 }
-                if (candidate != null) onUpdateAvailable()
             } catch (error: CancellationException) {
                 throw error
             } finally {
@@ -127,11 +127,12 @@ internal fun AboutScreen(onBack: () -> Unit, onOssLicenses: () -> Unit,
                     updateResult == "failed" -> stringResource(R.string.about_update_failed)
                     else -> stringResource(R.string.about_update_not_checked)
                 }
-                AboutUpdateCard(stringResource(R.string.about_updates_body), updateStatus,
-                    stringResource(R.string.about_check_updates), ::checkUpdates,
-                    checking = checking, hasResult = updateResult != "unchecked")
-                if (hasPendingInstallRequests) OutlinedButton(onClick = onUpdateAvailable,
-                    modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.goldy_transfer_open)) }
+                val canOpenUpdate = availableUpdate != null || hasPendingInstallRequests
+                AboutUpdateCard(stringResource(R.string.about_updates_body),
+                    availableUpdate?.let { stringResource(R.string.about_update_available, displayVersion(it.release.tag)) } ?: updateStatus,
+                    stringResource(if (canOpenUpdate) R.string.goldy_update_view else R.string.about_check_updates),
+                    { if (canOpenUpdate) onUpdateAvailable() else checkUpdates() },
+                    checking = checking && !canOpenUpdate, hasResult = updateResult != "unchecked" || canOpenUpdate)
             }
             AboutActionGroup(listOf(
                 AboutAction("support", stringResource(R.string.about_support_title),

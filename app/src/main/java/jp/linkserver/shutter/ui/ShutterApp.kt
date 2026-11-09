@@ -44,10 +44,6 @@ internal fun ShutterApp(shutter: ShutterViewModel, showUninstallReminder: Boolea
     val offerPending by shutter.autoMaintainOfferPending.collectAsStateWithLifecycle()
     val updateState = updates?.state?.collectAsStateWithLifecycle()?.value ?: GoldyState()
     val downloads: UpdateDownloadViewModel = viewModel()
-    LifecycleResumeEffect(downloads) {
-        downloads.onForegroundChanged(true)
-        onPauseOrDispose { downloads.onForegroundChanged(false) }
-    }
     val developerSettings = updates?.developerSettings?.collectAsStateWithLifecycle()?.value ?: UpdateDeveloperSettings()
     val warningDeveloperSettings by shutter.warningDeveloperSettings.collectAsStateWithLifecycle()
     val galaxySettings by shutter.galaxySettings.collectAsStateWithLifecycle()
@@ -99,6 +95,12 @@ internal fun ShutterNavigation(
     openTransferRequest: Boolean = false, onTransferRequestConsumed: () -> Unit = {}
 ) {
     var screen by rememberSaveable { mutableStateOf("home") }
+    if (downloads != null && screen == "update") {
+        LifecycleResumeEffect(downloads) {
+            downloads.onForegroundChanged(true)
+            onPauseOrDispose { downloads.onForegroundChanged(false) }
+        }
+    }
     val context = LocalContext.current
     var showUpdatePrompt by rememberSaveable { mutableStateOf(false) }
     var updateReturnScreen by rememberSaveable { mutableStateOf("home") }
@@ -144,7 +146,8 @@ internal fun ShutterNavigation(
                 warningDeveloperSettings, onForceSamsungChange, onForceNonMainUserChange,
                 galaxySettings, onGalaxyAudioPolicyChange, state, onRestore, onEmulateCscChange)
             "about" -> AboutScreen(back, { screen = "licenses" }, onCheckUpdates, openUpdate,
-                downloads?.state?.collectAsStateWithLifecycle()?.value?.hasTransfer == true)
+                downloads?.state?.collectAsStateWithLifecycle()?.value?.let { it.hasTransfer || it.restoring } == true,
+                updateState.availableUpdate)
             "update" -> if (downloads != null) UpdateOverviewScreen(updateState.availableUpdate, back, downloads)
                 else UpdateOverviewScreen(updateState.availableUpdate, back)
             "licenses" -> OssLicensesScreen(back)

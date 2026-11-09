@@ -64,8 +64,8 @@ class UpdateTransferProcessRecoveryTest {
         assertEquals(0, launches)
         assertTrue(File(app.cacheDir, "goldy-apks").listFiles().orEmpty().none { it.extension == "part" })
         instrumentation.runOnMainSync { model.action(model.selection.value, UpdateAction.Download) }
-        waitFor { model.state.value.transfer == UpdateTransferState.Ready }
-        assertEquals(0, launches)
+        waitFor { model.state.value.transfer == UpdateTransferState.HandedOff }
+        assertEquals(1, launches)
         val request = model.state.value.requests.single { it.id == ledger.getString("selected_request", null) }
         app.contentResolver.openInputStream(request.uri)!!.use { assertTrue(it.read() >= 0) }
         // Test-only cleanup after recorded callbacks; normal UI has no file-release action.
