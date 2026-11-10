@@ -42,7 +42,6 @@ secrets.properties
 *.idsig
 
 # Local diagnostics and editor temporary files
-/docs/
 *.log
 *.hprof
 *.tmp
@@ -54,3 +53,37 @@ secrets.properties
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local coding-assistant instructions and state
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+GEMINI.md
+.agents/
+.codex/
+.claude/
+/design-qa.md
+/BUG_FIX_PLAN.md
+
+# Local editor settings and credentials
+.vscode/
+*.pem
+
+# Generated QA records; executable verification tools stay tracked.
+/verification/pyrite-light-palette/
+/verification/pyrite-migration/
+/verification/goldy-migration/*.json
+/verification/goldy-migration/*.md
+/verification/goldy-migration/*.png
+/verification/phase3/*.json
+/verification/phase3/*.md
+/verification/theme-unification/*.json
+/verification/theme-unification/*.md
+__pycache__/
+*.py[cod]
+
+# Existing local working material
+/docs/
+
+# Local document archives
+.local-notes/

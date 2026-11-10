@@ -1,4 +1,4 @@
-param([ValidatePattern('^emulator-[0-9]+$')][string]$Serial='emulator-5564', [string]$Adb='adb',
+param([Parameter(Mandatory=$true)][ValidatePattern('^emulator-[0-9]+$')][string]$Serial, [string]$Adb='adb',
     [ValidateSet('integration','permission','background','leases','interruption')][string]$Phase='integration', [string]$Label='development')
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent

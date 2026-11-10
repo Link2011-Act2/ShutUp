@@ -1,5 +1,5 @@
 param(
-    [ValidatePattern('^emulator-[0-9]+$')][string]$Serial='emulator-5564',
+    [Parameter(Mandatory=$true)][ValidatePattern('^emulator-[0-9]+$')][string]$Serial,
     [string]$Adb='adb',
     [ValidateSet('normal','narrow','activities-dark')][string]$Phase='normal',
     [string]$Classes,

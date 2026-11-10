@@ -1,4 +1,4 @@
-param([ValidatePattern('^emulator-[0-9]+$')][string]$Serial='emulator-5564', [string]$Adb='adb', [switch]$ProcessStagesOnly)
+param([Parameter(Mandatory=$true)][ValidatePattern('^emulator-[0-9]+$')][string]$Serial, [string]$Adb='adb', [switch]$ProcessStagesOnly)
 $ErrorActionPreference='Stop'
 $taskRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $taskOutput=Join-Path $taskRoot 'build/full-goldy-20261107'
